@@ -1,0 +1,6 @@
+/* Globals CSS */
+
+.hover-link:hover {
+  color: #0fa57c !important;
+  transition: color 0.2s ease;
+}

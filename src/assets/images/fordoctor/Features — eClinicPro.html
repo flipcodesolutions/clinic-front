@@ -1,0 +1,2611 @@
+<!DOCTYPE html>
+<!-- saved from url=(0031)https://eclinicpro.com/features -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Everything to run your clinic — patient records, prescriptions, appointments, billing, WhatsApp/SMS, and more. All included in one simple plan.">
+        <meta name="theme-color" content="#0F9B6E">
+    <title>Features — eClinicPro</title>
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://eclinicpro.com/features">
+
+    <!-- Open Graph (Facebook, WhatsApp, LinkedIn previews) -->
+    <meta property="og:site_name" content="eClinicPro">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Features — eClinicPro">
+    <meta property="og:description" content="Everything to run your clinic — patient records, prescriptions, appointments, billing, WhatsApp/SMS, and more. All included in one simple plan.">
+    <meta property="og:url" content="https://eclinicpro.com/features">
+    <meta property="og:image" content="https://eclinicpro.com/assets/img/logos/logo.png">
+    <meta property="og:locale" content="en_IN">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Features — eClinicPro">
+    <meta name="twitter:description" content="Everything to run your clinic — patient records, prescriptions, appointments, billing, WhatsApp/SMS, and more. All included in one simple plan.">
+    <meta name="twitter:image" content="https://eclinicpro.com/assets/img/logos/logo.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="https://eclinicpro.com/assets/img/logos/favicon.svg">
+    <link rel="icon" type="image/png" sizes="64x64" href="https://eclinicpro.com/assets/img/logos/favicon.png">
+    <link rel="apple-touch-icon" href="https://eclinicpro.com/assets/img/logos/apple-touch-icon.png">
+
+    <!-- Site-wide Organization JSON-LD (trust signal) -->
+    <script type="text/javascript" async="" charset="utf-8" src="./Features — eClinicPro_files/recaptcha__en.js.download" crossorigin="anonymous" integrity="sha384-BzR1KsTgQlBYM6f2zBvowklwbhqpOnnspbOTaQKeAnJ5VVF0uPvnM53ZW+Z2zTQd"></script><script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "eClinicPro",
+        "url": "https://eclinicpro.com/",
+        "logo": "https://eclinicpro.com/assets/img/logos/logo.png",
+        "description": "The clinic operating system — patient records, prescriptions, appointments, billing — all in one place.",
+        "sameAs": [],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "hello@eclinicpro.com",
+            "areaServed": "IN",
+            "availableLanguage": ["English", "Hindi"]
+        }
+    }
+    </script>
+
+    <!-- Google Analytics 4 -->
+    <script async="" src="./Features — eClinicPro_files/js"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-YTM2L1L5RZ');
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com/">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+    <!-- Non-blocking font load: swap-in once downloaded, system font shown first. -->
+    <link rel="preload" as="style" href="./Features — eClinicPro_files/css2">
+    <link rel="stylesheet" href="./Features — eClinicPro_files/css2" media="all" onload="this.media=&#39;all&#39;">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"></noscript>
+
+        <link rel="stylesheet" href="./Features — eClinicPro_files/styles.css">
+    
+    <!-- Alpine pinned to exact version for CDN cacheability (was @3.x.x — re-fetched on every floating release) -->
+    <script defer="" src="./Features — eClinicPro_files/cdn.min.js.download"></script>
+    <script src="./Features — eClinicPro_files/analytics.js.download" data-key="4woSp6JOsZmShXEwnBQwUQ" async=""></script>
+    <script>
+        var ahrefs_analytics_script = document.createElement('script');
+        ahrefs_analytics_script.async = true;
+        ahrefs_analytics_script.src = 'https://analytics.ahrefs.com/analytics.js';
+        ahrefs_analytics_script.setAttribute('data-key', '4woSp6JOsZmShXEwnBQwUQ');
+        document.getElementsByTagName('head')[0].appendChild(ahrefs_analytics_script);
+    </script><script async="" src="./Features — eClinicPro_files/analytics.js.download" data-key="4woSp6JOsZmShXEwnBQwUQ"></script>
+
+<script>window.ECP_PATIENT = null;</script><script>window.ECP_PORTAL_URL = "https://app.eclinicpro.com";</script><script>window.ECP_SITE_URL = "https://eclinicpro.com";</script></head>
+<!-- Hand the initial session blob to JS via a separate JSON script tag
+     so we don't have to embed PHP inside an Alpine x-data attribute. -->
+
+
+
+
+<body class="" x-data="ecpHeader()" x-init="loadPatient(); window.addEventListener(&#39;storage&#39;, loadPatient); window.addEventListener(&#39;ecp:patient-login&#39;, (e) =&gt; { if (e.detail) this.patient = e.detail; })">
+
+<header class="nav">
+    <div class="nav-inner">
+        <a href="https://eclinicpro.com/" class="logo" aria-label="eClinicPro home">
+            <img src="./Features — eClinicPro_files/logo.svg" alt="eClinicPro" class="logo-img" width="160" height="40">
+        </a>
+
+        <nav class="nav-links" :class="mobileNav ? &#39;is-open&#39; : &#39;&#39;">
+            <a href="https://eclinicpro.com/find-a-doctor" class="nav-link ">Find a doctor</a>
+            <a href="https://eclinicpro.com/cervical-cancer" class="nav-link nav-link-awareness ">Cervical Cancer</a>
+            <a href="https://eclinicpro.com/features" class="nav-link ">For doctors</a>
+            <a href="https://eclinicpro.com/#specialties" class="nav-link ">Specialties</a>
+            <a href="https://eclinicpro.com/security" class="nav-link ">Security</a>
+        </nav>
+
+        <div class="nav-cta">
+            <!-- Logged out: opens the shared login modal. -->
+            <button type="button" class="nav-signin" x-show="!patient" @click="window.ecpAuth &amp;&amp; window.ecpAuth.open(&#39;default&#39;)" style="background: none; border: 0; cursor: pointer; padding: 0; font: inherit;">
+                Patient login
+            </button>
+
+            <!-- Logged in: greeting + avatar dropdown -->
+            <div class="nav-user" x-show="patient" @click.outside="patientMenuOpen = false" style="display: none;">
+                <button type="button" class="nav-user-btn" @click="patientMenuOpen = !patientMenuOpen">
+                    <span class="nav-user-avatar">
+                        <template x-if="patient &amp;&amp; patient.has_photo"></template>
+                        <template x-if="!patient || !patient.has_photo"></template><span x-text="patientInitial()">P</span>
+                    </span>
+                    <span class="nav-user-hi">Hi, <strong x-text="patientFirstName()"></strong></span>
+                    <svg class="nav-user-caret" :class="patientMenuOpen ? &#39;open&#39; : &#39;&#39;" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="nav-user-menu" x-show="patientMenuOpen" x-transition.opacity="" style="display: none;">
+                    <a href="https://eclinicpro.com/patient" class="nav-user-item">My Health</a>
+                    <a href="https://eclinicpro.com/find-a-doctor" class="nav-user-item">Find a doctor</a>
+                    <button type="button" class="nav-user-item danger" @click="signOut()">Sign out</button>
+                </div>
+            </div>
+
+            <a href="https://app.eclinicpro.com/login" class="btn btn-primary">Doctor panel</a>
+            <button type="button" @click="mobileNav = !mobileNav" class="nav-burger" aria-label="Menu">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<script>
+// Header / nav state. Defined as a real function so we don't have to
+// stuff JS (with comments, awaits, and braces) into an HTML attribute,
+// which breaks parsing in some browsers + makes Alpine angry.
+function ecpHeader() {
+  return {
+    mobileNav: false,
+    patient: window.ECP_PATIENT || null,
+    patientMenuOpen: false,
+
+    loadPatient() {
+      if (window.ECP_PATIENT) {
+        this.patient = window.ECP_PATIENT;
+        try {
+          localStorage.setItem('ecp_patient', JSON.stringify(this.patient));
+        } catch (e) {}
+        return;
+      }
+      // Server says logged out — don't show a stale localStorage session in the header.
+      this.patient = null;
+      try { localStorage.removeItem('ecp_patient'); } catch (e) {}
+    },
+
+    patientFirstName() {
+      if (!this.patient) return '';
+      const n = this.patient.first_name || this.patient.name || this.patient.handle || '';
+      return n.split(/\s+/)[0] || 'there';
+    },
+
+    patientInitial() {
+      const n = this.patientFirstName();
+      return n ? n.charAt(0).toUpperCase() : 'P';
+    },
+
+    async signOut() {
+      try {
+        await fetch('/api/patient_auth?action=logout', {
+          method: 'POST',
+          credentials: 'same-origin',
+        });
+      } catch (e) { /* ignore */ }
+      try { localStorage.removeItem('ecp_patient'); } catch (e) {}
+      this.patient = null;
+      this.patientMenuOpen = false;
+      location.reload();
+    },
+  };
+}
+</script>
+
+
+<div id="ecp-auth-modal" x-data="ecpAuthModal()" x-show="open" @keydown.escape.window="close()" class="auth-overlay" @click.self="close()" style="display: none;">
+  <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="ecp-auth-title">
+    <button type="button" class="auth-close" @click="close()" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+
+    <div class="auth-head">
+      <div class="auth-logo">e<em>ClinicPro</em></div>
+      <h2 id="ecp-auth-title" x-text="headline()">Sign in to continue</h2>
+      <p class="auth-sub" x-text="subline()">Enter your WhatsApp number — we'll send you a code. No password needed.</p>
+    </div>
+
+    <!-- Sign in / Create account tabs (visible only on STEP 1) -->
+    <div class="auth-tabs" role="tablist" x-show="step === &#39;phone&#39;">
+      <button type="button" role="tab" :class="intent === &#39;signin&#39; ? &#39;is-active&#39; : &#39;&#39;" @click="intent = &#39;signin&#39;; errorMsg = &#39;&#39;" class="is-active">
+        Sign in
+      </button>
+      <button type="button" role="tab" :class="intent === &#39;signup&#39; ? &#39;is-active&#39; : &#39;&#39;" @click="intent = &#39;signup&#39;; errorMsg = &#39;&#39;" class="">
+        Create account
+      </button>
+    </div>
+
+    <!-- STEP 1: phone -->
+    <form class="auth-form" x-show="step === &#39;phone&#39;" @submit.prevent="sendOtp()">
+      <label>
+        <span class="lbl">Mobile number</span>
+        <div class="auth-phone-field">
+          <span class="auth-cc">+91</span>
+          <input type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" x-model="phoneDigits" @input="phoneDigits = phoneDigits.replace(/\D/g, &#39;&#39;).slice(0,10)" :disabled="busy" placeholder="98XXXXXXXX" required="">
+        </div>
+      </label>
+      <p class="auth-hint" x-text="step1Hint()">We'll send a 6-digit code via WhatsApp. No password to remember.</p>
+      <p class="auth-error" x-show="errorMsg" x-html="errorMsg" style="display: none;"></p>
+            <div class="auth-captcha">
+        <div class="g-recaptcha" data-sitekey="6LfaaEstAAAAACeWcRjHDn1tbZYOkHdBD8jH9ULM"><div style="width: 304px; height: 78px;"><div><iframe title="reCAPTCHA" width="304" height="78" role="presentation" name="a-xht9ojurszn4" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="./Features — eClinicPro_files/anchor.html"></iframe></div><textarea id="g-recaptcha-response" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 40px; border: 1px solid rgb(193, 193, 193); margin: 10px 25px; padding: 0px; resize: none; display: none;"></textarea></div></div>
+      </div>
+            <button type="submit" class="auth-btn primary" :disabled="busy || phoneDigits.length &lt; 10" disabled="disabled">
+        <span x-show="!busy" x-text="intent === &#39;signup&#39; ? &#39;Create my account&#39; : &#39;Send code&#39;">Send code</span>
+        <span x-show="busy" style="display: none;">Sending…</span>
+      </button>
+      <p class="auth-tos">
+        By continuing you agree to our <a href="https://eclinicpro.com/security" target="_blank">privacy &amp; terms</a>.
+      </p>
+    </form>
+
+    <!-- STEP 2: code (+ name for new signups) -->
+    <form class="auth-form" x-show="step === &#39;code&#39;" @submit.prevent="verifyOtp()" style="display: none;">
+      <div class="auth-back" @click="step = &#39;phone&#39;; errorMsg = &#39;&#39;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span>Change number</span>
+      </div>
+
+      <!-- Returning user → friendly greeting -->
+      <template x-if="phoneExists &amp;&amp; nameHint"></template>
+
+      <!-- New signup → confirmation -->
+      <template x-if="!phoneExists"></template><div class="auth-welcome new">
+          Setting up your new account
+          <span>We sent a verification code to <strong x-text="&#39;+91 &#39; + phoneDigits">+91 </strong>.</span>
+        </div>
+
+      <template x-if="devCode"></template>
+
+      <label>
+        <span class="lbl">6-digit code</span>
+        <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" x-model="code" x-ref="codeInput" @input="code = code.replace(/\D/g, &#39;&#39;).slice(0,6)" :disabled="busy" placeholder="••••••" required="">
+      </label>
+
+      <!-- Name field: ONLY shown for new accounts -->
+      <template x-if="!phoneExists"></template><label>
+          <span class="lbl">Your full name</span>
+          <input type="text" x-model="name" :disabled="busy" placeholder="e.g. Riya Mehta" maxlength="120" required="">
+        </label>
+
+      <p class="auth-error" x-show="errorMsg" x-html="errorMsg" style="display: none;"></p>
+
+            <div class="auth-captcha">
+        <div class="g-recaptcha" data-sitekey="6LfaaEstAAAAACeWcRjHDn1tbZYOkHdBD8jH9ULM"><div style="width: 304px; height: 78px;"><div><iframe title="reCAPTCHA" width="304" height="78" role="presentation" name="a-qciv108t4ny5" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="./Features — eClinicPro_files/anchor(1).html"></iframe></div><textarea id="g-recaptcha-response-1" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 40px; border: 1px solid rgb(193, 193, 193); margin: 10px 25px; padding: 0px; resize: none; display: none;"></textarea></div><iframe style="display: none;" src="./Features — eClinicPro_files/saved_resource.html"></iframe></div>
+      </div>
+      
+      <button type="submit" class="auth-btn primary" :disabled="busy || code.length !== 6 || (!phoneExists &amp;&amp; !name.trim())" disabled="disabled">
+        <span x-show="!busy" x-text="phoneExists ? &#39;Sign in&#39; : &#39;Create account&#39;">Create account</span>
+        <span x-show="busy" style="display: none;">Verifying…</span>
+      </button>
+
+      <button type="button" class="auth-btn ghost" :disabled="busy || resendCountdown &gt; 0" @click="resendOtp()">
+        <span x-show="resendCountdown === 0">Resend code</span>
+        <span x-show="resendCountdown &gt; 0" style="display: none;">Resend in <span x-text="resendCountdown">0</span>s</span>
+      </button>
+    </form>
+  </div>
+</div>
+<script src="./Features — eClinicPro_files/api.js.download" async="" defer=""></script>
+
+<style>
+.auth-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 30, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 16px;
+  animation: ecpFadeIn .15s ease;
+}
+@keyframes ecpFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.auth-card {
+  background: #fff;
+  border-radius: 22px;
+  width: 100%; max-width: 420px;
+  padding: 32px 32px 28px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+  position: relative;
+  animation: ecpPopIn .2s ease;
+}
+@keyframes ecpPopIn {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0) scale(1);     opacity: 1; }
+}
+
+.auth-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 0; background: transparent;
+  color: var(--mute, #888);
+  cursor: pointer;
+  display: grid; place-items: center;
+  transition: background .15s, color .15s;
+}
+.auth-close:hover { background: var(--bg-2, #f3f3f3); color: var(--ink, #000); }
+
+.auth-head { text-align: center; margin-bottom: 22px; }
+.auth-logo {
+  font-family: inherit;
+  font-size: 18px; font-weight: 500;
+  color: var(--ink); letter-spacing: -0.4px;
+  margin-bottom: 14px;
+}
+.auth-logo em {
+  font-style: normal; font-weight: 600;
+  background: linear-gradient(135deg, var(--teal-700), var(--teal-400));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.auth-head h2 {
+  font-size: 22px; font-weight: 600;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+.auth-sub { font-size: 14px; color: var(--mute); line-height: 1.5; }
+
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-form label { display: flex; flex-direction: column; gap: 6px; }
+.auth-form .lbl {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--mute);
+}
+.auth-form .lbl em {
+  font-style: normal; text-transform: none;
+  letter-spacing: normal; color: var(--teal-700); font-weight: 500;
+}
+.auth-form input {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 13px 14px;
+  font: inherit; font-size: 16px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  width: 100%;
+}
+.auth-form input:focus {
+  border-color: var(--teal-400);
+  box-shadow: 0 0 0 3px rgba(15,155,110,0.14);
+}
+.auth-form input:disabled { background: var(--bg-2); opacity: 0.7; }
+
+.auth-phone-field {
+  display: flex; align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+}
+.auth-phone-field:focus-within {
+  border-color: var(--teal-400);
+  box-shadow: 0 0 0 3px rgba(15,155,110,0.14);
+}
+.auth-cc {
+  background: var(--bg-2);
+  padding: 13px 14px;
+  font-weight: 600; font-size: 15px;
+  color: var(--ink-2);
+  border-right: 1px solid var(--line);
+}
+.auth-phone-field input {
+  border: 0; border-radius: 0;
+  flex: 1;
+}
+.auth-phone-field input:focus { box-shadow: none; }
+
+.auth-hint, .auth-tos {
+  font-size: 12.5px; color: var(--mute);
+  line-height: 1.5; margin: -4px 0 0;
+}
+.auth-captcha {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 4px;
+}
+.auth-tos { text-align: center; margin-top: 4px; }
+.auth-tos a { color: var(--teal-700); text-decoration: underline; }
+
+.auth-error {
+  font-size: 13px; color: #c0392b;
+  background: rgba(192,57,43,0.06);
+  border: 1px solid rgba(192,57,43,0.15);
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin: 0;
+}
+
+.auth-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); background: #fff;
+  padding: 13px 18px;
+  border-radius: 11px;
+  font: inherit; font-size: 14.5px; font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.auth-btn:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); }
+.auth-btn.primary {
+  background: var(--teal-600); color: #fff; border-color: var(--teal-600);
+}
+.auth-btn.primary:hover:not(:disabled) {
+  background: var(--teal-700); border-color: var(--teal-700);
+  box-shadow: 0 4px 14px rgba(15,155,110,0.28);
+}
+.auth-btn.ghost { background: transparent; border: 0; color: var(--ink-2); }
+.auth-btn.ghost:hover:not(:disabled) { color: var(--teal-700); }
+.auth-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.auth-back {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12.5px; font-weight: 600;
+  color: var(--ink-2); cursor: pointer;
+  align-self: flex-start;
+  padding: 4px 0;
+}
+.auth-back:hover { color: var(--teal-700); }
+
+.auth-sent-to {
+  font-size: 13.5px; color: var(--ink-2);
+  background: var(--bg-2);
+  padding: 10px 12px;
+  border-radius: 9px;
+  text-align: center;
+}
+.auth-sent-to strong { color: var(--ink); font-weight: 600; }
+
+/* Sign in / Create account tabs */
+.auth-tabs {
+  display: flex;
+  background: var(--bg-2);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+.auth-tabs button {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font: inherit; font-size: 13.5px; font-weight: 600;
+  color: var(--mute);
+  cursor: pointer;
+  transition: all .15s;
+}
+.auth-tabs button:hover { color: var(--ink); }
+.auth-tabs button.is-active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+/* Step-2 greeting card */
+.auth-welcome {
+  background: var(--teal-50);
+  color: var(--teal-800);
+  border: 1px solid rgba(15,155,110,0.15);
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.auth-welcome strong { font-weight: 700; }
+.auth-welcome span {
+  font-size: 13px; font-weight: 400;
+  color: var(--ink-2);
+}
+.auth-welcome.new {
+  background: #f0f4ff;
+  color: #1e3a8a;
+  border-color: rgba(30,58,138,0.15);
+}
+.auth-welcome.new span { color: var(--ink-2); }
+
+/* Inline link inside an error message */
+.auth-error a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-devcode {
+  font-size: 13px;
+  background: #fff7e0;
+  border: 1px solid #f5d97e;
+  color: #6b4f00;
+  padding: 10px 12px;
+  border-radius: 9px;
+  display: flex; align-items: center; gap: 10px;
+}
+.auth-devcode .tag {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.08em;
+  background: #f5d97e; color: #6b4f00;
+  padding: 2px 6px; border-radius: 4px;
+}
+.auth-devcode strong {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: 16px; letter-spacing: 2px;
+  color: #6b4f00;
+  margin-left: auto;
+}
+
+@media (max-width: 480px) {
+  .auth-card { padding: 26px 22px 22px; border-radius: 18px; }
+  .auth-head h2 { font-size: 19px; }
+}
+</style>
+
+<script>
+/** Keep header + booking widgets in sync after OTP login (no full page reload). */
+function ecpSetPatientSession(patient) {
+  if (!patient || !patient.id) return null;
+  const slim = {
+    id:         Number(patient.id),
+    name:       patient.name || patient.first_name || 'Patient',
+    first_name: patient.first_name || null,
+    phone:      patient.phone || patient.handle || null,
+    handle:     patient.phone || patient.handle || null,
+  };
+  window.ECP_PATIENT = slim;
+  try { localStorage.setItem('ecp_patient', JSON.stringify(slim)); } catch (e) {}
+  try {
+    window.dispatchEvent(new CustomEvent('ecp:patient-login', { detail: slim }));
+  } catch (e) {}
+  return slim;
+}
+
+function ecpAuthModal() {
+  return {
+    open: false,
+    step: 'phone',           // 'phone' | 'code'
+    intent: 'signin',        // 'signin' | 'signup' — user's tab choice
+    phoneDigits: '',
+    code: '',
+    name: '',
+    phoneExists: false,      // set by server response after sendOtp
+    nameHint: null,          // first name of returning user (for greeting)
+    devCode: null,
+    busy: false,
+    errorMsg: '',
+    resendCountdown: 0,
+    captchaEnabled: true,
+    _resendTimer: null,
+    _reason: 'default',
+    _afterLogin: null,
+
+    captchaToken() {
+      if (!this.captchaEnabled || typeof grecaptcha === 'undefined') return '';
+      try {
+        for (let i = 0; i < 4; i++) {
+          try {
+            const t = grecaptcha.getResponse(i);
+            if (t) return t;
+          } catch (e) { break; }
+        }
+        return grecaptcha.getResponse() || '';
+      } catch (e) { return ''; }
+    },
+    resetCaptcha() {
+      if (!this.captchaEnabled || typeof grecaptcha === 'undefined') return;
+      try {
+        for (let i = 0; i < 4; i++) {
+          try { grecaptcha.reset(i); } catch (e) { break; }
+        }
+      } catch (e) {}
+    },
+
+    init() {
+      // Expose a tiny global API the rest of the site uses.
+      window.ecpAuth = {
+        require: (reason, cb) => this.require(reason, cb),
+        open:    (reason)     => this.openModal(reason || 'default'),
+        close:   ()           => this.close(),
+        logout:  async ()     => {
+          try {
+            await fetch('/api/patient_auth?action=logout', { method: 'POST', credentials: 'same-origin' });
+          } catch (e) {}
+          try { window.dispatchEvent(new StorageEvent('storage', { key: 'ecp_patient' })); } catch (e) {}
+          location.reload();
+        },
+        me: async () => {
+          try {
+            const r = await fetch('/api/patient_auth?action=me', { credentials: 'same-origin' });
+            const j = await r.json();
+            return j.patient || null;
+          } catch (e) { return null; }
+        },
+      };
+      window.addEventListener('ecp:open-auth', e => this.openModal(e.detail?.reason || 'default'));
+    },
+
+    async require(reason, cb) {
+      const me = await window.ecpAuth.me();
+      if (me) {
+        ecpSetPatientSession(me);
+        cb && cb(me);
+        return;
+      }
+      this._afterLogin = cb;
+      this.openModal(reason);
+    },
+
+    openModal(reason) {
+      this._reason = reason || 'default';
+      this.intent = 'signin';   // default to sign in; user can flip
+      this.step = 'phone';
+      this.errorMsg = '';
+      this.devCode = null;
+      this.code = '';
+      this.name = '';
+      this.phoneExists = false;
+      this.nameHint = null;
+      this.open = true;
+      document.body.style.overflow = 'hidden';
+    },
+
+    close() {
+      this.open = false;
+      this._afterLogin = null;
+      document.body.style.overflow = '';
+      if (this._resendTimer) { clearInterval(this._resendTimer); this._resendTimer = null; }
+    },
+
+    headline() {
+      // On step 2 we always say "Verify your number" — the welcome card
+      // covers the rest of the context.
+      if (this.step === 'code') return 'Verify your number';
+      // Step 1 — depends on intent + reason
+      if (this.intent === 'signup') {
+        return this._reason === 'save_doctor' ? 'Create account to save'
+             : this._reason === 'book'        ? 'Create account to book'
+             :                                  'Create your account';
+      }
+      return {
+        save_doctor: 'Sign in to save this doctor',
+        book:        'Sign in to book',
+        default:     'Sign in to continue',
+      }[this._reason] || 'Sign in to continue';
+    },
+    subline() {
+      if (this.step === 'code') {
+        return this.phoneExists
+          ? "Almost there — enter the code we texted you."
+          : "Last step before your account is ready.";
+      }
+      return this.intent === 'signup'
+        ? "New to eClinicPro? Enter your WhatsApp number — we'll send you a code."
+        : "Enter your WhatsApp number — we'll send you a code. No password needed.";
+    },
+    step1Hint() {
+      return this.intent === 'signup'
+        ? "We'll create your account once you confirm the code."
+        : "We'll send a 6-digit code via WhatsApp. No password to remember.";
+    },
+
+    async sendOtp() {
+      if (this.phoneDigits.length < 10) return;
+      const captcha = this.captchaToken();
+      if (this.captchaEnabled && !captcha) {
+        this.errorMsg = 'Please complete the captcha.';
+        return;
+      }
+      this.busy = true; this.errorMsg = ''; this.devCode = null;
+      try {
+        const r = await fetch('/api/patient_auth?action=send_otp', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone:  '+91' + this.phoneDigits,
+            intent: this.intent,
+            'g-recaptcha-response': captcha || undefined,
+          }),
+        });
+        const text = await r.text();
+        let j;
+        try { j = JSON.parse(text); }
+        catch (e) {
+          this.errorMsg = 'Server returned an unexpected response (HTTP ' + r.status + '). ' +
+                          (text.slice(0, 160) || 'Empty body');
+          console.error('[ecpAuth] non-JSON response:', text);
+          return;
+        }
+        if (!j.ok) {
+          this.resetCaptcha();
+          // Smart messages: if user picked the wrong tab, offer to flip it.
+          if (j.error === 'account_not_found') {
+            this.errorMsg = "We don't see an account with this number. " +
+              '<a onclick="document.querySelector(\'#ecp-auth-modal\').__x.$data.flipTo(\'signup\')">Create one instead?</a>';
+          } else if (j.error === 'account_exists') {
+            this.errorMsg = 'This number is already registered. ' +
+              '<a onclick="document.querySelector(\'#ecp-auth-modal\').__x.$data.flipTo(\'signin\')">Sign in instead?</a>';
+          } else {
+            this.errorMsg = this.errorText(j.error, j.retry_after) + (j.hint ? ' — ' + j.hint : '');
+          }
+          return;
+        }
+        // Capture whether this is a returning user, so step 2 can greet them.
+        this.phoneExists = !!j.exists;
+        this.nameHint    = j.name_hint || null;
+        if (j.dev_code)  this.devCode = j.dev_code;
+        this.step = 'code';
+        this.resetCaptcha();
+        this.startResendCountdown(30);
+        this.$nextTick(() => this.$refs.codeInput && this.$refs.codeInput.focus());
+      } catch (e) {
+        this.errorMsg = "Couldn't reach server: " + (e.message || e);
+        this.resetCaptcha();
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    // Called from the inline link in the error messages above.
+    flipTo(newIntent) {
+      this.intent = newIntent;
+      this.errorMsg = '';
+    },
+
+    async resendOtp() {
+      this.code = '';
+      if (this.captchaEnabled && !this.captchaToken()) {
+        this.errorMsg = 'Complete the captcha, then tap Resend again.';
+        return;
+      }
+      await this.sendOtp();
+    },
+
+    startResendCountdown(secs) {
+      this.resendCountdown = secs;
+      if (this._resendTimer) clearInterval(this._resendTimer);
+      this._resendTimer = setInterval(() => {
+        this.resendCountdown -= 1;
+        if (this.resendCountdown <= 0) { clearInterval(this._resendTimer); this._resendTimer = null; }
+      }, 1000);
+    },
+
+    async verifyOtp() {
+      if (this.code.length !== 6) return;
+      const captcha = this.captchaToken();
+      if (this.captchaEnabled && !captcha) {
+        this.errorMsg = 'Please complete the captcha.';
+        return;
+      }
+      this.busy = true; this.errorMsg = '';
+      try {
+        const r = await fetch('/api/patient_auth?action=verify_otp', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: '+91' + this.phoneDigits,
+            code:  this.code,
+            name:  this.name || undefined,
+            'g-recaptcha-response': captcha || undefined,
+          }),
+        });
+        const text = await r.text();
+        let j;
+        try { j = JSON.parse(text); }
+        catch (e) {
+          this.errorMsg = 'Server returned an unexpected response (HTTP ' + r.status + '). ' +
+                          (text.slice(0, 160) || 'Empty body');
+          console.error('[ecpAuth] non-JSON response:', text);
+          return;
+        }
+        if (!j.ok) {
+          this.resetCaptcha();
+          this.errorMsg = this.errorText(j.error) + (j.hint ? ' — ' + j.hint : '');
+          return;
+        }
+
+        // Success. Stash a minimal copy in localStorage so any other
+        // open tabs pick up the new session via the 'storage' event.
+        ecpSetPatientSession(j.patient);
+
+        // If the caller wanted us to do something after login (save a
+        // doctor, start a booking), do it BEFORE reloading.
+        const cb = this._afterLogin;
+        if (cb) {
+          try { await cb(j.patient); } catch (e) { console.error(e); }
+          this.close();
+          if (this._reason !== 'book') {
+            location.reload();
+          }
+          return;
+        }
+
+        location.reload();
+      } catch (e) {
+        this.errorMsg = "Couldn't reach server. Check your connection.";
+        this.resetCaptcha();
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    errorText(code, retryAfter) {
+      switch (code) {
+        case 'invalid_phone':     return 'That number doesn\'t look right.';
+        case 'phone_required':    return 'Enter your mobile number.';
+        case 'resend_too_soon':   return retryAfter
+                                    ? `Please wait ${retryAfter}s before requesting another code.`
+                                    : 'Please wait a moment before requesting another code.';
+        case 'otp_locked':        return retryAfter
+                                    ? `Too many OTP requests. Try again in ${Math.ceil(retryAfter / 60)} minute(s).`
+                                    : 'Too many OTP requests. Please try again later.';
+        case 'invalid_code':      return 'That code is incorrect. Try again.';
+        case 'expired':           return 'Code expired. Tap Resend.';
+        case 'too_many_attempts': return 'Too many attempts. Request a new code.';
+        case 'no_code_issued':    return 'No active code. Tap Resend.';
+        case 'db_unavailable':    return 'Database is unreachable. Check /app/.env credentials.';
+        case 'whatsapp_not_configured': return 'WhatsApp OTP is not configured yet. Contact support.';
+        case 'wa_template_missing': return 'WhatsApp OTP template is missing. Contact support.';
+        case 'wa_template_unapproved': return 'WhatsApp OTP template is not approved yet.';
+        case 'not_whatsapp':      return 'This number does not appear to have WhatsApp active.';
+        case 'wa_send_failed':    return 'We couldn\'t send the WhatsApp OTP. Try again later.';
+        case 'sms_not_configured': return 'SMS isn\'t configured yet. Contact support.';
+        case 'sms_send_failed':   return 'We couldn\'t send the SMS. Try again or use a different number.';
+        case 'captcha_failed':    return 'Please complete the captcha and try again.';
+        case 'server_error':      return 'Server error.';
+        default:                  return 'Something went wrong. Please try again.';
+      }
+    },
+  };
+}
+</script>
+
+<div id="ecp-claim-modal" x-data="ecpClaimModal()" x-show="open" @keydown.escape.window="close()" class="auth-overlay" @click.self="close()" style="display: none;">
+  <div class="auth-card" style="max-width: 480px;" role="dialog" aria-modal="true">
+    <button type="button" class="auth-close" @click="close()" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+
+    <div class="auth-head">
+      <div class="auth-logo">e<em>ClinicPro</em></div>
+      <h2 x-text="headline()">Claim this listing</h2>
+      <p class="auth-sub" x-text="subline()">Verify your number, then confirm a few details. We review claims within 1–2 days.</p>
+    </div>
+
+    <!-- Step progress -->
+    <div class="claim-steps" x-show="!done">
+      <div class="claim-step is-active" :class="step &gt;= 1 ? &#39;is-active&#39; : &#39;&#39;"><span>1</span> Verify phone</div>
+      <div class="claim-sep"></div>
+      <div class="claim-step" :class="step &gt;= 2 ? &#39;is-active&#39; : &#39;&#39;"><span>2</span> Enter code</div>
+      <div class="claim-sep"></div>
+      <div class="claim-step" :class="step &gt;= 3 ? &#39;is-active&#39; : &#39;&#39;"><span>3</span> Your details</div>
+    </div>
+
+    <!-- STEP 1: phone -->
+    <form class="auth-form" x-show="step === 1 &amp;&amp; !done" @submit.prevent="sendOtp()">
+      <template x-if="context &amp;&amp; context.name"></template>
+      <label>
+        <span class="lbl">Your mobile number</span>
+        <div class="auth-phone-field">
+          <span class="auth-cc">+91</span>
+          <input type="tel" inputmode="numeric" maxlength="10" required="" x-model="phoneDigits" @input="phoneDigits = phoneDigits.replace(/\D/g, &#39;&#39;).slice(0,10)" :disabled="busy" placeholder="98XXXXXXXX">
+        </div>
+      </label>
+      <p class="auth-hint">We'll send a one-time code via SMS to verify it's really you.</p>
+      <p class="auth-error" x-show="errorMsg" x-text="errorMsg" style="display: none;"></p>
+      <button type="submit" class="auth-btn primary" :disabled="busy || phoneDigits.length &lt; 10" disabled="disabled">
+        <span x-show="!busy">Send code</span>
+        <span x-show="busy" style="display: none;">Sending…</span>
+      </button>
+    </form>
+
+    <!-- STEP 2: code -->
+    <form class="auth-form" x-show="step === 2 &amp;&amp; !done" @submit.prevent="verifyOtp()" style="display: none;">
+      <div class="auth-back" @click="step = 1; errorMsg = &#39;&#39;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span>Change number</span>
+      </div>
+      <div class="auth-sent-to">
+        Code sent to <strong x-text="&#39;+91 &#39; + phoneDigits">+91 </strong>
+      </div>
+      <template x-if="devCode"></template>
+      <label>
+        <span class="lbl">6-digit code</span>
+        <input type="text" inputmode="numeric" maxlength="6" required="" x-model="code" x-ref="codeInput" @input="code = code.replace(/\D/g, &#39;&#39;).slice(0,6)" :disabled="busy" placeholder="••••••">
+      </label>
+      <p class="auth-error" x-show="errorMsg" x-text="errorMsg" style="display: none;"></p>
+      <button type="submit" class="auth-btn primary" :disabled="busy || code.length !== 6" disabled="disabled">
+        <span x-show="!busy">Verify</span>
+        <span x-show="busy" style="display: none;">Verifying…</span>
+      </button>
+      <button type="button" class="auth-btn ghost" :disabled="busy || resendCountdown &gt; 0" @click="resendOtp()">
+        <span x-show="resendCountdown === 0">Resend code</span>
+        <span x-show="resendCountdown &gt; 0" style="display: none;">Resend in <span x-text="resendCountdown">0</span>s</span>
+      </button>
+    </form>
+
+    <!-- STEP 3: doctor details + optional document upload -->
+    <form class="auth-form" x-show="step === 3 &amp;&amp; !done" @submit.prevent="submitForm()" enctype="multipart/form-data" style="display: none;">
+      <label>
+        <span class="lbl">Full name *</span>
+        <input type="text" x-model="form.full_name" required="" maxlength="120" :disabled="busy" placeholder="Dr. Riya Mehta">
+      </label>
+
+      <label>
+        <span class="lbl">Clinic / Hospital name *</span>
+        <input type="text" x-model="form.clinic_name" required="" maxlength="180" :disabled="busy" placeholder="Mehta Eye Care">
+      </label>
+
+      <div class="auth-form-row">
+        <label style="flex: 1;">
+          <span class="lbl">Specialty *</span>
+          <select x-model="form.specialty" required="" :disabled="busy">
+            <option value="">Choose…</option>
+            <template x-for="s in specialties" :key="s.id"></template>
+          </select>
+        </label>
+        <label style="flex: 1;">
+          <span class="lbl">City *</span>
+          <input type="text" x-model="form.city" required="" maxlength="80" :disabled="busy" placeholder="Ahmedabad">
+        </label>
+      </div>
+
+      <label>
+        <span class="lbl">Email <em>(optional, for backup contact)</em></span>
+        <input type="email" x-model="form.email" maxlength="160" :disabled="busy" placeholder="you@clinic.com">
+      </label>
+
+      <div class="auth-form-row">
+        <label style="flex: 1;">
+          <span class="lbl">Reg. number <em>(optional)</em></span>
+          <input type="text" x-model="form.reg_number" maxlength="60" :disabled="busy" placeholder="e.g. G-12345">
+        </label>
+        <label style="flex: 1;">
+          <span class="lbl">Issued by <em>(optional)</em></span>
+          <input type="text" x-model="form.reg_council" maxlength="80" :disabled="busy" placeholder="Gujarat Medical Council">
+        </label>
+      </div>
+
+      <label>
+        <span class="lbl">Registration certificate <em>(JPG/PNG/PDF, ≤5MB)</em></span>
+        <input type="file" x-ref="documentInput" accept="image/jpeg,image/png,image/webp,application/pdf" :disabled="busy">
+        <span class="auth-hint" style="margin-top: 4px;">
+          Speeds up review. You can also upload later from your dashboard.
+        </span>
+      </label>
+
+      <label>
+        <span class="lbl">Anything we should know? <em>(optional)</em></span>
+        <textarea x-model="form.message" rows="2" maxlength="2000" :disabled="busy" placeholder="e.g. I run two clinics in Ahmedabad — both should be linked."></textarea>
+      </label>
+
+      <p class="auth-error" x-show="errorMsg" x-text="errorMsg" style="display: none;"></p>
+
+      <button type="submit" class="auth-btn primary" :disabled="busy || !form.full_name.trim() || !form.clinic_name.trim() || !form.specialty || !form.city.trim()" disabled="disabled">
+        <span x-show="!busy">Submit for review</span>
+        <span x-show="busy" style="display: none;">Submitting…</span>
+      </button>
+    </form>
+
+    <!-- DONE state -->
+    <div class="claim-done" x-show="done" style="display: none;">
+      <div class="claim-done-icon">✓</div>
+      <h3>Request submitted</h3>
+      <p>
+        Thanks! Our team will review your request within 1–2 business days.
+        We'll text you on <strong x-text="&#39;+91 &#39; + phoneDigits">+91 </strong> when it's approved.
+      </p>
+      <p class="claim-ref">Reference #<span x-text="resultId"></span></p>
+      <button type="button" class="auth-btn primary" @click="close()">Close</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Reuses .auth-* styles from auth-modal.php; just adds claim-specific bits */
+.claim-steps {
+  display: flex; align-items: center;
+  margin-bottom: 18px;
+  font-size: 12px; color: var(--mute);
+}
+.claim-step {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-weight: 500;
+}
+.claim-step span {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  display: inline-grid; place-items: center;
+  font-weight: 700; font-size: 12px;
+  color: var(--mute);
+}
+.claim-step.is-active { color: var(--ink); }
+.claim-step.is-active span { background: var(--teal-600); color: #fff; }
+.claim-sep { flex: 1; height: 1px; background: var(--line); margin: 0 8px; }
+
+.claim-listing {
+  background: var(--teal-50);
+  border: 1px solid rgba(15,155,110,0.18);
+  padding: 12px 14px;
+  border-radius: 10px;
+  display: flex; flex-direction: column;
+  margin-bottom: 4px;
+}
+.claim-listing strong { color: var(--ink); font-size: 14px; font-weight: 600; }
+.claim-listing span { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+
+.auth-form-row { display: flex; gap: 10px; }
+.auth-form select,
+.auth-form textarea {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 13px 14px;
+  font: inherit; font-size: 15px;
+  outline: none; width: 100%;
+  transition: border-color .15s, box-shadow .15s;
+  background: #fff;
+}
+.auth-form select:focus,
+.auth-form textarea:focus {
+  border-color: var(--teal-400);
+  box-shadow: 0 0 0 3px rgba(15,155,110,0.14);
+}
+.auth-form textarea { resize: vertical; font-family: inherit; }
+.auth-form input[type="file"] {
+  font-size: 13.5px; color: var(--ink-2);
+  padding: 8px 0;
+}
+
+.claim-done { text-align: center; padding: 14px 4px; }
+.claim-done-icon {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--teal-50);
+  color: var(--teal-700);
+  font-size: 30px; font-weight: 700;
+  display: grid; place-items: center;
+  margin: 0 auto 16px;
+}
+.claim-done h3 { font-size: 20px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.3px; }
+.claim-done p { font-size: 14px; color: var(--ink-2); margin-bottom: 12px; line-height: 1.5; }
+.claim-done .claim-ref {
+  font-size: 12px; color: var(--mute);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  margin-bottom: 18px;
+}
+.claim-done .auth-btn { width: 100%; }
+
+@media (max-width: 480px) {
+  .auth-form-row { flex-direction: column; gap: 12px; }
+  .claim-steps { font-size: 11px; }
+  .claim-step span { width: 20px; height: 20px; font-size: 11px; }
+}
+</style>
+
+<script>
+function ecpClaimModal() {
+  return {
+    open: false,
+    step: 1,                  // 1 phone → 2 code → 3 details
+    done: false,              // success screen
+    busy: false,
+    errorMsg: '',
+    devCode: null,
+    resendCountdown: 0,
+    _resendTimer: null,
+    _type: 'claim',
+    context: null,            // {id, name, area, city} when claiming
+    resultId: null,
+    phoneDigits: '',
+    code: '',
+    form: {
+      full_name: '',
+      clinic_name: '',
+      city: '',
+      specialty: '',
+      email: '',
+      reg_number: '',
+      reg_council: '',
+      message: '',
+    },
+    specialties: [],
+
+    init() {
+      // Expose a tiny global API the find-a-doctor page calls.
+      window.ecpClaim = {
+        open:  (type, ctx) => this.openModal(type, ctx),
+        close: ()          => this.close(),
+      };
+      // Reuse the specialty list from FD_DATA if find-a-doctor is on this page.
+      if (window.FD_DATA && Array.isArray(window.FD_DATA.specialties)) {
+        this.specialties = window.FD_DATA.specialties;
+      }
+    },
+
+    openModal(type, ctx) {
+      this._type   = type || 'claim';
+      this.context = ctx || null;
+      this.step    = 1;
+      this.done    = false;
+      this.busy    = false;
+      this.errorMsg = '';
+      this.devCode = null;
+      this.resultId = null;
+      this.code = '';
+      // Pre-fill from the context where possible.
+      if (this.context) {
+        this.form.clinic_name = this.context.clinicName || this.context.name || '';
+        this.form.city        = this.context.city  || '';
+        this.form.specialty   = this.context.spec  || '';
+        this.form.full_name   = this.context.doctorName || '';
+      } else {
+        this.form = { full_name: '', clinic_name: '', city: '', specialty: '',
+                      email: '', reg_number: '', reg_council: '', message: '' };
+      }
+      this.open = true;
+      document.body.style.overflow = 'hidden';
+    },
+
+    close() {
+      this.open = false;
+      document.body.style.overflow = '';
+      if (this._resendTimer) { clearInterval(this._resendTimer); this._resendTimer = null; }
+    },
+
+    headline() {
+      if (this.done) return 'Submitted ✓';
+      if (this._type === 'new_listing') return 'List your clinic';
+      return 'Claim this listing';
+    },
+    subline() {
+      if (this.done) return '';
+      if (this._type === 'new_listing')
+        return "Not in our directory yet? Tell us and we'll add you.";
+      return 'Verify your number, then confirm a few details. We review claims within 1–2 days.';
+    },
+
+    async sendOtp() {
+      if (this.phoneDigits.length < 10) return;
+      this.busy = true; this.errorMsg = ''; this.devCode = null;
+      try {
+        const r = await fetch('/api/doctor_claim?action=send_otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: '+91' + this.phoneDigits }),
+        });
+        const text = await r.text();
+        let j; try { j = JSON.parse(text); } catch (e) {
+          this.errorMsg = 'Server returned an unexpected response (HTTP ' + r.status + ').';
+          return;
+        }
+        if (!j.ok) { this.errorMsg = this.errorText(j.error, j.retry_after); return; }
+        if (j.dev_code) this.devCode = j.dev_code;
+        this.step = 2;
+        this.startResendCountdown(30);
+        this.$nextTick(() => this.$refs.codeInput && this.$refs.codeInput.focus());
+      } catch (e) {
+        this.errorMsg = "Couldn't reach server. Try again.";
+      } finally { this.busy = false; }
+    },
+
+    async resendOtp() {
+      this.code = '';
+      await this.sendOtp();
+    },
+
+    startResendCountdown(secs) {
+      this.resendCountdown = secs;
+      if (this._resendTimer) clearInterval(this._resendTimer);
+      this._resendTimer = setInterval(() => {
+        this.resendCountdown -= 1;
+        if (this.resendCountdown <= 0) { clearInterval(this._resendTimer); this._resendTimer = null; }
+      }, 1000);
+    },
+
+    async verifyOtp() {
+      if (this.code.length !== 6) return;
+      this.busy = true; this.errorMsg = '';
+      try {
+        const r = await fetch('/api/doctor_claim?action=verify_otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: '+91' + this.phoneDigits, code: this.code }),
+        });
+        const j = await r.json();
+        if (!j.ok) { this.errorMsg = this.errorText(j.error); return; }
+        this.step = 3;
+      } catch (e) {
+        this.errorMsg = "Couldn't reach server. Try again.";
+      } finally { this.busy = false; }
+    },
+
+    async submitForm() {
+      this.busy = true; this.errorMsg = '';
+      try {
+        const fd = new FormData();
+        fd.append('type', this._type);
+        if (this.context && this.context.id) fd.append('directory_doctor_id', this.context.id);
+        fd.append('phone', '+91' + this.phoneDigits);
+        for (const [k, v] of Object.entries(this.form)) {
+          fd.append(k, v || '');
+        }
+        const fileInput = this.$refs.documentInput;
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          fd.append('document', fileInput.files[0]);
+        }
+
+        const r = await fetch('/api/doctor_claim?action=submit', {
+          method: 'POST', body: fd,
+        });
+        const j = await r.json();
+        if (!j.ok) { this.errorMsg = this.errorText(j.error) + (j.hint ? ' — ' + j.hint : ''); return; }
+        this.resultId = j.request_id;
+        this.done = true;
+      } catch (e) {
+        this.errorMsg = "Couldn't reach server. Try again.";
+      } finally { this.busy = false; }
+    },
+
+    errorText(code, retryAfter) {
+      switch (code) {
+        case 'invalid_phone':           return "That number doesn't look right.";
+        case 'resend_too_soon':         return retryAfter
+                                          ? `Please wait ${retryAfter}s before requesting another code.`
+                                          : 'Please wait a moment before requesting another code.';
+        case 'invalid_code':            return 'That code is incorrect. Try again.';
+        case 'expired':                 return 'Code expired. Tap Resend.';
+        case 'too_many_attempts':       return 'Too many attempts. Request a new code.';
+        case 'no_code_issued':          return 'No active code. Tap Resend.';
+        case 'phone_not_verified':      return 'Your verification expired. Please start over.';
+        case 'missing_required_fields': return 'Please fill in all required (*) fields.';
+        case 'file_too_large':          return 'File too large (max 5 MB).';
+        case 'file_type_not_allowed':   return 'Only JPG, PNG, WebP or PDF allowed.';
+        case 'directory_doctor_id_required': return 'Internal error — couldn\'t identify the listing.';
+        case 'db_unavailable':          return 'Database unreachable. Please try again shortly.';
+        default:                        return 'Something went wrong. Please try again.';
+      }
+    },
+  };
+}
+</script>
+
+<style>
+    /* ═══════════════════════════════════════════
+           RESET & BASE
+        ═══════════════════════════════════════════ */
+
+
+    /* ═══════════════════════════════════════════
+           HERO
+        ═══════════════════════════════════════════ */
+    .feat-hero {
+        padding: 110px 0 72px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        background: #f0f4f1;
+    }
+
+    .feat-hero-glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 0%, rgba(26, 122, 78, 0.08) 0%, transparent 65%);
+        pointer-events: none;
+    }
+
+    .feat-hero-inner {
+        position: relative;
+        max-width: 820px;
+        margin: 0 auto;
+    }
+
+    /* Eyebrow */
+    .hp-eyebrow {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #2a9d6a;
+        margin-bottom: 20px;
+        position: relative;
+        padding: 0 16px;
+    }
+
+    .hp-eyebrow::before,
+    .hp-eyebrow::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 28px;
+        height: 2px;
+        background: #2a9d6a;
+        border-radius: 2px;
+    }
+
+    .hp-eyebrow::before {
+        right: 100%;
+        margin-right: -12px;
+    }
+
+    .hp-eyebrow::after {
+        left: 100%;
+        margin-left: -12px;
+    }
+
+    .h-display {
+        font-size: clamp(38px, 5.5vw, 60px);
+        font-weight: 700;
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+        color: #0d1f12;
+        margin-bottom: 22px;
+    }
+
+    .h-display .grad {
+        color: #1e8c5c;
+    }
+
+    .feat-hero-sub {
+        font-size: 18px;
+        line-height: 1.75;
+        color: #4e6e56;
+        max-width: 620px;
+        margin: 0 auto;
+    }
+
+    /* ═══════════════════════════════════════════
+           STATS BAR
+        ═══════════════════════════════════════════ */
+    .feat-stats-bar {
+        background: #ffffff;
+        border-top: 1.5px solid #ddeee5;
+        border-bottom: 1.5px solid #ddeee5;
+        padding: 48px 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 12px 20px;
+        position: relative;
+    }
+
+    .stat-item+.stat-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 20%;
+        height: 60%;
+        width: 1.5px;
+        background: #ddeee5;
+    }
+
+    .stat-num {
+        font-size: clamp(32px, 4vw, 48px);
+        font-weight: 700;
+        color: #1a7a4e;
+        letter-spacing: -0.03em;
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        font-size: 13.5px;
+        color: #6b8a72;
+        font-weight: 500;
+    }
+
+    /* ═══════════════════════════════════════════
+           STICKY CATEGORY NAV TABS
+        ═══════════════════════════════════════════ */
+    .feat-nav {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(240, 244, 241, 0.92);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        border-bottom: 1.5px solid #ddeee5;
+        padding: 14px 0;
+    }
+
+    .feat-nav-inner {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        justify-content: center;
+        flex-wrap: wrap;
+        scrollbar-width: none;
+    }
+
+    .feat-nav-inner::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 22px;
+        border-radius: 999px;
+        border: 1.5px solid #c8ddd0;
+        background: #ffffff;
+        font-family: 'Inter', sans-serif;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: #3a5742;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        text-decoration: none;
+    }
+
+    .tab:hover {
+        border-color: #2a9d6a;
+        color: #1a7a4e;
+        background: #edf8f3;
+        transform: translateY(0px);
+    }
+
+    .tab.active {
+        background: #1a7a4e;
+        border-color: #1a7a4e;
+        color: #ffffff;
+        font-weight: 600;
+        box-shadow: 0 4px 14px rgba(26, 122, 78, 0.28);
+    }
+
+    /* ═══════════════════════════════════════════
+           CATEGORY SECTIONS
+        ═══════════════════════════════════════════ */
+    .feat-body {
+        padding: 60px 0 0px;
+    }
+
+    .feat-category {
+        padding: 30px 0;
+        border-top: 1.5px solid #ddeee5;
+    }
+
+    .feat-category:first-child {
+        border-top: none;
+    }
+
+    /* Category header: label + title left, blurb right */
+    .feat-cat-head {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        gap: 60px;
+        align-items: end;
+        margin-bottom: 40px;
+    }
+
+    .cat-count {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #2a9d6a;
+        margin-bottom: 10px;
+    }
+
+    .cat-title {
+        font-size: clamp(24px, 3vw, 32px);
+        font-weight: 800;
+        color: #0d1f12;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+    }
+
+    .cat-icon {
+        font-size: 28px;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+
+    .cat-blurb {
+        font-size: 16px;
+        line-height: 1.75;
+        color: #4e6e56;
+        padding-top: 6px;
+    }
+
+    /* ═══════════════════════════════════════════
+           FEATURE CARDS GRID
+        ═══════════════════════════════════════════ */
+    .feat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .feat-card {
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 26px 22px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        border: 1.5px solid #e8f0ea;
+        cursor: default;
+        transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* shimmer */
+    .feat-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(26, 122, 78, 0.045) 0%, transparent 55%);
+        opacity: 0;
+        transition: opacity 0.22s ease;
+        pointer-events: none;
+    }
+
+    .feat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 40px rgba(26, 122, 78, 0.13);
+        border-color: #a8d8be;
+    }
+
+    .feat-card:hover::after {
+        opacity: 1;
+    }
+
+    /* Icon bubble */
+    .feat-card-ic {
+        font-size: 22px;
+        width: 48px;
+        height: 48px;
+        background: #edf8f3;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .feat-card:hover .feat-card-ic {
+        background: #d2f0e2;
+        transform: scale(1.08);
+    }
+    .feat-card-ic img{width:25px;height:auto;object-fit: contain;filter: brightness(0) saturate(100%) invert(28%) sepia(63%) saturate(1045%) hue-rotate(134deg) brightness(92%) contrast(93%);}
+
+    .feat-card h4 {
+        font-size: 14.5px;
+        font-weight: 700;
+        color: #0d1f12;
+        line-height: 1.3;
+    }
+
+    .feat-card p {
+        font-size: 13px;
+        line-height: 1.65;
+        color: #6b8a72;
+        flex: 1;
+    }
+
+    /* ═══════════════════════════════════════════
+           PRICING SECTION
+        ═══════════════════════════════════════════ */
+    .feat-pricing {
+        background: #ffffff;
+        border-top: 1.5px solid #ddeee5;
+        padding: 88px 0 96px;
+    }
+
+    .feat-pricing-head {
+        text-align: center;
+        max-width: 680px;
+        margin: 0 auto 56px;
+    }
+
+    .h-section {
+        font-size: clamp(28px, 4vw, 44px);
+        font-weight: 800;
+        color: #0d1f12;
+        letter-spacing: -0.025em;
+        margin: 12px 0 16px;
+    }
+
+    .pricing-lede {
+        font-size: 16px;
+        line-height: 1.75;
+        color: #4e6e56;
+    }
+
+    .feat-plan-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 32px;
+        max-width: 1060px;
+        margin: 0 auto;
+    }
+
+    /* Plan card */
+    .plan-card {
+        background: #ffffff;
+        border: 1.5px solid #e8f0ea;
+        border-radius: 22px;
+        padding: 36px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        transition: box-shadow 0.22s ease;
+    }
+
+    .plan-card.primary {
+        border: 2px solid #1a7a4e;
+        box-shadow: 0 8px 40px rgba(26, 122, 78, 0.12);
+    }
+
+    .plan-badge {
+        display: inline-block;
+        background: #edf8f3;
+        color: #1a7a4e;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 999px;
+        margin-bottom: 16px;
+    }
+
+    .plan-price {
+        font-size: 52px;
+        font-weight: 300;
+        letter-spacing: -0.03em;
+        color: #0d1f12;
+        margin-bottom: 6px;
+        line-height: 1;
+    }
+
+    .plan-price .currency {
+        font-size: 26px;
+        vertical-align: super;
+        opacity: 0.65;
+        margin-right: 2px;
+    }
+
+    .plan-price .per {
+        font-size: 17px;
+        font-weight: 400;
+        color: #6b8a72;
+        margin-left: 4px;
+    }
+
+    .plan-yearly {
+        font-size: 13.5px;
+        color: #6b8a72;
+        margin-bottom: 28px;
+        line-height: 1.7;
+    }
+
+    .plan-strike {
+        text-decoration: line-through;
+        margin-right: 6px;
+    }
+
+    .plan-save {
+        display: inline-block;
+        background: #edf8f3;
+        color: #1a7a4e;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        letter-spacing: 0.04em;
+    }
+
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 28px;
+        border-top: 1.5px solid #e8f0ea;
+        border-bottom: 1.5px solid #e8f0ea;
+        padding: 20px 0;
+    }
+
+    .plan-features li {
+        padding: 7px 0;
+        font-size: 14px;
+        color: #3a5742;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .plan-features li::before {
+        content: '✓';
+        color: #1a7a4e;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    /* Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 28px;
+        border-radius: 999px;
+        font-family: 'Inter', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        text-decoration: none;
+        border: 2px solid transparent;
+    }
+
+    .btn-teal {
+        background: #1a7a4e;
+        color: #ffffff;
+        border-color: #1a7a4e;
+    }
+
+    .btn-teal:hover {
+        background: #145f3c;
+        border-color: #145f3c;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(26, 122, 78, 0.28);
+    }
+
+    .btn-block {
+        display: block;
+        text-align: center;
+        width: 100%;
+    }
+
+    .plan-fineprint {
+        font-size: 12px;
+        color: #6b8a72;
+        text-align: center;
+        margin-top: 12px;
+    }
+
+    /* Add-on column */
+    .addon-column {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .addon-heading {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0d1f12;
+        margin-bottom: 4px;
+    }
+
+    .addon-card {
+        background: #ffffff;
+        border: 1.5px solid #e8f0ea;
+        border-radius: 16px;
+        padding: 22px;
+        display: flex;
+        gap: 16px;
+        transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .addon-card:hover {
+        border-color: #a8d8be;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 28px rgba(26, 122, 78, 0.10);
+    }
+
+    .addon-icon {
+        font-size: 32px;
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        background: #edf8f3;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+.addon-icon img{width:32px;height:auto;object-fit: contain;filter: brightness(0) saturate(100%) invert(28%) sepia(63%) saturate(1045%) hue-rotate(134deg) brightness(92%) contrast(93%);}
+    .addon-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0d1f12;
+        margin-bottom: 6px;
+    }
+
+    .addon-desc {
+        font-size: 13px;
+        color: #6b8a72;
+        line-height: 1.6;
+        margin-bottom: 8px;
+    }
+
+    .addon-price {
+        font-size: 14px;
+        font-weight: 700;
+        color: #1a7a4e;
+    }
+
+    .addon-tease {
+        font-size: 12.5px;
+        color: #6b8a72;
+        line-height: 1.6;
+        padding: 4px 6px;
+    }
+
+    /* ═══════════════════════════════════════════
+           SCROLL REVEAL
+        ═══════════════════════════════════════════ */
+    .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+
+    .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* ═══════════════════════════════════════════
+           RESPONSIVE
+        ═══════════════════════════════════════════ */
+    @media (max-width: 1080px) {
+        .feat-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 900px) {
+        .feat-plan-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .feat-cat-head {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stat-item:nth-child(3)::before {
+            display: none;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .feat-hero {
+            padding: 80px 0 52px;
+        }
+
+        .feat-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .plan-card {
+            padding: 24px;
+        }
+
+        .plan-price {
+            font-size: 40px;
+        }
+
+        .hp-eyebrow::before,
+        .hp-eyebrow::after {
+            display: none;
+        }
+
+        .feat-nav-inner {
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+        }
+    }
+</style>
+
+
+<!-- ═══════ HERO ═══════ -->
+<section class="feat-hero">
+    <div class="feat-hero-glow"></div>
+    <div class="wrap feat-hero-inner reveal visible is-in">
+        <p class="hp-eyebrow">Everything eClinicPro does</p>
+        <h1 class="h-display">Everything to run your clinic.<br><span class="grad">All in one place.</span></h1>
+        <p class="feat-hero-sub">
+            42+ features across 7 areas — patient records, prescriptions, billing,
+            WhatsApp/SMS and more. All included in one simple ₹16,000/year plan.
+        </p>
+    </div>
+</section>
+
+<!-- ═══════ STATS BAR ═══════ -->
+<div class="feat-stats-bar">
+    <div class="wrap">
+        <div class="stats-grid reveal visible is-in">
+            <div class="stat-item">
+                <div class="stat-num">42</div>
+                <div class="stat-label">Features included</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">50+</div>
+                <div class="stat-label">Specialties</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">1</div>
+                <div class="stat-label">Simple plan</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">₹16,000</div>
+                <div class="stat-label">Per year</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ STICKY CATEGORY NAV ═══════ -->
+<nav class="feat-nav" id="featNav">
+    <div class="wrap">
+        <div class="feat-nav-inner">
+                            <a href="https://eclinicpro.com/features#records" class="tab" data-target="records">
+                    <span></span>
+                    Patient Records                </a>
+                            <a href="https://eclinicpro.com/features#visits" class="tab" data-target="visits">
+                    <span></span>
+                    Appointments &amp; Visits                </a>
+                            <a href="https://eclinicpro.com/features#rx" class="tab active" data-target="rx">
+                    <span></span>
+                    Prescriptions &amp; Pharmacy                </a>
+                            <a href="https://eclinicpro.com/features#clinical" class="tab" data-target="clinical">
+                    <span></span>
+                    Clinical Tools                </a>
+                            <a href="https://eclinicpro.com/features#business" class="tab" data-target="business">
+                    <span></span>
+                    Billing &amp; Business                </a>
+                            <a href="https://eclinicpro.com/features#patient" class="tab" data-target="patient">
+                    <span></span>
+                    Patient Experience                </a>
+                            <a href="https://eclinicpro.com/features#platform" class="tab" data-target="platform">
+                    <span></span>
+                    Platform &amp; Integrations                </a>
+                    </div>
+    </div>
+</nav>
+
+<!-- ═══════ FEATURE CATEGORIES ═══════ -->
+<div class="feat-body">
+    <div class="wrap">
+                    <section id="records" class="feat-category">
+                <!-- Category header -->
+                <div class="feat-cat-head reveal visible is-in">
+                    <div>
+                        <span class="cat-count">6 features</span>
+                        <h2 class="cat-title">
+                            <!-- <span class="cat-icon"></span> -->
+                            Patient Records                        </h2>
+                    </div>
+                    <p class="cat-blurb">Encrypted, structured, searchable — and built around how doctors actually think, not how databases work.</p>
+                </div>
+                <!-- Feature cards -->
+                <div class="feat-grid">
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/structured-visit-notes.png" alt="Structured visit notes"></div>
+                            <h4>Structured visit notes</h4>
+                            <p>SOAP, free-form, or specialty-shaped templates. Auto-save every 2 seconds.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/qr-patient-cards.png" alt="QR patient cards"></div>
+                            <h4>QR patient cards</h4>
+                            <p>Print or send. Tap to load any chart in under 200ms.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/attachments.png" alt="Attachments"></div>
+                            <h4>Attachments</h4>
+                            <p>PDFs, X-rays, lab reports, voice memos. Encrypted, viewable inline.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/allergy-alert-flags.png" alt="Allergy &amp; alert flags"></div>
+                            <h4>Allergy &amp; alert flags</h4>
+                            <p>Drug allergies and history conditions surface across every screen.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/family-history-graph.png" alt="Family history graph"></div>
+                            <h4>Family history graph</h4>
+                            <p>Visual family tree with hereditary condition tagging.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/chronic-care-tracking.png" alt="Chronic care tracking"></div>
+                            <h4>Chronic care tracking</h4>
+                            <p>Long-term condition timelines with target band visuals.</p>
+                        </div>
+                                    </div>
+            </section>
+                    <section id="visits" class="feat-category">
+                <!-- Category header -->
+                <div class="feat-cat-head reveal visible is-in">
+                    <div>
+                        <span class="cat-count">6 features</span>
+                        <h2 class="cat-title">
+                            <!-- <span class="cat-icon"></span> -->
+                            Appointments &amp; Visits                        </h2>
+                    </div>
+                    <p class="cat-blurb">A booking system that respects walk-ins, no-shows, and the messiness of real clinical workflow.</p>
+                </div>
+                <!-- Feature cards -->
+                <div class="feat-grid">
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/smart-scheduling.png" alt="Smart scheduling"></div>
+                            <h4>Smart scheduling</h4>
+                            <p>Multi-doctor, multi-room. Drag to reschedule. Conflicts auto-blocked.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/sms-reminders.png" alt="WhatsApp + SMS reminders"></div>
+                            <h4>WhatsApp + SMS reminders</h4>
+                            <p>Auto-sent 24h and 1h before. Patient can reply to confirm or cancel.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/walk-in-triage.png" alt="Walk-in triage"></div>
+                            <h4>Walk-in triage</h4>
+                            <p>Quick-add a walk-in, place them in the queue with severity.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/no-show-analytics.png" alt="No-show analytics"></div>
+                            <h4>No-show analytics</h4>
+                            <p>Which patients no-show, which slots, which time of week — track it all.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/online-booking-page.png" alt="Online booking page"></div>
+                            <h4>Online booking page</h4>
+                            <p>Branded booking link patients can share. Sync to your calendar live.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/telemedicine-slots.png" alt="Telemedicine slots"></div>
+                            <h4>Telemedicine slots</h4>
+                            <p>Mix in-person and video slots in one calendar. Patients pick what works.</p>
+                        </div>
+                                    </div>
+            </section>
+                    <section id="rx" class="feat-category">
+                <!-- Category header -->
+                <div class="feat-cat-head reveal visible is-in">
+                    <div>
+                        <span class="cat-count">6 features</span>
+                        <h2 class="cat-title">
+                            <!-- <span class="cat-icon"></span> -->
+                            Prescriptions &amp; Pharmacy                        </h2>
+                    </div>
+                    <p class="cat-blurb">From the moment you write a script to the moment your patient picks it up — fully tracked.</p>
+                </div>
+                <!-- Feature cards -->
+                <div class="feat-grid">
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/prescriptionl.svg" alt="Prescriptionl"></div>
+                            <h4>Digital prescriptions</h4>
+                            <p>200,000-drug DB with dosage, interaction, and pediatric warnings.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/whatsapp-rx-delivery.png" alt="WhatsApp Rx delivery"></div>
+                            <h4>WhatsApp Rx delivery</h4>
+                            <p>Signed PDF sent to patient before they leave the chair.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/pharmacy-inventory.svg" alt="Pharmacy inventory"></div>
+                            <h4>Pharmacy inventory</h4>
+                            <p>Batch numbers, expiry alerts, low-stock auto-orders.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/controlled-substance-log.svg" alt="Controlled substance log"></div>
+                            <h4>Controlled substance log</h4>
+                            <p>Schedule-II compliant audit trail with DEA-ready exports.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/refill-management.svg" alt="Refill management"></div>
+                            <h4>Refill management</h4>
+                            <p>Patients request refills via WhatsApp. Approve with one tap.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/adherence-tracking.png" alt="Adherence tracking"></div>
+                            <h4>Adherence tracking</h4>
+                            <p>See who refilled, who didn't, and follow up automatically.</p>
+                        </div>
+                                    </div>
+            </section>
+                    <section id="clinical" class="feat-category">
+                <!-- Category header -->
+                <div class="feat-cat-head reveal visible is-in">
+                    <div>
+                        <span class="cat-count">6 features</span>
+                        <h2 class="cat-title">
+                            <!-- <span class="cat-icon"></span> -->
+                            Clinical Tools                        </h2>
+                    </div>
+                    <p class="cat-blurb">The specialty-specific toolkit — the right tools appear automatically for your specialty.</p>
+                </div>
+                <!-- Feature cards -->
+                <div class="feat-grid">
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/vitals-trend-charts.png" alt="Vitals trend charts"></div>
+                            <h4>Vitals trend charts</h4>
+                            <p>BP, HR, glucose, weight — visual time series with target bands.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/lab-orders-and-results.png" alt="Lab orders &amp; results"></div>
+                            <h4>Lab orders &amp; results</h4>
+                            <p>Order, receive, attach. Auto-flagged abnormals.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/dental-charting.svg" alt="Dental charting"></div>
+                            <h4>Dental charting</h4>
+                            <p>FDI/Palmer/Universal. Per-tooth notes, images, and treatment plans.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/skin-imaging.png" alt="Skin imaging"></div>
+                            <h4>Skin imaging</h4>
+                            <p>Side-by-side before/after with lesion measurement.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/who-growth-charts.png" alt="WHO growth charts"></div>
+                            <h4>WHO growth charts</h4>
+                            <p>Pediatric percentile tracking for weight, height, head circumference.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/homeo-remedy-db.png" alt="Homeo remedy DB"></div>
+                            <h4>Homeo remedy DB</h4>
+                            <p>3,200 remedies, potency picker, antidote rules, miasm tags.</p>
+                        </div>
+                                    </div>
+            </section>
+                    <section id="business" class="feat-category">
+                <!-- Category header -->
+                <div class="feat-cat-head reveal visible is-in">
+                    <div>
+                        <span class="cat-count">6 features</span>
+                        <h2 class="cat-title">
+                            <!-- <span class="cat-icon"></span> -->
+                            Billing &amp; Business                        </h2>
+                    </div>
+                    <p class="cat-blurb">Run the business of medicine without spreadsheets — and with no enterprise tax.</p>
+                </div>
+                <!-- Feature cards -->
+                <div class="feat-grid">
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/invoicing.png" alt="Invoicing"></div>
+                            <h4>Invoicing</h4>
+                            <p>Multi-currency, GST/VAT-ready, tax codes per region.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/payments.png" alt="Payments"></div>
+                            <h4>Payments</h4>
+                            <p>Card, UPI, Apple/Google Pay, bank transfer, cash. Reconciled automatically.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/revenue-cohort-reports.png" alt="Revenue &amp; cohort reports"></div>
+                            <h4>Revenue &amp; cohort reports</h4>
+                            <p>New vs repeat, by doctor, by procedure, exportable to CSV.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/insurance-claims.png" alt="Insurance claims"></div>
+                            <h4>Insurance claims</h4>
+                            <p>Submit, track, and reconcile claims (US, UK, India, UAE).</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/patient-packages.png" alt="Patient packages"></div>
+                            <h4>Patient packages</h4>
+                            <p>Sell prepaid visit/treatment packages. Auto-deducted at each visit.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/multi-location.png" alt="Multi-location"></div>
+                            <h4>Multi-location</h4>
+                            <p>One brand, many branches. Roll-up reporting, cross-branch records.</p>
+                        </div>
+                                    </div>
+            </section>
+                    <section id="patient" class="feat-category">
+                <!-- Category header -->
+                <div class="feat-cat-head reveal visible is-in">
+                    <div>
+                        <span class="cat-count">6 features</span>
+                        <h2 class="cat-title">
+                            <!-- <span class="cat-icon"></span> -->
+                            Patient Experience                        </h2>
+                    </div>
+                    <p class="cat-blurb">The patient-facing layer your front desk wishes they could build. White-labeled and beautiful.</p>
+                </div>
+                <!-- Feature cards -->
+                <div class="feat-grid">
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/patient-web-portal.png" alt="Patient Records"></div>
+                            <h4>Patient web portal</h4>
+                            <p>Records, prescriptions, bills, upcoming visits — all in one tab.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/video-consults.png" alt="Video consults"></div>
+                            <h4>Video consults</h4>
+                            <p>HD, browser-based, no app install. Works on 3G.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/whatsapp-summaries.png" alt="WhatsApp summaries"></div>
+                            <h4>WhatsApp summaries</h4>
+                            <p>After every visit: a clean summary plus next-step instructions.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/diet-and-exercise-plans.png" alt="Diet &amp; exercise plans"></div>
+                            <h4>Diet &amp; exercise plans</h4>
+                            <p>Templated programs with daily WhatsApp check-ins.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/refill-requests.svg" alt="Refill requests"></div>
+                            <h4>Refill requests</h4>
+                            <p>Patients tap once. You approve or revise.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/feedback-collection.png" alt="Feedback collection"></div>
+                            <h4>Feedback collection</h4>
+                            <p>Post-visit NPS via WhatsApp. Scores roll into your reports.</p>
+                        </div>
+                                    </div>
+            </section>
+                    <section id="platform" class="feat-category">
+                <!-- Category header -->
+                <div class="feat-cat-head reveal visible is-in">
+                    <div>
+                        <span class="cat-count">6 features</span>
+                        <h2 class="cat-title">
+                            <!-- <span class="cat-icon"></span> -->
+                            Platform &amp; Integrations                        </h2>
+                    </div>
+                    <p class="cat-blurb">Everything underneath the surface — engineered for clinics, not enterprises.</p>
+                </div>
+                <!-- Feature cards -->
+                <div class="feat-grid">
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/india-DPDP-ready.svg" alt="India DPDP ready"></div>
+                            <h4>India DPDP ready</h4>
+                            <p>Encrypted at rest &amp; in transit, per-clinic isolation, real audit logs.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/fast-and-reliable.svg" alt="Fast &amp; reliable"></div>
+                            <h4>Fast &amp; reliable</h4>
+                            <p>Built for Indian clinics and networks — quick even on patchy connections.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/multi-language.png" alt="Multi-language"></div>
+                            <h4>Multi-language</h4>
+                            <p>Interface and prescriptions in English, Hindi, Gujarati and more.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 0ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/easy-migration.svg" alt="Easy migration"></div>
+                            <h4>Easy migration</h4>
+                            <p>Import from Practo, spreadsheets, or your existing system.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 60ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/api-and-webhooks.png" alt="API &amp; webhooks"></div>
+                            <h4>API &amp; webhooks</h4>
+                            <p>Full REST API. Webhook on every meaningful event.</p>
+                        </div>
+                                            <div class="feat-card reveal visible is-in" style="transition-delay: 120ms;">
+                            <div class="feat-card-ic"><img src="./Features — eClinicPro_files/roles-and-audit-logs.png" alt="Roles &amp; audit logs"></div>
+                            <h4>Roles &amp; audit logs</h4>
+                            <p>Granular staff roles and a signed audit trail on every record.</p>
+                        </div>
+                                    </div>
+            </section>
+            </div>
+</div>
+
+<!-- ═══════ PRICING ═══════ -->
+<section id="pricing" class="feat-pricing">
+    <div class="wrap">
+        <div class="feat-pricing-head reveal">
+            <p class="hp-eyebrow">Pricing</p>
+            <h2 class="h-section">One plan. Everything included.</h2>
+            <p class="pricing-lede">
+                No tiers, no per-seat games, no surprise upsells. One annual price gets you
+                the whole clinic system — and you start with a 30-day free trial, no card needed.
+            </p>
+        </div>
+        <div class="feat-plan-grid reveal">
+            <!-- Plan card -->
+            <div class="plan-card primary">
+                <span class="plan-badge">Standard Plan</span>
+                <div class="plan-price">
+                    <span class="currency">₹</span>16,000<span class="per">/year</span>
+                </div>
+                <p class="plan-yearly">
+                    <span class="plan-strike">₹17,988</span>
+                    <span class="plan-save">Save 10%</span><br>
+                    + 18% GST at checkout
+                </p>
+                <ul class="plan-features">
+                    <li>Patient records, visits, prescriptions</li>
+                    <li>Appointments &amp; walk-in queue</li>
+                    <li>Billing &amp; invoicing (GST-ready)</li>
+                    <li>Vitals, diagnosis, follow-up tracking</li>
+                    <li>Specialty-aware forms (50+ specialties)</li>
+                    <li>Teleconsultation built in</li>
+                    <li>Public doctor profile on eclinicpro.com</li>
+                    <li>Daily reports &amp; analytics</li>
+                    <li>Unlimited patients, unlimited staff users</li>
+                    <li>30-day free trial — no credit card</li>
+                </ul>
+                <a href="https://app.eclinicpro.com/register" class="btn btn-teal btn-block">
+                    Start 30-day free trial →
+                </a>
+                <p class="plan-fineprint">No card needed. Cancel anytime during trial.</p>
+            </div>
+            <!-- Add-ons column -->
+            <div class="addon-column">
+                <h3 class="addon-heading">Optional add-ons</h3>
+                <div class="addon-card">
+                    <div class="addon-icon"><img src="./Features — eClinicPro_files/whatsapp-summaries.png" alt="Patient Connect"></div>
+                    <div>
+                        <div class="addon-name">Patient Connect</div>
+                        <p class="addon-desc">WhatsApp automation: appointment reminders, prescription delivery, follow-up nudges. Cuts no-show rates in half.</p>
+                        <div class="addon-price">+₹499 / month</div>
+                    </div>
+                </div>
+                <div class="addon-card">
+                    <div class="addon-icon"><img src="./Features — eClinicPro_files/clinic-network.png" alt="Clinic network"></div>
+                    <div>
+                        <div class="addon-name">Clinic Network</div>
+                        <p class="addon-desc">Add an extra clinic branch under one account. Unified patient records, separate queues per branch.</p>
+                        <div class="addon-price">+₹999 / month per branch</div>
+                    </div>
+                </div>
+                <p class="addon-tease">
+                    GST (18%) is added at checkout. After the 30-day trial you decide whether to
+                    continue — no automatic charges and no card taken upfront.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════ JAVASCRIPT ═══════ -->
+<script>
+    /* ─── Scroll Reveal ─── */
+    const revealObserver = new IntersectionObserver(
+        (entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.08
+        }
+    );
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    /* ─── Active tab highlight on scroll ─── */
+    const tabs = document.querySelectorAll('.tab[data-target]');
+    const sections = Array.from(document.querySelectorAll('.feat-category'));
+
+    function setActiveTab(id) {
+        tabs.forEach(t => {
+            t.classList.toggle('active', t.dataset.target === id);
+        });
+    }
+    const sectionObserver = new IntersectionObserver(
+        (entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setActiveTab(entry.target.id);
+                }
+            });
+        }, {
+            rootMargin: '-30% 0px -60% 0px',
+            threshold: 0
+        }
+    );
+    sections.forEach(sec => sectionObserver.observe(sec));
+    /* ─── Smooth-scroll tab clicks ─── */
+    tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = document.getElementById(tab.dataset.target);
+            if (target) {
+                const offset = document.getElementById('featNav').offsetHeight + 16;
+                const top = target.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({
+                    top,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+</script>
+
+
+
+    <section class="cta-block" id="cta">
+        <div class="wrap reveal">
+            <h2>Ready to run your clinic beautifully?</h2>
+            <p class="lede">
+                Join 2,847 clinics across India. Start free in 2 minutes.<br>
+                No credit card. No phone-tag with sales. Just a clean clinic.
+            </p>
+            <div class="hero-ctas">
+                <a href="https://app.eclinicpro.com/register" class="btn btn-primary btn-lg">
+                    Start 30-day free trial
+                </a>
+                <a href="https://eclinicpro.com/book-a-demo" class="btn btn-ghost-dark btn-lg">
+                    Schedule a 15-min demo →
+                </a>
+            </div>
+        </div>
+    </section>
+
+<!-- Mega-city links — major SEO juice for /find-a-doctor/{city} pages.
+     Wrapped in try/catch so a DB hiccup never blows up the entire page. -->
+    <section class="foot-cities">
+        <div class="wrap">
+            <h4>Doctors near you</h4>
+            <ul>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/mumbai">Mumbai</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/hyderabad">Hyderabad</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/chennai">Chennai</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/pune">Pune</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/ahmedabad">Ahmedabad</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/jaipur">Jaipur</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/surat">Surat</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/vadodara">Vadodara</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/guwahati">Guwahati</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/indore">Indore</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/rajkot">Rajkot</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/delhi">Delhi</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/lucknow">Lucknow</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/patna">Patna</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/bhopal">Bhopal</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/bhubaneswar">Bhubaneswar</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/nashik">Nashik</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/coimbatore">Coimbatore</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/raipur">Raipur</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/kochi">Kochi</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/kanpur">Kanpur</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/ranchi">Ranchi</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/ludhiana">Ludhiana</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/madurai">Madurai</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/varanasi">Varanasi</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/thiruvananthapuram">Thiruvananthapuram</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/agra">Agra</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/jalandhar">Jalandhar</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/amritsar">Amritsar</a></li>
+                                                        <li><a href="https://eclinicpro.com/find-a-doctor/faridabad">Faridabad</a></li>
+                                <li><a href="https://eclinicpro.com/find-a-doctor" class="foot-cities-more">All cities →</a></li>
+            </ul>
+        </div>
+    </section>
+
+<footer class="foot">
+    <div class="wrap">
+        <div class="foot-grid">
+            <div class="foot-brand">
+                <a href="https://eclinicpro.com/" class="logo" aria-label="eClinicPro home">
+                    <img src="./Features — eClinicPro_files/logo-2.svg" alt="eClinicPro" class="logo-img" width="160" height="160">
+                </a>
+                <p>Book a verified doctor, or run your whole clinic — one simple system. Made in India, for Indian clinics. 🌿</p>
+            </div>
+            <div class="foot-col">
+                <h5>For patients</h5>
+                <ul>
+                    <li><a href="https://eclinicpro.com/for-patients">Why eClinicPro</a></li>
+                    <li><a href="https://eclinicpro.com/patient">Register free</a></li>
+                    <li><a href="https://eclinicpro.com/find-a-doctor">Find a doctor</a></li>
+                    <li><a href="https://eclinicpro.com/patient">My health panel</a></li>
+                    <li><a href="https://eclinicpro.com/for-patients#family">Family profiles</a></li>
+                    <li><a href="https://eclinicpro.com/for-patients#rx">E-prescriptions</a></li>
+                </ul>
+            </div>
+            <div class="foot-col">
+                <h5>Product</h5>
+                <ul>
+                    <li><a href="https://eclinicpro.com/find-a-doctor">Find a doctor</a></li>
+                    <li><a href="https://eclinicpro.com/eclinicpro-health-store">Health Store</a></li>
+                    <li><a href="https://eclinicpro.com/lab">Lab Tests</a></li>
+                    <li><a href="https://eclinicpro.com/health-insurance">Health Insurance</a></li>
+                    <li><a href="https://eclinicpro.com/features">For doctors</a></li>
+                    <li><a href="https://eclinicpro.com/product-tour">Product tour</a></li>
+                    <li><a href="https://eclinicpro.com/features#pricing">Pricing</a></li>
+                </ul>
+            </div>
+            <div class="foot-col">
+                <h5>Specialties</h5>
+                <ul>
+                    <li><a href="https://eclinicpro.com/gps">General practice</a></li>
+                    <li><a href="https://eclinicpro.com/dentists">Dentistry</a></li>
+                    <li><a href="https://eclinicpro.com/homeopathy-clinic-management-software">Homeopathy</a></li>
+                    <li><a href="https://eclinicpro.com/dermatologists">Dermatology</a></li>
+                    <li><a href="https://eclinicpro.com/pediatricians">Pediatrics</a></li>
+                    <li><a href="https://eclinicpro.com/physiotherapists">Physiotherapy</a></li>
+                </ul>
+            </div>
+            <div class="foot-col">
+                <h5>Trust</h5>
+                <ul>
+                    <li><a href="https://eclinicpro.com/security">Security</a></li>
+                    <li><a href="https://eclinicpro.com/customer-stories">Customer stories</a></li>
+                    <li><a href="https://eclinicpro.com/security#compliance">HIPAA / GDPR</a></li>
+                    <li><a href="https://eclinicpro.com/cervical-cancer">Cervical Cancer Awareness</a></li>
+                    <li><a href="https://eclinicpro.com/find-a-doctor">Find a doctor</a></li>
+                    <li><a href="https://eclinicpro.com/book-a-demo">Book a demo</a></li>
+                </ul>
+            </div>
+            <div class="foot-col">
+                <h5>Company</h5>
+                <ul>
+                    <li><a href="https://eclinicpro.com/become-a-partner">Become a partner</a></li>
+                    <li><a href="https://eclinicpro.com/features#">About</a></li>
+                    <li><a href="https://eclinicpro.com/features#">Careers</a></li>
+                    <li><a href="https://eclinicpro.com/features#">Press kit</a></li>
+                    <li><a href="https://eclinicpro.com/features#">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="foot-bottom">
+            <div>© 2026 eClinicPro — a brand of <a href="https://silverwebbuzz.com/" target="_blank" rel="noopener">Silver Webbuzz Pvt Ltd</a> · Made with care for clinics across India 🌿</div>
+            <div class="links">
+                <a href="https://eclinicpro.com/privacy-policy">Privacy</a>
+                <a href="https://eclinicpro.com/terms">Terms</a>
+                <a href="https://eclinicpro.com/refund-policy">Refunds</a>
+                <a href="https://eclinicpro.com/privacy-policy#grievance">Grievance</a>
+                <a href="https://eclinicpro.com/security">Security</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+<!-- Reveal-on-scroll: light replacement for the React IntersectionObserver -->
+
+<!--
+  Removed from the global footer (2026-07-10, perf): jQuery 3.7.1, slick
+  (x2: jsdelivr 1.8.1 + cloudflare 1.9.0) and swiper (x2: v11 + v12).
+  These were render-blocking on EVERY page (~160 KiB from 4 CDNs) but:
+    - jQuery + slick were dead code (only user was the commented-out init below)
+    - swiper is used ONLY by /eclinicpro-health-store, which loads its own copy
+  Lighthouse network tree showed these as the main critical-path chain on
+  /find-a-doctor. If a future page needs a carousel, load swiper on that
+  page only (as health-store does), not here.
+-->
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const els = document.querySelectorAll('.reveal');
+        if (!els.length || !('IntersectionObserver' in window)) {
+            els.forEach(el => el.classList.add('is-in'));
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('is-in');
+                    io.unobserve(e.target);
+                }
+            });
+        }, {
+            threshold: 0.12,
+            rootMargin: '0px 0px -60px 0px'
+        });
+        els.forEach(el => io.observe(el));
+    });
+</script>
+
+
+
+<div style="background-color: rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204); box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; position: absolute; transition: visibility linear 0.3s, opacity 0.3s linear; opacity: 0; visibility: hidden; z-index: 2000000000; left: 0px; top: -10000px;"><div style="width: 100%; height: 100%; position: fixed; top: 0px; left: 0px; z-index: 2000000000; background-color: rgb(255, 255, 255); opacity: 0.05;"></div><div class="g-recaptcha-bubble-arrow" style="border: 11px solid transparent; width: 0px; height: 0px; position: absolute; pointer-events: none; margin-top: -11px; z-index: 2000000000;"></div><div class="g-recaptcha-bubble-arrow" style="border: 10px solid transparent; width: 0px; height: 0px; position: absolute; pointer-events: none; margin-top: -10px; z-index: 2000000000;"></div><div style="z-index: 2000000000; position: relative;"><iframe title="recaptcha challenge expires in two minutes" name="c-xht9ojurszn4" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="./Features — eClinicPro_files/bframe.html" style="width: 100%; height: 100%;"></iframe></div></div><div style="background-color: rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204); box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; position: absolute; transition: visibility linear 0.3s, opacity 0.3s linear; opacity: 0; visibility: hidden; z-index: 2000000000; left: 0px; top: -10000px;"><div style="width: 100%; height: 100%; position: fixed; top: 0px; left: 0px; z-index: 2000000000; background-color: rgb(255, 255, 255); opacity: 0.05;"></div><div class="g-recaptcha-bubble-arrow" style="border: 11px solid transparent; width: 0px; height: 0px; position: absolute; pointer-events: none; margin-top: -11px; z-index: 2000000000;"></div><div class="g-recaptcha-bubble-arrow" style="border: 10px solid transparent; width: 0px; height: 0px; position: absolute; pointer-events: none; margin-top: -10px; z-index: 2000000000;"></div><div style="z-index: 2000000000; position: relative;"><iframe title="recaptcha challenge expires in two minutes" name="c-qciv108t4ny5" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="./Features — eClinicPro_files/bframe(1).html" style="width: 100%; height: 100%;"></iframe></div></div></body></html>
