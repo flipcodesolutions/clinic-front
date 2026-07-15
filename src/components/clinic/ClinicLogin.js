@@ -124,8 +124,8 @@ export default function ClinicLogin({ onLogin }) {
               type="button"
               onClick={fillDemo}
               style={{
-                background: 'none', border: '1.5px dashed #DDD6FE',
-                borderRadius: '10px', padding: '10px', color: '#7C3AED',
+                background: 'none', border: '1.5px dashed #5eead4',
+                borderRadius: '10px', padding: '10px', color: '#0d9488',
                 fontSize: '13px', fontWeight: 600, cursor: 'pointer',
               }}
             >

@@ -13,6 +13,7 @@ export default function DoctorAchievements() {
   const [achievements, setAchievements] = useState(initialAchievements);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', year: '', icon: '🏆' });
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleAdd = () => {
     if (!form.title) return;
@@ -21,61 +22,92 @@ export default function DoctorAchievements() {
     setShowForm(false);
   };
 
+  const filteredAchievements = achievements.filter(ach => {
+    const term = searchTerm.toLowerCase();
+    return (
+      ach.title.toLowerCase().includes(term) ||
+      (ach.description && ach.description.toLowerCase().includes(term)) ||
+      (ach.year && ach.year.toLowerCase().includes(term))
+    );
+  });
+
   return (
     <div className="doc-achievements">
       <div className="doc-ach-header">
         <div>
           <h1 className="doc-ach-title">Achievements</h1>
-          <p className="doc-ach-subtitle">{achievements.length} achievements</p>
+          <p className="doc-ach-subtitle">{filteredAchievements.length} achievements</p>
         </div>
         <button className="doc-ach-add-btn" onClick={() => setShowForm(!showForm)}>
           + Add Achievement
         </button>
       </div>
 
-      {/* Add Form */}
+      {/* Add Form Modal */}
       {showForm && (
-        <div className="doc-ach-form-card">
-          <h3 className="doc-ach-form-title">New Achievement</h3>
+        <div className="clinic-modal-backdrop" onClick={() => setShowForm(false)}>
+          <div className="clinic-modal-card" onClick={e => e.stopPropagation()}>
+            <h3 className="doc-ach-form-title">New Achievement</h3>
 
-          {/* Icon Picker */}
-          <label className="doc-icon-picker-label">Icon</label>
-          <div className="doc-icon-picker">
-            {icons.map(icon => (
-              <button
-                key={icon}
-                className={`doc-icon-btn${form.icon === icon ? ' selected' : ''}`}
-                onClick={() => setForm({ ...form, icon })}
-              >
-                {icon}
-              </button>
-            ))}
-          </div>
+            {/* Icon Picker */}
+            <label className="doc-icon-picker-label">Icon</label>
+            <div className="doc-icon-picker">
+              {icons.map(icon => (
+                <button
+                  key={icon}
+                  type="button"
+                  className={`doc-icon-btn${form.icon === icon ? ' selected' : ''}`}
+                  onClick={() => setForm({ ...form, icon })}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
 
-          <div className="doc-ach-form-grid">
-            <div className="doc-ach-form-col-full">
-              <label className="doc-label">Title *</label>
-              <input className="doc-input" placeholder="Achievement title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+            <div className="doc-ach-form-grid">
+              <div className="doc-ach-form-col-full">
+                <label className="doc-label">Title *</label>
+                <input className="doc-input" placeholder="Achievement title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+              </div>
+              <div>
+                <label className="doc-label">Year</label>
+                <input className="doc-input" placeholder="e.g. 2023" value={form.year} onChange={e => setForm({ ...form, year: e.target.value })} />
+              </div>
+              <div>
+                <label className="doc-label">Description</label>
+                <input className="doc-input" placeholder="Brief description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+              </div>
             </div>
-            <div>
-              <label className="doc-label">Year</label>
-              <input className="doc-input" placeholder="e.g. 2023" value={form.year} onChange={e => setForm({ ...form, year: e.target.value })} />
+            <div className="doc-ach-form-actions mt-3">
+              <button className="doc-ach-save-btn" onClick={handleAdd}>Save</button>
+              <button className="doc-ach-cancel-btn" onClick={() => setShowForm(false)}>Cancel</button>
             </div>
-            <div>
-              <label className="doc-label">Description</label>
-              <input className="doc-input" placeholder="Brief description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-            </div>
-          </div>
-          <div className="doc-ach-form-actions">
-            <button className="doc-ach-save-btn" onClick={handleAdd}>Save</button>
-            <button className="doc-ach-cancel-btn" onClick={() => setShowForm(false)}>Cancel</button>
           </div>
         </div>
       )}
 
+      {/* Search Bar */}
+      <div className="clinic-filter-bar">
+        <div className="clinic-filter-group">
+          <input 
+            className="clinic-search-input" 
+            placeholder="Search achievements by title, description, or year..." 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+          />
+        </div>
+        {searchTerm && (
+          <div className="clinic-filter-actions">
+            <button className="clinic-btn-reset" onClick={() => setSearchTerm('')}>
+              Clear
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* List */}
       <div className="doc-ach-list">
-        {achievements.map(ach => (
+        {filteredAchievements.map(ach => (
           <div key={ach.id} className="doc-ach-card">
             <div className="doc-ach-icon">{ach.icon}</div>
             <div className="doc-ach-content">

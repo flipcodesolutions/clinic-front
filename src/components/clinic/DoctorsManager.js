@@ -21,6 +21,12 @@ export default function DoctorsManager() {
     name: '', email: '', password: '', speciality: '', experience: '', fee: '', phone: '', status: 'Active'
   });
 
+  // Filter States
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [appliedStatus, setAppliedStatus] = useState('');
+
   const handleAdd = (e) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.speciality) {
@@ -38,117 +44,174 @@ export default function DoctorsManager() {
     }
   };
 
+  // Filter Logic
+  const filteredDoctors = doctors.filter(doc => {
+    const matchesSearch = !appliedSearch ? true : (
+      doc.name.toLowerCase().includes(appliedSearch.toLowerCase()) ||
+      doc.speciality.toLowerCase().includes(appliedSearch.toLowerCase()) ||
+      (doc.email && doc.email.toLowerCase().includes(appliedSearch.toLowerCase())) ||
+      (doc.phone && doc.phone.toLowerCase().includes(appliedSearch.toLowerCase()))
+    );
+    const matchesStatus = !appliedStatus ? true : doc.status === appliedStatus;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="staff-manager">
       {/* Header */}
       <div className="staff-header">
         <div>
           <h1 className="staff-title">Doctors Directory</h1>
-          <p className="staff-count">{doctors.length} Registered Doctors</p>
+          <p className="staff-count">{filteredDoctors.length} Registered Doctors</p>
         </div>
         <button className="staff-add-btn" onClick={() => setShowForm(!showForm)}>
           <span>+</span> Add Doctor
         </button>
       </div>
 
-      {/* Form */}
+      {/* Register Form Modal */}
       {showForm && (
-        <div className="staff-form-card">
-          <h3 className="staff-form-title">Register New Doctor</h3>
-          <form onSubmit={handleAdd}>
-            <div className="staff-form-grid">
-              <div>
-                <label className="staff-form-label">Doctor Name *</label>
-                <input 
-                  className="staff-input" 
-                  placeholder="e.g. Dr. Amit Verma" 
-                  value={form.name} 
-                  onChange={e => setForm({ ...form, name: e.target.value })} 
-                  required 
-                />
+        <div className="clinic-modal-backdrop" onClick={() => setShowForm(false)}>
+          <div className="clinic-modal-card" onClick={e => e.stopPropagation()}>
+            <h3 className="staff-form-title">Register New Doctor</h3>
+            <form onSubmit={handleAdd}>
+              <div className="staff-form-grid">
+                <div>
+                  <label className="staff-form-label">Doctor Name *</label>
+                  <input 
+                    className="staff-input" 
+                    placeholder="e.g. Dr. Amit Verma" 
+                    value={form.name} 
+                    onChange={e => setForm({ ...form, name: e.target.value })} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="staff-form-label">Speciality *</label>
+                  <select 
+                    className="staff-select" 
+                    value={form.speciality} 
+                    onChange={e => setForm({ ...form, speciality: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Speciality</option>
+                    {specialities.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="staff-form-label">Email Address *</label>
+                  <input 
+                    type="email" 
+                    className="staff-input" 
+                    placeholder="doctor@clinic.com" 
+                    value={form.email} 
+                    onChange={e => setForm({ ...form, email: e.target.value })} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="staff-form-label">Temporary Password *</label>
+                  <input 
+                    type="password" 
+                    className="staff-input" 
+                    placeholder="Password for doctor login" 
+                    value={form.password} 
+                    onChange={e => setForm({ ...form, password: e.target.value })} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="staff-form-label">Phone Number</label>
+                  <input 
+                    className="staff-input" 
+                    placeholder="10 digit phone number" 
+                    value={form.phone} 
+                    onChange={e => setForm({ ...form, phone: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="staff-form-label">Experience (Years)</label>
+                  <input 
+                    type="number" 
+                    className="staff-input" 
+                    placeholder="e.g. 5" 
+                    value={form.experience} 
+                    onChange={e => setForm({ ...form, experience: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="staff-form-label">Consultation Fee (₹)</label>
+                  <input 
+                    type="number" 
+                    className="staff-input" 
+                    placeholder="e.g. 500" 
+                    value={form.fee} 
+                    onChange={e => setForm({ ...form, fee: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="staff-form-label">Availability Status</label>
+                  <select 
+                    className="staff-select" 
+                    value={form.status} 
+                    onChange={e => setForm({ ...form, status: e.target.value })}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="On Leave">On Leave</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="staff-form-label">Speciality *</label>
-                <select 
-                  className="staff-select" 
-                  value={form.speciality} 
-                  onChange={e => setForm({ ...form, speciality: e.target.value })}
-                  required
-                >
-                  <option value="">Select Speciality</option>
-                  {specialities.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+              <div className="staff-form-actions">
+                <button type="submit" className="staff-save-btn">Save Doctor</button>
+                <button type="button" className="staff-cancel-btn" onClick={() => setShowForm(false)}>Cancel</button>
               </div>
-              <div>
-                <label className="staff-form-label">Email Address *</label>
-                <input 
-                  type="email" 
-                  className="staff-input" 
-                  placeholder="doctor@clinic.com" 
-                  value={form.email} 
-                  onChange={e => setForm({ ...form, email: e.target.value })} 
-                  required 
-                />
-              </div>
-              <div>
-                <label className="staff-form-label">Temporary Password *</label>
-                <input 
-                  type="password" 
-                  className="staff-input" 
-                  placeholder="Password for doctor login" 
-                  value={form.password} 
-                  onChange={e => setForm({ ...form, password: e.target.value })} 
-                  required 
-                />
-              </div>
-              <div>
-                <label className="staff-form-label">Phone Number</label>
-                <input 
-                  className="staff-input" 
-                  placeholder="10 digit phone number" 
-                  value={form.phone} 
-                  onChange={e => setForm({ ...form, phone: e.target.value })} 
-                />
-              </div>
-              <div>
-                <label className="staff-form-label">Experience (Years)</label>
-                <input 
-                  type="number" 
-                  className="staff-input" 
-                  placeholder="e.g. 5" 
-                  value={form.experience} 
-                  onChange={e => setForm({ ...form, experience: e.target.value })} 
-                />
-              </div>
-              <div>
-                <label className="staff-form-label">Consultation Fee (₹)</label>
-                <input 
-                  type="number" 
-                  className="staff-input" 
-                  placeholder="e.g. 500" 
-                  value={form.fee} 
-                  onChange={e => setForm({ ...form, fee: e.target.value })} 
-                />
-              </div>
-              <div>
-                <label className="staff-form-label">Availability Status</label>
-                <select 
-                  className="staff-select" 
-                  value={form.status} 
-                  onChange={e => setForm({ ...form, status: e.target.value })}
-                >
-                  <option value="Active">Active</option>
-                  <option value="On Leave">On Leave</option>
-                </select>
-              </div>
-            </div>
-            <div className="staff-form-actions">
-              <button type="submit" className="staff-save-btn">Save Doctor</button>
-              <button type="button" className="staff-cancel-btn" onClick={() => setShowForm(false)}>Cancel</button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
+
+      {/* Search & Filter Bar */}
+      <div className="clinic-filter-bar">
+        <div className="clinic-filter-group">
+          <input 
+            className="clinic-search-input" 
+            placeholder="Search doctors by name, speciality, contact..." 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+          />
+        </div>
+        <select 
+          className="clinic-filter-select" 
+          value={statusFilter} 
+          onChange={e => setStatusFilter(e.target.value)}
+        >
+          <option value="">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="On Leave">On Leave</option>
+        </select>
+        <div className="clinic-filter-actions">
+          <button 
+            className="clinic-btn-apply" 
+            onClick={() => {
+              setAppliedSearch(searchTerm);
+              setAppliedStatus(statusFilter);
+            }}
+          >
+            Apply Filter
+          </button>
+          <button 
+            className="clinic-btn-reset" 
+            onClick={() => {
+              setSearchTerm('');
+              setStatusFilter('');
+              setAppliedSearch('');
+              setAppliedStatus('');
+            }}
+          >
+            Reset
+          </button>
+        </div>
+      </div>
 
       {/* Doctors Table Card */}
       <div className="clinic-table-card">
@@ -166,7 +229,7 @@ export default function DoctorsManager() {
               </tr>
             </thead>
             <tbody>
-              {doctors.map(doc => (
+              {filteredDoctors.map(doc => (
                 <tr key={doc.id}>
                   <td>
                     <div className="clinic-doctor-cell">

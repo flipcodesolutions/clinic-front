@@ -12,6 +12,7 @@ export default function GalleryManager() {
   const [images, setImages] = useState(sampleImages);
   const [caption, setCaption] = useState('');
   const [preview, setPreview] = useState(null);
+  const [showUploadForm, setShowUploadForm] = useState(false);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -26,6 +27,7 @@ export default function GalleryManager() {
     setImages([...images, { id: Date.now(), url: preview, caption: caption || 'New Photo' }]);
     setPreview(null);
     setCaption('');
+    setShowUploadForm(false);
   };
 
   const handleDelete = (id) => setImages(images.filter(img => img.id !== id));
@@ -33,44 +35,67 @@ export default function GalleryManager() {
   return (
     <div className="gallery-manager">
       {/* Header */}
-      <div className="gallery-header">
-        <h1 className="gallery-title">Gallery</h1>
-        <p className="gallery-subtitle">{images.length} photos uploaded</p>
+      <div className="gallery-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 className="gallery-title">Gallery</h1>
+          <p className="gallery-subtitle m-0">{images.length} photos uploaded</p>
+        </div>
+        <button className="staff-add-btn" onClick={() => setShowUploadForm(true)}>
+          <span>+</span> Add Photo
+        </button>
       </div>
 
-      {/* Upload Card */}
-      <div className="gallery-upload-card">
-        <h3 className="gallery-upload-title">Upload New Photo</h3>
-        <div className="gallery-upload-body">
-          <label className="gallery-dropzone">
-            {preview
-              ? <img src={preview} alt="preview" className="gallery-dropzone-preview" />
-              : <>
-                  <span className="gallery-dropzone-icon">📷</span>
-                  <span className="gallery-dropzone-text">Click to upload</span>
-                </>
-            }
-            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
-          </label>
+      {/* Upload Modal */}
+      {showUploadForm && (
+        <div className="clinic-modal-backdrop" onClick={() => { setShowUploadForm(false); setPreview(null); setCaption(''); }}>
+          <div className="clinic-modal-card" onClick={e => e.stopPropagation()}>
+            <h3 className="gallery-upload-title">Upload New Photo</h3>
+            <div className="gallery-upload-body">
+              <label className="gallery-dropzone">
+                {preview
+                  ? <img src={preview} alt="preview" className="gallery-dropzone-preview" />
+                  : <>
+                      <span className="gallery-dropzone-icon">📷</span>
+                      <span className="gallery-dropzone-text">Click to upload</span>
+                    </>
+                }
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+              </label>
 
-          <div className="gallery-upload-fields">
-            <label className="gallery-caption-label">Caption</label>
-            <input
-              className="gallery-caption-input"
-              value={caption}
-              onChange={e => setCaption(e.target.value)}
-              placeholder="Enter photo caption..."
-            />
-            <button
-              className="gallery-upload-btn"
-              onClick={handleUpload}
-              disabled={!preview}
-            >
-              Upload Photo
-            </button>
+              <div className="gallery-upload-fields">
+                <label className="gallery-caption-label">Caption</label>
+                <input
+                  className="gallery-caption-input"
+                  value={caption}
+                  onChange={e => setCaption(e.target.value)}
+                  placeholder="Enter photo caption..."
+                />
+                <div className="d-flex gap-2">
+                  <button
+                    className="gallery-upload-btn"
+                    onClick={handleUpload}
+                    disabled={!preview}
+                  >
+                    Upload Photo
+                  </button>
+                  <button
+                    className="staff-cancel-btn btn py-2 px-3 border"
+                    style={{ borderRadius: '10px', fontSize: '14px', fontWeight: 600 }}
+                    type="button"
+                    onClick={() => {
+                      setShowUploadForm(false);
+                      setPreview(null);
+                      setCaption('');
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Gallery Table Card */}
       <div className="clinic-table-card">

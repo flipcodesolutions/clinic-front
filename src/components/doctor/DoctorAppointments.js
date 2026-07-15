@@ -13,8 +13,19 @@ const allAppointments = [
 export default function DoctorAppointments() {
   const [filter, setFilter] = useState('All');
   const [appointments, setAppointments] = useState(allAppointments);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const filtered = filter === 'All' ? appointments : appointments.filter(a => a.status === filter);
+  const filtered = appointments.filter(a => {
+    const matchesStatus = filter === 'All' ? true : a.status === filter;
+    const matchesSearch = !searchQuery ? true : (
+      a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      a.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      a.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      a.date.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    return matchesStatus && matchesSearch;
+  });
+
   const counts = {
     All: appointments.length,
     Confirmed: appointments.filter(a => a.status === 'Confirmed').length,
@@ -29,6 +40,25 @@ export default function DoctorAppointments() {
       <div className="doc-appt-header">
         <h1 className="doc-appt-title">Appointments</h1>
         <p className="doc-appt-subtitle">Manage patient appointments</p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="clinic-filter-bar">
+        <div className="clinic-filter-group">
+          <input
+            className="clinic-search-input"
+            placeholder="Search appointments by patient name, phone, type, date..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+        {searchQuery && (
+          <div className="clinic-filter-actions">
+            <button className="clinic-btn-reset" onClick={() => setSearchQuery('')}>
+              Clear
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Filter Tabs */}
