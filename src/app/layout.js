@@ -4,8 +4,7 @@ import "@/css/visitor.css";
 import BootstrapClient from "./BootstrapClient";
 import { Toaster } from "react-hot-toast";
 import { Inter } from "next/font/google";
-import Navbar from "@/components/common/Navbar";
-import Footer from "@/components/common/Footer";
+import ConditionalNav from "@/components/common/ConditionalNav";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,15 +21,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.className}>
       <body>
-        <div className="d-flex flex-column min-vh-100">
-          <Navbar />
-          <main className="flex-grow-1">{children}</main>
-          <Footer />
-        </div>
+        <ConditionalNav>{children}</ConditionalNav>
         <BootstrapClient />
         <Toaster position="top-right" reverseOrder={false} />
       </body>
     </html>
   );
 }
-

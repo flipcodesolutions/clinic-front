@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaPlus } from "react-icons/fa";
@@ -8,26 +7,40 @@ import { FaPlus } from "react-icons/fa";
 export default function Navbar() {
   const pathname = usePathname();
 
-  const isActive = (path) => {
-    return pathname === path ? "fw-bold text-success" : "text-secondary";
-  };
+  const isActive = (path) =>
+    pathname === path
+      ? "fw-bold text-success"
+      : "text-secondary";
+
+  const navLinks = [
+    { href: "/finddoctor", label: "Find a doctor" },
+    { href: "/cervical-cancer", label: "Cervical Cancer" },
+    { href: "/for-doctors", label: "For doctors" },
+    { href: "/specialties", label: "Specialties" },
+    { href: "/security", label: "Security" },
+  ];
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-white py-3 border-bottom sticky-top z-3">
+    <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-3 z-3">
       <div className="container">
-        {/* eClinicPro Logo */}
-        <Link href="/" className="navbar-brand d-flex align-items-center gap-2 fw-bold navbar-brand-custom">
-          <div className="d-flex align-items-center justify-content-center bg-dark text-white rounded logo-container-custom">
-            <FaPlus className="fs-6 text-success" />
-            <div className="position-absolute logo-dot-custom"></div>
+
+        {/* Logo */}
+        <Link
+          href="/"
+          className="navbar-brand d-flex align-items-center gap-2 fw-bold navbar-brand-custom"
+        >
+          <div className="logo-container-custom bg-dark text-white rounded d-flex align-items-center justify-content-center position-relative">
+            <FaPlus className="text-success fs-6" />
+            <div className="logo-dot-custom" />
           </div>
+
           <span className="logo-text-custom ms-1">
             <span className="text-brand-green">Medi </span>
             <span className="text-brand-dark">Growth</span>
           </span>
         </Link>
 
-        {/* Hamburger Menu for Mobile */}
+        {/* Mobile Toggle */}
         <button
           className="navbar-toggler border-0"
           type="button"
@@ -40,48 +53,32 @@ export default function Navbar() {
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* Links */}
+        {/* Navbar */}
         <div className="collapse navbar-collapse" id="eClinicNavbar">
-          <ul className="navbar-nav mx-auto mb-2 mb-lg-0 gap-4 nav-menu-custom">
-            <li className="nav-item">
-              <Link href="/finddoctor" className={`nav-link hover-link ${isActive("/finddoctor")}`}>
-                Find a doctor
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link href="/cervical-cancer" className={`nav-link hover-link ${isActive("/cervical-cancer")}`}>
-                Cervical Cancer
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link href="/for-doctors" className={`nav-link hover-link ${isActive("/for-doctors")}`}>
-                For doctors
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link href="/specialties" className={`nav-link hover-link ${isActive("/specialties")}`}>
-                Specialties
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link href="/security" className={`nav-link hover-link ${isActive("/security")}`}>
-                Security
-              </Link>
-            </li>
+
+          <ul className="navbar-nav mx-auto gap-4 mb-2 mb-lg-0 nav-menu-custom">
+            {navLinks.map(({ href, label }) => (
+              <li className="nav-item" key={href}>
+                <Link
+                  href={href}
+                  className={`nav-link hover-link ${isActive(href)}`}
+                >
+                  {label}
+                </Link>
+              </li>
+            ))}
           </ul>
 
-          {/* Right Side Buttons */}
-          <div className="d-flex align-items-center gap-3">
-            <Link href="/admin/login" className="text-decoration-none text-secondary fw-semibold hover-link btn-signin-custom">
-              Sign in
-            </Link>
+          {/* Login Button */}
+          <div className="d-flex align-items-center">
             <Link
-              href="/admin/dashboard"
-              className="btn text-white rounded-pill px-4 py-2 fw-semibold btn-brand-green"
+              href="/login"
+              className="btn btn-brand-green text-white rounded-pill px-4 py-2 fw-semibold"
             >
-              Doctor panel
+              Login / Sign In
             </Link>
           </div>
+
         </div>
       </div>
     </nav>
