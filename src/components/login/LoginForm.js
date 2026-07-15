@@ -10,6 +10,12 @@ import { useRouter } from 'next/navigation';
 ───────────────────────────────────────────────────────────── */
 const MOCK_USERS = [
   {
+    email: 'superadmin@medigrowth.com',
+    password: 'superadmin123',
+    role: 'superadmin',
+    name: 'Medi Growth Super Admin',
+  },
+  {
     email: 'clinic@medigrowth.com',
     password: 'clinic123',
     role: 'clinic',
@@ -24,16 +30,19 @@ const MOCK_USERS = [
 ];
 
 const ROLE_REDIRECT = {
+  superadmin: '/super-admin-panel',
   clinic: '/clinic-panel',
   doctor: '/doctor-panel',
 };
 
 const DEMO_USERS = {
+  superadmin: { email: 'superadmin@medigrowth.com', password: 'superadmin123' },
   clinic: { email: 'clinic@medigrowth.com', password: 'clinic123' },
   doctor: { email: 'doctor@medigrowth.com', password: 'doctor123' },
 };
 
 const ROLE_CARDS = [
+  { role: 'superadmin', icon: '👑', name: 'Super Admin', desc: 'Manage clinics, depts & services' },
   { role: 'clinic', icon: '🏥', name: 'Clinic Admin', desc: 'Manage staff, gallery & doctors' },
   { role: 'doctor', icon: '👨‍⚕️', name: 'Doctor', desc: 'Appointments, schedule & profile' },
 ];
@@ -44,7 +53,7 @@ export default function LoginForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
-  const [demoTab, setDemoTab] = useState('clinic'); // active demo tab
+  const [demoTab, setDemoTab] = useState('superadmin'); // active demo tab
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -109,7 +118,7 @@ export default function LoginForm() {
           <div className="login-left d-none d-md-flex flex-column justify-content-between">
 
             <div className="login-left-brand">
-              <div className="login-left-logo">🏥</div>
+              <div className="login-left-logo">👑</div>
               <h2 className="login-left-title">Medi Growth Portal</h2>
               <p className="login-left-subtitle">
                 One login for all roles — the system automatically directs you to your panel.
@@ -135,13 +144,13 @@ export default function LoginForm() {
 
               {/* Tab selector */}
               <div className="login-demo-tabs">
-                {['clinic', 'doctor'].map(tab => (
+                {['superadmin', 'clinic', 'doctor'].map(tab => (
                   <button
                     key={tab}
                     className={`login-demo-tab${demoTab === tab ? ' active' : ''}`}
                     onClick={() => setDemoTab(tab)}
                   >
-                    {tab === 'clinic' ? '🏥 Clinic' : '👨‍⚕️ Doctor'}
+                    {tab === 'superadmin' ? '👑 Super Admin' : tab === 'clinic' ? '🏥 Clinic' : '👨‍⚕️ Doctor'}
                   </button>
                 ))}
               </div>
@@ -156,7 +165,7 @@ export default function LoginForm() {
               </div>
 
               <button className="login-autofill-btn" onClick={autofill}>
-                ⚡ Auto-fill {demoTab === 'clinic' ? 'Clinic' : 'Doctor'} Credentials
+                ⚡ Auto-fill {demoTab === 'superadmin' ? 'Super Admin' : demoTab === 'clinic' ? 'Clinic' : 'Doctor'} Credentials
               </button>
             </div>
           </div>
@@ -165,7 +174,7 @@ export default function LoginForm() {
           <div className="login-right">
             <h1 className="login-form-title">Welcome back 👋</h1>
             <p className="login-form-subtitle">
-              Enter your credentials — we'll take you to your panel automatically.
+              Enter your credentials — we&apos;ll take you to your panel automatically.
             </p>
 
             <form onSubmit={handleSubmit} noValidate>

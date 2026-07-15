@@ -4,7 +4,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 
 // Visitor navbar/footer will be hidden on these paths
-const HIDDEN_PATHS = ['/clinic-panel', '/doctor-panel', '/login'];
+const HIDDEN_PATHS = ['/clinic-panel', '/doctor-panel', '/login', '/super-admin-panel'];
 
 export default function ConditionalNav({ children }) {
   const pathname = usePathname();
