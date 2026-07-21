@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
-import { createDepartment, deleteDepartment, getDepartments } from '@/services/departmentService';
+import { createCity, deleteCity, getCities } from '@/services/cityService';
 
 function formatStatus(status) {
   if (!status) return 'Inactive';
@@ -10,12 +10,11 @@ function formatStatus(status) {
 
 const emptyForm = {
   name: '',
-  description: '',
   status: 'active',
 };
 
-export default function DepartmentsManager() {
-  const [departments, setDepartments] = useState([]);
+export default function CitiesManager() {
+  const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm);
@@ -26,21 +25,21 @@ export default function DepartmentsManager() {
   const [statusFilter, setStatusFilter] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
 
-  const loadDepartments = async (filters = {}) => {
+  const loadCities = async (filters = {}) => {
     try {
       setLoading(true);
       setError('');
-      const data = await getDepartments(filters);
-      setDepartments(data);
+      const data = await getCities(filters);
+      setCities(data);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Something went wrong while loading departments.');
+      setError(err.response?.data?.message || err.message || 'Something went wrong while loading cities.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadDepartments();
+    loadCities();
   }, []);
 
   const handleApplyFilter = () => {
@@ -49,14 +48,14 @@ export default function DepartmentsManager() {
       status: statusFilter,
     };
     setActiveFilters(filters);
-    loadDepartments(filters);
+    loadCities(filters);
   };
 
   const handleResetFilter = () => {
     setSearch('');
     setStatusFilter('');
     setActiveFilters({});
-    loadDepartments();
+    loadCities();
   };
 
   const handleOpenAdd = () => {
@@ -75,7 +74,7 @@ export default function DepartmentsManager() {
     e.preventDefault();
 
     if (!form.name.trim()) {
-      setFormError('Department name is required.');
+      setFormError('City name is required.');
       return;
     }
 
@@ -85,25 +84,24 @@ export default function DepartmentsManager() {
     try {
       const payload = {
         name: form.name.trim(),
-        description: form.description.trim(),
         status: form.status,
       };
 
-      const newDepartment = await createDepartment(payload);
-      setDepartments(prev => [newDepartment, ...prev]);
+      const newCity = await createCity(payload);
+      setCities(prev => [newCity, ...prev]);
       setForm(emptyForm);
       setShowModal(false);
     } catch (err) {
-      setFormError(err.response?.data?.message || err.message || 'Failed to add department.');
+      setFormError(err.response?.data?.message || err.message || 'Failed to add city.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (department) => {
+  const handleDelete = async (city) => {
     const result = await Swal.fire({
-      title: 'Delete department?',
-      text: `"${department.name}" will be permanently removed.`,
+      title: 'Delete city?',
+      text: `"${city.name}" will be permanently removed.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#dc2626',
@@ -115,12 +113,12 @@ export default function DepartmentsManager() {
     if (!result.isConfirmed) return;
 
     try {
-      await deleteDepartment(department.id);
-      await loadDepartments(activeFilters);
+      await deleteCity(city.id);
+      await loadCities(activeFilters);
 
       Swal.fire({
         title: 'Deleted!',
-        text: 'Department has been removed successfully.',
+        text: 'City has been removed successfully.',
         icon: 'success',
         timer: 2000,
         showConfirmButton: false,
@@ -128,36 +126,36 @@ export default function DepartmentsManager() {
     } catch (err) {
       Swal.fire({
         title: 'Error',
-        text: err.response?.data?.message || err.message || 'Failed to delete department.',
+        text: err.response?.data?.message || err.message || 'Failed to delete city.',
         icon: 'error',
       });
     }
   };
 
   const toggleStatus = (id) => {
-    setDepartments(departments.map(d => {
-      if (d.id !== id) return d;
-      const isActive = formatStatus(d.status) === 'Active';
-      return { ...d, status: isActive ? 'inactive' : 'active' };
+    setCities(cities.map(c => {
+      if (c.id !== id) return c;
+      const isActive = formatStatus(c.status) === 'Active';
+      return { ...c, status: isActive ? 'inactive' : 'active' };
     }));
   };
 
   return (
-    <div className="departments-manager">
+    <div className="cities-manager">
       <div className="admin-header">
         <div>
-          <h1 className="admin-title">System Departments</h1>
-          <p className="admin-subtitle">Manage the master list of clinical departments/specialties.</p>
+          <h1 className="admin-title">City Directory</h1>
+          <p className="admin-subtitle">Manage cities available for clinic registration and search.</p>
         </div>
         <button className="admin-add-btn" onClick={handleOpenAdd}>
-          <span>+</span> Add Department
+          <span>+</span> Add City
         </button>
       </div>
 
       <div className="admin-filter-bar">
         <input
           className="admin-search-input"
-          placeholder="Search departments by name..."
+          placeholder="Search cities by name..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleApplyFilter()}
@@ -184,9 +182,7 @@ export default function DepartmentsManager() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Department Name</th>
-                <th>Description</th>
+                <th>City Name</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -194,39 +190,35 @@ export default function DepartmentsManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
-                    Loading departments...
+                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                    Loading cities...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#dc2626' }}>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#dc2626' }}>
                     {error}
                   </td>
                 </tr>
-              ) : departments.length === 0 ? (
+              ) : cities.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
-                    No departments found.
+                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                    No cities found.
                   </td>
                 </tr>
               ) : (
-                departments.map(d => {
-                  const status = formatStatus(d.status);
+                cities.map(c => {
+                  const status = formatStatus(c.status);
 
                   return (
-                    <tr key={d.id}>
-                      <td style={{ color: '#94a3b8', fontSize: 13, width: 80 }}>DEP-{d.id}</td>
-                      <td>
-                        <span style={{ fontWeight: 600 }}>{d.name}</span>
-                      </td>
-                      <td>
-                        <span style={{ fontSize: 13, color: '#64748b' }}>{d.description || '—'}</span>
+                    <tr key={c.id}>
+                        <td>
+                        <span style={{ fontWeight: 600 }}>{c.name}</span>
                       </td>
                       <td>
                         <button
                           style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
-                          onClick={() => toggleStatus(d.id)}
+                          onClick={() => toggleStatus(c.id)}
                           title="Click to toggle status"
                         >
                           <span className={`admin-badge ${status === 'Active' ? 'active' : 'inactive'}`}>
@@ -235,7 +227,7 @@ export default function DepartmentsManager() {
                         </button>
                       </td>
                       <td>
-                        <button className="admin-action-btn-delete" onClick={() => handleDelete(d)}>
+                        <button className="admin-action-btn-delete" onClick={() => handleDelete(c)}>
                           Delete
                         </button>
                       </td>
@@ -251,28 +243,18 @@ export default function DepartmentsManager() {
       {showModal && (
         <div className="admin-modal-backdrop" onClick={handleCloseModal}>
           <div className="admin-modal-card" onClick={e => e.stopPropagation()}>
-            <h3 className="admin-modal-title">Add New Department</h3>
+            <h3 className="admin-modal-title">Add New City</h3>
             <form onSubmit={handleAdd}>
               <div className="admin-form-grid">
                 <div className="admin-form-full">
-                  <label className="admin-form-label">Department Name *</label>
+                  <label className="admin-form-label">City Name *</label>
                   <input
                     className="admin-input"
-                    placeholder="e.g. Ophthalmology"
+                    placeholder="e.g. Surendranagar"
                     value={form.name}
                     onChange={e => setForm({ ...form, name: e.target.value })}
                     required
                     autoFocus
-                  />
-                </div>
-
-                <div className="admin-form-full">
-                  <label className="admin-form-label">Description</label>
-                  <textarea
-                    className="admin-textarea"
-                    placeholder="Short description of this department..."
-                    value={form.description}
-                    onChange={e => setForm({ ...form, description: e.target.value })}
                   />
                 </div>
 
@@ -295,7 +277,7 @@ export default function DepartmentsManager() {
 
               <div className="admin-form-actions">
                 <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Saving...' : 'Save Department'}
+                  {saving ? 'Saving...' : 'Save City'}
                 </button>
                 <button
                   type="button"

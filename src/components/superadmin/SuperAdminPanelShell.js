@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAuthToken, getUserAuth } from '@/utils/auth';
 
 export default function SuperAdminPanelShell({ children }) {
   const router = useRouter();
@@ -8,22 +9,24 @@ export default function SuperAdminPanelShell({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const raw = localStorage.getItem('user_auth');
-    if (!raw) {
+    const user = getUserAuth();
+    const token = getAuthToken();
+
+    if (!user || !token) {
       router.replace('/login');
       return;
     }
-    try {
-      const user = JSON.parse(raw);
-      if (user.role !== 'superadmin') {
-        router.replace('/login');
-        return;
-      }
-      setAuthed(true);
-      setLoading(false);
-    } catch (e) {
+
+    const isSuperAdmin =
+      user.role === 'super_admin' || user.roles?.includes('super_admin');
+
+    if (!isSuperAdmin) {
       router.replace('/login');
+      return;
     }
+
+    setAuthed(true);
+    setLoading(false);
   }, [router]);
 
   if (loading || !authed) {

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAuthToken, getUserAuth } from '@/utils/auth';
 
 export default function DoctorPanelShell({ children }) {
   const router = useRouter();
@@ -8,16 +9,22 @@ export default function DoctorPanelShell({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const raw = localStorage.getItem('user_auth');
-    if (!raw) {
+    const user = getUserAuth();
+    const token = getAuthToken();
+
+    if (!user || !token) {
       router.replace('/login');
       return;
     }
-    const user = JSON.parse(raw);
-    if (user.role !== 'doctor') {
+
+    const isDoctor =
+      user.role === 'doctor' || user.roles?.includes('doctor');
+
+    if (!isDoctor) {
       router.replace('/login');
       return;
     }
+
     setAuthed(true);
     setLoading(false);
   }, [router]);

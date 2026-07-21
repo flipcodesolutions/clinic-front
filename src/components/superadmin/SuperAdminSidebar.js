@@ -1,46 +1,49 @@
 'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-export default function SuperAdminSidebar({ activeTab, onTabChange, onLogout }) {
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'clinics', label: 'Clinics Directory' },
-    { id: 'departments', label: 'Departments' },
-    { id: 'services', label: 'Global Services' },
-  ];
+const menuItems = [
+  { id: 'dashboard', label: 'Dashboard', href: '/super-admin-panel/dashboard' },
+  { id: 'cities', label: 'Cities', href: '/super-admin-panel/cities' },
+  { id: 'departments', label: 'Departments', href: '/super-admin-panel/departments' },
+  { id: 'services', label: 'Global Services', href: '/super-admin-panel/services' },
+  { id: 'clinics', label: 'Clinics Directory', href: '/super-admin-panel/clinics' },
+];
+
+export default function SuperAdminSidebar({ onLogout }) {
+  const pathname = usePathname();
+
+  const isActive = (href) => pathname === href;
 
   return (
     <aside className="admin-sidebar">
-      {/* Decorative circles */}
       <div className="admin-sidebar-deco-top"></div>
       <div className="admin-sidebar-deco-bottom"></div>
 
-      {/* Header */}
       <div className="admin-sidebar-header">
         <h2 className="admin-sidebar-title">Super Admin</h2>
       </div>
 
-      {/* Menu Navigation */}
       <nav className="admin-sidebar-menu">
         {menuItems.map((item) => (
-          <button
+          <Link
             key={item.id}
-            onClick={() => onTabChange(item.id)}
-            className={`admin-sidebar-link ${activeTab === item.id ? 'active' : ''}`}
+            href={item.href}
+            className={`admin-sidebar-link ${isActive(item.href) ? 'active' : ''}`}
           >
             <span>{item.label}</span>
-          </button>
+          </Link>
         ))}
 
-        {/* Sign Out Link at the bottom of navigation */}
         <button
           onClick={onLogout}
           className="admin-sidebar-link"
-          style={{ 
-            marginTop: 'auto', 
-            color: '#fca5a5', 
-            background: 'rgba(239, 68, 68, 0.1)', 
+          style={{
+            marginTop: 'auto',
+            color: '#fca5a5',
+            background: 'rgba(239, 68, 68, 0.1)',
             border: '1px solid rgba(239, 68, 68, 0.15)',
-            justifyContent: 'center'
+            justifyContent: 'center',
           }}
         >
           <span>Logout</span>
@@ -49,4 +52,3 @@ export default function SuperAdminSidebar({ activeTab, onTabChange, onLogout }) 
     </aside>
   );
 }
-

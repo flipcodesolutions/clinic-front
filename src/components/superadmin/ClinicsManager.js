@@ -1,15 +1,17 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getClinics } from '@/services/clinicService';
 
-const initialClinics = [
-  { id: 1, name: 'Metro Health Care', email: 'info@metrohealth.com', phone: '9876543210', address: '102, Ring Road, Ahmedabad', status: 'Active' },
-  { id: 2, name: 'City Dental Clinic', email: 'dental@cityclinic.com', phone: '9876543211', address: 'G-5, Shanti Arcade, Ahmedabad', status: 'Active' },
-  { id: 3, name: 'Apex Cardiology Care', email: 'apex@cardio.com', phone: '9876543212', address: '4th Floor, Medical Plaza, Ahmedabad', status: 'Active' },
-  { id: 4, name: 'LifeLine General Hospital', email: 'lifeline@hospital.com', phone: '9876543213', address: 'Near Highway Cross, Ahmedabad', status: 'Inactive' },
-];
+// API returns "active" / "inactive — convert to title case for the UI
+function formatStatus(status) {
+  if (!status) return 'Inactive';
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+}
 
 export default function ClinicsManager() {
-  const [clinics, setClinics] = useState(initialClinics);
+  const [clinics, setClinics] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   
@@ -21,8 +23,40 @@ export default function ClinicsManager() {
   // Search & Filter State
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [appliedSearch, setAppliedSearch] = useState('');
-  const [appliedFilter, setAppliedFilter] = useState('');
+  const [activeFilters, setActiveFilters] = useState({});
+
+  const loadClinics = async (filters = {}) => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await getClinics(filters);
+      setClinics(data);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Something went wrong while loading clinics.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadClinics();
+  }, []);
+
+  const handleApplyFilter = () => {
+    const filters = {
+      search: search.trim(),
+      status: statusFilter,
+    };
+    setActiveFilters(filters);
+    loadClinics(filters);
+  };
+
+  const handleResetFilter = () => {
+    setSearch('');
+    setStatusFilter('');
+    setActiveFilters({});
+    loadClinics();
+  };
 
   const handleOpenAdd = () => {
     setForm({ name: '', email: '', phone: '', address: '', password: '', status: 'Active' });
@@ -37,7 +71,7 @@ export default function ClinicsManager() {
       phone: clinic.phone,
       address: clinic.address,
       password: '••••••••', // Masked mock password
-      status: clinic.status
+      status: formatStatus(clinic.status)
     });
     setEditingId(clinic.id);
     setShowModal(true);
@@ -67,20 +101,12 @@ export default function ClinicsManager() {
   };
 
   const toggleStatus = (id) => {
-    setClinics(clinics.map(c => c.id === id ? { ...c, status: c.status === 'Active' ? 'Inactive' : 'Active' } : c));
+    setClinics(clinics.map(c => {
+      if (c.id !== id) return c;
+      const isActive = formatStatus(c.status) === 'Active';
+      return { ...c, status: isActive ? 'inactive' : 'active' };
+    }));
   };
-
-  const filteredClinics = clinics.filter(c => {
-    const term = appliedSearch.toLowerCase();
-    const matchesSearch = !appliedSearch ? true : (
-      c.name.toLowerCase().includes(term) ||
-      c.email.toLowerCase().includes(term) ||
-      c.phone.toLowerCase().includes(term) ||
-      c.address.toLowerCase().includes(term)
-    );
-    const matchesStatus = !appliedFilter ? true : c.status === appliedFilter;
-    return matchesSearch && matchesStatus;
-  });
 
   return (
     <div className="clinics-manager">
@@ -102,6 +128,7 @@ export default function ClinicsManager() {
           placeholder="Search by clinic name, email, phone, city..." 
           value={search}
           onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleApplyFilter()}
         />
         <select 
           className="admin-filter-select"
@@ -109,21 +136,13 @@ export default function ClinicsManager() {
           onChange={e => setStatusFilter(e.target.value)}
         >
           <option value="">All Statuses</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
         </select>
-        <button className="admin-btn-apply" onClick={() => {
-          setAppliedSearch(search);
-          setAppliedFilter(statusFilter);
-        }}>
+        <button className="admin-btn-apply" onClick={handleApplyFilter}>
           Apply Filter
         </button>
-        <button className="admin-btn-reset" onClick={() => {
-          setSearch('');
-          setStatusFilter('');
-          setAppliedSearch('');
-          setAppliedFilter('');
-        }}>
+        <button className="admin-btn-reset" onClick={handleResetFilter}>
           Reset
         </button>
       </div>
@@ -142,18 +161,42 @@ export default function ClinicsManager() {
               </tr>
             </thead>
             <tbody>
-              {filteredClinics.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: 30, color: '#64748b' }}>
+                    Loading clinics...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: 30, color: '#dc2626' }}>
+                    {error}
+                  </td>
+                </tr>
+              ) : clinics.length === 0 ? (
                 <tr>
                   <td colSpan="5" style={{ textAlign: 'center', padding: 30, color: '#64748b' }}>
                     No clinics found matching criteria.
                   </td>
                 </tr>
               ) : (
-                filteredClinics.map(c => (
+                clinics.map(c => {
+                  const status = formatStatus(c.status);
+
+                  return (
                   <tr key={c.id}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <span className="clinic-avatar">🏥</span>
+                        {c.logo ? (
+                          <img
+                            src={c.logo}
+                            alt={c.name}
+                            className="clinic-avatar"
+                            style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <span className="clinic-avatar">🏥</span>
+                        )}
                         <div>
                           <div style={{ fontWeight: 600, fontSize: 15 }}>{c.name}</div>
                           <div style={{ fontSize: 12, color: '#94a3b8' }}>ID: CLN-{c.id}</div>
@@ -168,6 +211,9 @@ export default function ClinicsManager() {
                       <div style={{ fontSize: 13, color: '#475569', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.address}>
                         {c.address}
                       </div>
+                      {c.city && (
+                        <div style={{ fontSize: 12, color: '#94a3b8' }}>{c.city}, {c.state}</div>
+                      )}
                     </td>
                     <td>
                       <button 
@@ -175,8 +221,8 @@ export default function ClinicsManager() {
                         onClick={() => toggleStatus(c.id)}
                         title="Click to toggle status"
                       >
-                        <span className={`admin-badge ${c.status === 'Active' ? 'active' : 'inactive'}`}>
-                          {c.status}
+                        <span className={`admin-badge ${status === 'Active' ? 'active' : 'inactive'}`}>
+                          {status}
                         </span>
                       </button>
                     </td>
@@ -189,7 +235,8 @@ export default function ClinicsManager() {
                       </button>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

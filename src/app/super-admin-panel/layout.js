@@ -1,5 +1,6 @@
 import '@/css/SuperAdmin.css';
 import SuperAdminPanelShell from '@/components/superadmin/SuperAdminPanelShell';
+import SuperAdminPanelLayout from '@/components/superadmin/SuperAdminPanelLayout';
 
 export const metadata = {
   title: 'Super Admin Panel - Medi Growth',
@@ -7,5 +8,9 @@ export const metadata = {
 };
 
 export default function SuperAdminLayout({ children }) {
-  return <SuperAdminPanelShell>{children}</SuperAdminPanelShell>;
+  return (
+    <SuperAdminPanelShell>
+      <SuperAdminPanelLayout>{children}</SuperAdminPanelLayout>
+    </SuperAdminPanelShell>
+  );
 }

@@ -2,47 +2,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-/* ─────────────────────────────────────────────────────────────
-   MOCK USER DATABASE
-   Once the real backend is ready, replace this with a real API call.
-   The user role will be fetched from the database, and the frontend will redirect accordingly.
-───────────────────────────────────────────────────────────── */
-const MOCK_USERS = [
-  {
-    email: 'superadmin@medigrowth.com',
-    password: 'superadmin123',
-    role: 'superadmin',
-    name: 'Medi Growth Super Admin',
-  },
-  {
-    email: 'clinic@medigrowth.com',
-    password: 'clinic123',
-    role: 'clinic',
-    name: 'HealthCare Plus Clinic',
-  },
-  {
-    email: 'doctor@medigrowth.com',
-    password: 'doctor123',
-    role: 'doctor',
-    name: 'Dr. Priya Sharma',
-  },
-];
-
-const ROLE_REDIRECT = {
-  superadmin: '/super-admin-panel',
-  clinic: '/clinic-panel',
-  doctor: '/doctor-panel',
-};
-
-const DEMO_USERS = {
-  superadmin: { email: 'superadmin@medigrowth.com', password: 'superadmin123' },
-  clinic: { email: 'clinic@medigrowth.com', password: 'clinic123' },
-  doctor: { email: 'doctor@medigrowth.com', password: 'doctor123' },
-};
+import { login } from '@/services/authService';
+import { getRedirectPath, saveUserSession } from '@/utils/auth';
 
 const ROLE_CARDS = [
-  { role: 'superadmin', icon: '👑', name: 'Super Admin', desc: 'Manage clinics, depts & services' },
+  { role: 'super_admin', icon: '👑', name: 'Super Admin', desc: 'Manage clinics, depts & services' },
   { role: 'clinic', icon: '🏥', name: 'Clinic Admin', desc: 'Manage staff, gallery & doctors' },
   { role: 'doctor', icon: '👨‍⚕️', name: 'Doctor', desc: 'Appointments, schedule & profile' },
 ];
@@ -53,9 +17,8 @@ export default function LoginForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
-  const [demoTab, setDemoTab] = useState('superadmin'); // active demo tab
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -66,31 +29,26 @@ export default function LoginForm() {
 
     setLoading(true);
 
-    /* ── Simulate API call (replace with real fetch later) ── */
-    setTimeout(() => {
-      const user = MOCK_USERS.find(
-        u => u.email === form.email && u.password === form.password
-      );
+    try {
+      const { user, token } = await login(form.email, form.password);
+      const redirectPath = getRedirectPath(user.roles);
 
-      if (user) {
-        // Save session with role
-        localStorage.setItem('user_auth', JSON.stringify({
-          email: user.email,
-          role: user.role,
-          name: user.name,
-        }));
-        // Redirect based on role
-        router.push(ROLE_REDIRECT[user.role]);
-      } else {
-        setError('Invalid email or password. Only registered users can login.');
+      if (!redirectPath) {
+        setError('Your account role is not allowed to access any panel.');
         setLoading(false);
+        return;
       }
-    }, 1000);
-  };
 
-  const autofill = () => {
-    setForm({ email: DEMO_USERS[demoTab].email, password: DEMO_USERS[demoTab].password });
-    setError('');
+      saveUserSession(user, token);
+      router.push(redirectPath);
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        'Invalid email or password.';
+      setError(message);
+      setLoading(false);
+    }
   };
 
   return (
@@ -138,35 +96,13 @@ export default function LoginForm() {
               </div>
             </div>
 
-            {/* Demo credentials */}
+            {/* Login info */}
             <div className="login-demo-section">
-              <p className="login-demo-label">🔑 Demo Credentials</p>
-
-              {/* Tab selector */}
-              <div className="login-demo-tabs">
-                {['superadmin', 'clinic', 'doctor'].map(tab => (
-                  <button
-                    key={tab}
-                    className={`login-demo-tab${demoTab === tab ? ' active' : ''}`}
-                    onClick={() => setDemoTab(tab)}
-                  >
-                    {tab === 'superadmin' ? '👑 Super Admin' : tab === 'clinic' ? '🏥 Clinic' : '👨‍⚕️ Doctor'}
-                  </button>
-                ))}
-              </div>
-
-              <div className="login-demo-row">
-                <span className="login-demo-key">Email</span>
-                <code className="login-demo-val">{DEMO_USERS[demoTab].email}</code>
-              </div>
-              <div className="login-demo-row">
-                <span className="login-demo-key">Pass</span>
-                <code className="login-demo-val">{DEMO_USERS[demoTab].password}</code>
-              </div>
-
-              <button className="login-autofill-btn" onClick={autofill}>
-                ⚡ Auto-fill {demoTab === 'superadmin' ? 'Super Admin' : demoTab === 'clinic' ? 'Clinic' : 'Doctor'} Credentials
-              </button>
+              <p className="login-demo-label">🔐 Secure Login</p>
+              <p className="text-white-50 small mb-0">
+                Sign in with your registered email and password.
+                You will be redirected to your panel based on your role.
+              </p>
             </div>
           </div>
 
