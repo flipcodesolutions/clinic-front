@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
-import { createCity, deleteCity, getCities } from '@/services/cityService';
+import { createCity, deleteCity, getCities, updateCity } from '@/services/cityService';
 
 function formatStatus(status) {
   if (!status) return 'Inactive';
@@ -18,6 +18,7 @@ export default function CitiesManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm);
+  const [editingCity, setEditingCity] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
@@ -59,7 +60,18 @@ export default function CitiesManager() {
   };
 
   const handleOpenAdd = () => {
+    setEditingCity(null);
     setForm(emptyForm);
+    setFormError('');
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (city) => {
+    setEditingCity(city);
+    setForm({
+      name: city.name,
+      status: city.status || 'active',
+    });
     setFormError('');
     setShowModal(true);
   };
@@ -67,10 +79,11 @@ export default function CitiesManager() {
   const handleCloseModal = () => {
     if (saving) return;
     setShowModal(false);
+    setEditingCity(null);
     setFormError('');
   };
 
-  const handleAdd = async (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
 
     if (!form.name.trim()) {
@@ -87,12 +100,19 @@ export default function CitiesManager() {
         status: form.status,
       };
 
-      const newCity = await createCity(payload);
-      setCities(prev => [newCity, ...prev]);
+      if (editingCity) {
+        const updated = await updateCity(editingCity.id, payload);
+        setCities(prev => prev.map(c => (c.id === editingCity.id ? updated : c)));
+      } else {
+        const newCity = await createCity(payload);
+        setCities(prev => [newCity, ...prev]);
+      }
+
       setForm(emptyForm);
+      setEditingCity(null);
       setShowModal(false);
     } catch (err) {
-      setFormError(err.response?.data?.message || err.message || 'Failed to add city.');
+      setFormError(err.response?.data?.message || err.message || 'Failed to save city.');
     } finally {
       setSaving(false);
     }
@@ -132,12 +152,18 @@ export default function CitiesManager() {
     }
   };
 
-  const toggleStatus = (id) => {
-    setCities(cities.map(c => {
-      if (c.id !== id) return c;
-      const isActive = formatStatus(c.status) === 'Active';
-      return { ...c, status: isActive ? 'inactive' : 'active' };
-    }));
+  const toggleStatus = async (city) => {
+    const newStatus = formatStatus(city.status) === 'Active' ? 'inactive' : 'active';
+    try {
+      const updated = await updateCity(city.id, { name: city.name, status: newStatus });
+      setCities(prev => prev.map(c => (c.id === city.id ? updated : c)));
+    } catch (err) {
+      Swal.fire({
+        title: 'Error',
+        text: err.response?.data?.message || 'Failed to update status',
+        icon: 'error',
+      });
+    }
   };
 
   return (
@@ -212,13 +238,13 @@ export default function CitiesManager() {
 
                   return (
                     <tr key={c.id}>
-                        <td>
+                      <td>
                         <span style={{ fontWeight: 600 }}>{c.name}</span>
                       </td>
                       <td>
                         <button
                           style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
-                          onClick={() => toggleStatus(c.id)}
+                          onClick={() => toggleStatus(c)}
                           title="Click to toggle status"
                         >
                           <span className={`admin-badge ${status === 'Active' ? 'active' : 'inactive'}`}>
@@ -227,6 +253,9 @@ export default function CitiesManager() {
                         </button>
                       </td>
                       <td>
+                        <button className="admin-action-btn-edit" onClick={() => handleOpenEdit(c)}>
+                          Edit
+                        </button>
                         <button className="admin-action-btn-delete" onClick={() => handleDelete(c)}>
                           Delete
                         </button>
@@ -243,8 +272,8 @@ export default function CitiesManager() {
       {showModal && (
         <div className="admin-modal-backdrop" onClick={handleCloseModal}>
           <div className="admin-modal-card" onClick={e => e.stopPropagation()}>
-            <h3 className="admin-modal-title">Add New City</h3>
-            <form onSubmit={handleAdd}>
+            <h3 className="admin-modal-title">{editingCity ? 'Edit City' : 'Add New City'}</h3>
+            <form onSubmit={handleSave}>
               <div className="admin-form-grid">
                 <div className="admin-form-full">
                   <label className="admin-form-label">City Name *</label>
@@ -277,7 +306,7 @@ export default function CitiesManager() {
 
               <div className="admin-form-actions">
                 <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Saving...' : 'Save City'}
+                  {saving ? 'Saving...' : editingCity ? 'Update City' : 'Save City'}
                 </button>
                 <button
                   type="button"

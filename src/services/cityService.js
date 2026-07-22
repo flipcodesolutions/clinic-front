@@ -34,6 +34,20 @@ export async function createCity(payload) {
 }
 
 /**
+ * Update an existing city by ID.
+ * Payload: { name, status }
+ */
+export async function updateCity(id, payload) {
+  const response = await apiClient.put(`/admin/cities/${id}`, payload);
+
+  if (response.data?.success) {
+    return response.data.data;
+  }
+
+  throw new Error(response.data?.message || 'Failed to update city');
+}
+
+/**
  * Delete a city by ID.
  */
 export async function deleteCity(id) {
