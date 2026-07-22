@@ -64,7 +64,6 @@ export async function getCityById(id) {
 /**
  * Update a city by ID.
  * PUT /admin/cities/:id
- * Update an existing city by ID.
  * Payload: { name, status }
  */
 export async function updateCity(id, payload) {
@@ -72,7 +71,6 @@ export async function updateCity(id, payload) {
 
   if (response.data?.success) {
     return apiSuccess(response, 'City updated successfully');
-    return response.data.data;
   }
 
   throw new Error(response.data?.message || 'Failed to update city');

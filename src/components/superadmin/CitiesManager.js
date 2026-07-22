@@ -9,7 +9,6 @@ import {
   updateCity,
 } from '@/services/cityService';
 import { showError, showSuccess } from '@/utils/toast';
-import { createCity, deleteCity, getCities, updateCity } from '@/services/cityService';
 
 function formatStatus(status) {
   if (!status) return 'Inactive';
@@ -33,7 +32,6 @@ export default function CitiesManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm);
-  const [editingCity, setEditingCity] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -115,7 +113,6 @@ export default function CitiesManager() {
 
   const handleOpenAdd = () => {
     setEditingId(null);
-    setEditingCity(null);
     setForm(emptyForm);
     setFormError('');
     setShowModal(true);
@@ -144,14 +141,6 @@ export default function CitiesManager() {
     } finally {
       setLoadingForm(false);
     }
-  const handleOpenEdit = (city) => {
-    setEditingCity(city);
-    setForm({
-      name: city.name,
-      status: city.status || 'active',
-    });
-    setFormError('');
-    setShowModal(true);
   };
 
   const handleCloseModal = () => {
@@ -163,11 +152,6 @@ export default function CitiesManager() {
   };
 
   const handleSubmit = async (e) => {
-    setEditingCity(null);
-    setFormError('');
-  };
-
-  const handleSave = async (e) => {
     e.preventDefault();
 
     if (!form.name.trim()) {
@@ -204,19 +188,6 @@ export default function CitiesManager() {
         (editingId ? 'Failed to update city.' : 'Failed to add city.');
       setFormError(message);
       showError(err, message);
-      if (editingCity) {
-        const updated = await updateCity(editingCity.id, payload);
-        setCities(prev => prev.map(c => (c.id === editingCity.id ? updated : c)));
-      } else {
-        const newCity = await createCity(payload);
-        setCities(prev => [newCity, ...prev]);
-      }
-
-      setForm(emptyForm);
-      setEditingCity(null);
-      setShowModal(false);
-    } catch (err) {
-      setFormError(err.response?.data?.message || err.message || 'Failed to save city.');
     } finally {
       setSaving(false);
     }
@@ -247,15 +218,13 @@ export default function CitiesManager() {
 
   const toggleStatus = async (city) => {
     const newStatus = formatStatus(city.status) === 'Active' ? 'inactive' : 'active';
+
     try {
-      const updated = await updateCity(city.id, { name: city.name, status: newStatus });
-      setCities(prev => prev.map(c => (c.id === city.id ? updated : c)));
+      const result = await updateCity(city.id, { name: city.name, status: newStatus });
+      showSuccess(result.message);
+      await loadCities(activeFilters);
     } catch (err) {
-      Swal.fire({
-        title: 'Error',
-        text: err.response?.data?.message || 'Failed to update status',
-        icon: 'error',
-      });
+      showError(err, 'Failed to update status');
     }
   };
 
@@ -443,19 +412,6 @@ export default function CitiesManager() {
                       <option value="inactive">Inactive</option>
                     </select>
                   </div>
-            <h3 className="admin-modal-title">{editingCity ? 'Edit City' : 'Add New City'}</h3>
-            <form onSubmit={handleSave}>
-              <div className="admin-form-grid">
-                <div className="admin-form-full">
-                  <label className="admin-form-label">City Name *</label>
-                  <input
-                    className="admin-input"
-                    placeholder="e.g. Surendranagar"
-                    value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
-                    required
-                    autoFocus
-                  />
                 </div>
 
                 {formError && (
@@ -477,26 +433,6 @@ export default function CitiesManager() {
                 </div>
               </form>
             )}
-              </div>
-
-              {formError && (
-                <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
-              )}
-
-              <div className="admin-form-actions">
-                <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Saving...' : editingCity ? 'Update City' : 'Save City'}
-                </button>
-                <button
-                  type="button"
-                  className="admin-cancel-btn"
-                  onClick={handleCloseModal}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
