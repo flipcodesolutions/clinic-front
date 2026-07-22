@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
-import { createDepartment, deleteDepartment, getDepartments } from '@/services/departmentService';
+import { createDepartment, deleteDepartment, getDepartments, updateDepartment } from '@/services/departmentService';
 
 function formatStatus(status) {
   if (!status) return 'Inactive';
@@ -19,6 +19,7 @@ export default function DepartmentsManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm);
+  const [editingItem, setEditingItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
@@ -60,7 +61,19 @@ export default function DepartmentsManager() {
   };
 
   const handleOpenAdd = () => {
+    setEditingItem(null);
     setForm(emptyForm);
+    setFormError('');
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (department) => {
+    setEditingItem(department);
+    setForm({
+      name: department.name || '',
+      description: department.description || '',
+      status: department.status || 'active',
+    });
     setFormError('');
     setShowModal(true);
   };
@@ -68,10 +81,11 @@ export default function DepartmentsManager() {
   const handleCloseModal = () => {
     if (saving) return;
     setShowModal(false);
+    setEditingItem(null);
     setFormError('');
   };
 
-  const handleAdd = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.name.trim()) {
@@ -89,12 +103,19 @@ export default function DepartmentsManager() {
         status: form.status,
       };
 
-      const newDepartment = await createDepartment(payload);
-      setDepartments(prev => [newDepartment, ...prev]);
+      if (editingItem) {
+        await updateDepartment(editingItem.id, payload);
+        await loadDepartments(activeFilters);
+      } else {
+        const newDepartment = await createDepartment(payload);
+        setDepartments(prev => [newDepartment, ...prev]);
+      }
+
       setForm(emptyForm);
+      setEditingItem(null);
       setShowModal(false);
     } catch (err) {
-      setFormError(err.response?.data?.message || err.message || 'Failed to add department.');
+      setFormError(err.response?.data?.message || err.message || `Failed to ${editingItem ? 'update' : 'add'} department.`);
     } finally {
       setSaving(false);
     }
@@ -134,12 +155,25 @@ export default function DepartmentsManager() {
     }
   };
 
-  const toggleStatus = (id) => {
-    setDepartments(departments.map(d => {
-      if (d.id !== id) return d;
-      const isActive = formatStatus(d.status) === 'Active';
-      return { ...d, status: isActive ? 'inactive' : 'active' };
-    }));
+  const toggleStatus = async (department) => {
+    try {
+      const currentIsActive = formatStatus(department.status) === 'Active';
+      const newStatus = currentIsActive ? 'inactive' : 'active';
+
+      await updateDepartment(department.id, {
+        name: department.name,
+        description: department.description,
+        status: newStatus,
+      });
+
+      await loadDepartments(activeFilters);
+    } catch (err) {
+      Swal.fire({
+        title: 'Error',
+        text: err.response?.data?.message || err.message || 'Failed to update department status.',
+        icon: 'error',
+      });
+    }
   };
 
   return (
@@ -226,7 +260,7 @@ export default function DepartmentsManager() {
                       <td>
                         <button
                           style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
-                          onClick={() => toggleStatus(d.id)}
+                          onClick={() => toggleStatus(d)}
                           title="Click to toggle status"
                         >
                           <span className={`admin-badge ${status === 'Active' ? 'active' : 'inactive'}`}>
@@ -235,6 +269,9 @@ export default function DepartmentsManager() {
                         </button>
                       </td>
                       <td>
+                        <button className="admin-action-btn-edit" onClick={() => handleOpenEdit(d)}>
+                          Edit
+                        </button>
                         <button className="admin-action-btn-delete" onClick={() => handleDelete(d)}>
                           Delete
                         </button>
@@ -251,8 +288,8 @@ export default function DepartmentsManager() {
       {showModal && (
         <div className="admin-modal-backdrop" onClick={handleCloseModal}>
           <div className="admin-modal-card" onClick={e => e.stopPropagation()}>
-            <h3 className="admin-modal-title">Add New Department</h3>
-            <form onSubmit={handleAdd}>
+            <h3 className="admin-modal-title">{editingItem ? 'Edit Department' : 'Add New Department'}</h3>
+            <form onSubmit={handleSubmit}>
               <div className="admin-form-grid">
                 <div className="admin-form-full">
                   <label className="admin-form-label">Department Name *</label>
@@ -295,7 +332,7 @@ export default function DepartmentsManager() {
 
               <div className="admin-form-actions">
                 <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Saving...' : 'Save Department'}
+                  {saving ? 'Saving...' : editingItem ? 'Update Department' : 'Save Department'}
                 </button>
                 <button
                   type="button"

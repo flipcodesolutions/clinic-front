@@ -45,3 +45,18 @@ export async function deleteDepartment(id) {
 
   throw new Error(response.data?.message || 'Failed to delete department');
 }
+
+/**
+ * Update department by ID.
+ * Payload: { name, description, status }
+ */
+export async function updateDepartment(id, payload) {
+  const response = await apiClient.put(`/admin/departments/${id}`, payload);
+
+  if (response.data?.success) {
+    return response.data.data;
+  }
+
+  throw new Error(response.data?.message || 'Failed to update department');
+}
+
