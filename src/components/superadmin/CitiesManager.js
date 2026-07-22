@@ -1,7 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
-import { createCity, deleteCity, getCities } from '@/services/cityService';
+import {
+  createCity,
+  deleteCity,
+  getCities,
+  getCityById,
+  updateCity,
+} from '@/services/cityService';
+import { showError, showSuccess } from '@/utils/toast';
 
 function formatStatus(status) {
   if (!status) return 'Inactive';
@@ -13,39 +20,64 @@ const emptyForm = {
   status: 'active',
 };
 
+const defaultFilters = {
+  search: '',
+  status: '',
+  page: 1,
+  limit: 10,
+};
+
 export default function CitiesManager() {
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [loadingForm, setLoadingForm] = useState(false);
   const [formError, setFormError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [activeFilters, setActiveFilters] = useState({});
+  const [activeFilters, setActiveFilters] = useState(defaultFilters);
+  const [pagination, setPagination] = useState({
+    count: 0,
+    currentPage: 1,
+    totalPages: 1,
+    limit: 10,
+  });
 
-  const loadCities = async (filters = {}) => {
+  const loadCities = async (filters = activeFilters) => {
     try {
       setLoading(true);
       setError('');
-      const data = await getCities(filters);
-      setCities(data);
+      const result = await getCities(filters);
+      setCities(result.data);
+      setPagination({
+        count: result.count,
+        currentPage: result.currentPage,
+        totalPages: result.totalPages,
+        limit: result.limit,
+      });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Something went wrong while loading cities.');
+      const message = err.response?.data?.message || err.message || 'Something went wrong while loading cities.';
+      setError(message);
+      showError(err, message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadCities();
+    loadCities(defaultFilters);
   }, []);
 
   const handleApplyFilter = () => {
     const filters = {
       search: search.trim(),
       status: statusFilter,
+      page: 1,
+      limit: activeFilters.limit,
     };
     setActiveFilters(filters);
     loadCities(filters);
@@ -54,23 +86,72 @@ export default function CitiesManager() {
   const handleResetFilter = () => {
     setSearch('');
     setStatusFilter('');
-    setActiveFilters({});
-    loadCities();
+    setActiveFilters(defaultFilters);
+    loadCities(defaultFilters);
+  };
+
+  const handleLimitChange = (limit) => {
+    const filters = {
+      ...activeFilters,
+      page: 1,
+      limit: Number(limit),
+    };
+    setActiveFilters(filters);
+    loadCities(filters);
+  };
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > pagination.totalPages) return;
+
+    const filters = {
+      ...activeFilters,
+      page,
+    };
+    setActiveFilters(filters);
+    loadCities(filters);
   };
 
   const handleOpenAdd = () => {
+    setEditingId(null);
     setForm(emptyForm);
     setFormError('');
     setShowModal(true);
   };
 
+  const handleOpenEdit = async (city) => {
+    setEditingId(city.id);
+    setFormError('');
+    setShowModal(true);
+    setLoadingForm(true);
+
+    try {
+      const data = await getCityById(city.id);
+      setForm({
+        name: data.name || '',
+        status: data.status || 'active',
+      });
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Failed to load city details.';
+      setFormError(message);
+      showError(err, message);
+      setForm({
+        name: city.name || '',
+        status: city.status || 'active',
+      });
+    } finally {
+      setLoadingForm(false);
+    }
+  };
+
   const handleCloseModal = () => {
-    if (saving) return;
+    if (saving || loadingForm) return;
     setShowModal(false);
+    setEditingId(null);
+    setForm(emptyForm);
     setFormError('');
   };
 
-  const handleAdd = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.name.trim()) {
@@ -87,12 +168,26 @@ export default function CitiesManager() {
         status: form.status,
       };
 
-      const newCity = await createCity(payload);
-      setCities(prev => [newCity, ...prev]);
+      if (editingId) {
+        const result = await updateCity(editingId, payload);
+        showSuccess(result.message);
+        await loadCities(activeFilters);
+      } else {
+        const result = await createCity(payload);
+        showSuccess(result.message);
+        await loadCities(activeFilters);
+      }
+
       setForm(emptyForm);
+      setEditingId(null);
       setShowModal(false);
     } catch (err) {
-      setFormError(err.response?.data?.message || err.message || 'Failed to add city.');
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        (editingId ? 'Failed to update city.' : 'Failed to add city.');
+      setFormError(message);
+      showError(err, message);
     } finally {
       setSaving(false);
     }
@@ -113,22 +208,11 @@ export default function CitiesManager() {
     if (!result.isConfirmed) return;
 
     try {
-      await deleteCity(city.id);
+      const deleteResult = await deleteCity(city.id);
       await loadCities(activeFilters);
-
-      Swal.fire({
-        title: 'Deleted!',
-        text: 'City has been removed successfully.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
-      });
+      showSuccess(deleteResult.message);
     } catch (err) {
-      Swal.fire({
-        title: 'Error',
-        text: err.response?.data?.message || err.message || 'Failed to delete city.',
-        icon: 'error',
-      });
+      showError(err, 'Failed to delete city.');
     }
   };
 
@@ -169,6 +253,16 @@ export default function CitiesManager() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
+        <select
+          className="admin-filter-select"
+          value={activeFilters.limit}
+          onChange={e => handleLimitChange(e.target.value)}
+        >
+          <option value="10">10 per page</option>
+          <option value="20">25 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
+        </select>
         <button className="admin-btn-apply" onClick={handleApplyFilter}>
           Apply Filter
         </button>
@@ -190,19 +284,19 @@ export default function CitiesManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
                     Loading cities...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#dc2626' }}>
+                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#dc2626' }}>
                     {error}
                   </td>
                 </tr>
               ) : cities.length === 0 ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
                     No cities found.
                   </td>
                 </tr>
@@ -212,7 +306,7 @@ export default function CitiesManager() {
 
                   return (
                     <tr key={c.id}>
-                        <td>
+                      <td>
                         <span style={{ fontWeight: 600 }}>{c.name}</span>
                       </td>
                       <td>
@@ -227,6 +321,9 @@ export default function CitiesManager() {
                         </button>
                       </td>
                       <td>
+                        <button className="admin-action-btn-edit" onClick={() => handleOpenEdit(c)}>
+                          Edit
+                        </button>
                         <button className="admin-action-btn-delete" onClick={() => handleDelete(c)}>
                           Delete
                         </button>
@@ -238,57 +335,100 @@ export default function CitiesManager() {
             </tbody>
           </table>
         </div>
+
+        {!loading && !error && pagination.totalPages > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 20px',
+              borderTop: '1px solid #e2e8f0',
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 14, color: '#64748b' }}>
+              Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total cities)
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="admin-btn-reset"
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage <= 1}
+              >
+                Previous
+              </button>
+              <button
+                className="admin-btn-apply"
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage >= pagination.totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showModal && (
         <div className="admin-modal-backdrop" onClick={handleCloseModal}>
           <div className="admin-modal-card" onClick={e => e.stopPropagation()}>
-            <h3 className="admin-modal-title">Add New City</h3>
-            <form onSubmit={handleAdd}>
-              <div className="admin-form-grid">
-                <div className="admin-form-full">
-                  <label className="admin-form-label">City Name *</label>
-                  <input
-                    className="admin-input"
-                    placeholder="e.g. Surendranagar"
-                    value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
-                    required
-                    autoFocus
-                  />
+            <h3 className="admin-modal-title">
+              {editingId ? 'Edit City' : 'Add New City'}
+            </h3>
+
+            {loadingForm ? (
+              <p style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                Loading city details...
+              </p>
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <div className="admin-form-grid">
+                  <div className="admin-form-full">
+                    <label className="admin-form-label">City Name *</label>
+                    <input
+                      className="admin-input"
+                      placeholder="e.g. Surendranagar"
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Status</label>
+                    <select
+                      className="admin-select"
+                      value={form.status}
+                      onChange={e => setForm({ ...form, status: e.target.value })}
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="admin-form-label">Status</label>
-                  <select
-                    className="admin-select"
-                    value={form.status}
-                    onChange={e => setForm({ ...form, status: e.target.value })}
+                {formError && (
+                  <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
+                )}
+
+                <div className="admin-form-actions">
+                  <button type="submit" className="admin-save-btn" disabled={saving}>
+                    {saving ? 'Saving...' : editingId ? 'Update City' : 'Save City'}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-cancel-btn"
+                    onClick={handleCloseModal}
+                    disabled={saving}
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                    Cancel
+                  </button>
                 </div>
-              </div>
-
-              {formError && (
-                <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
-              )}
-
-              <div className="admin-form-actions">
-                <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Saving...' : 'Save City'}
-                </button>
-                <button
-                  type="button"
-                  className="admin-cancel-btn"
-                  onClick={handleCloseModal}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
         </div>
       )}
