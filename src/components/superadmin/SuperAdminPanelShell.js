@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthToken, getUserAuth } from '@/utils/auth';
+import PanelLoader from '@/components/common/PanelLoader';
 
 export default function SuperAdminPanelShell({ children }) {
   const router = useRouter();
@@ -33,20 +34,9 @@ export default function SuperAdminPanelShell({ children }) {
 
   if (loading || !authed) {
     return (
-      <div className="panel-loading" style={{
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#f8fafc',
-        fontFamily: 'sans-serif'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>👑</div>
-          <h3 style={{ margin: '0 0 8px 0', color: '#0f172a' }}>Verifying Super Admin...</h3>
-          <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>Please wait a moment.</p>
-        </div>
-      </div>
+      <PanelLoader
+       
+      />
     );
   }
 

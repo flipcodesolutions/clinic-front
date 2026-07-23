@@ -519,3 +519,70 @@
 .clinic-avatar {
   font-size: 24px;
 }
+
+/* ============================================================
+   PANEL LOADER
+   ============================================================ */
+.admin-panel-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--admin-bg);
+  padding: 24px;
+}
+
+.admin-panel-loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: min(100%, 360px);
+  padding: 32px 28px;
+  background: var(--admin-white);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow-hover);
+}
+
+.admin-panel-loading-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 16px;
+  font-size: 26px;
+  border-radius: 14px;
+  background: var(--admin-primary-light);
+}
+
+.admin-panel-loading-spinner {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 18px;
+  border: 3px solid var(--admin-primary-light);
+  border-top-color: var(--admin-primary);
+  border-radius: 50%;
+  animation: adminPanelSpin 0.75s linear infinite;
+}
+
+.admin-panel-loading-title {
+  margin: 0 0 6px;
+  color: var(--admin-text);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.admin-panel-loading-subtitle {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@keyframes adminPanelSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
