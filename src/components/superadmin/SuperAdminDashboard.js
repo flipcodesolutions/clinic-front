@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getCities } from '@/services/cityService';
 import { getClinics } from '@/services/clinicService';
@@ -57,10 +58,10 @@ export default function SuperAdminDashboard() {
   }, []);
 
   const statsCards = [
-    { label: 'Registered Clinics', count: stats.clinics, icon: '🏥', theme: 'indigo' },
-    { label: 'Total Specialties', count: stats.departments, icon: '🩺', theme: 'purple' },
-    { label: 'Global Services', count: stats.services, icon: '⚙️', theme: 'blue' },
-    { label: 'Active Cities', count: stats.cities, icon: '🏙️', theme: 'emerald' },
+    { label: 'Registered Clinics', count: stats.clinics, icon: '🏥', theme: 'indigo', href: '/super-admin-panel/clinics' },
+    { label: 'Total Specialties', count: stats.departments, icon: '🩺', theme: 'purple', href: '/super-admin-panel/departments' },
+    { label: 'Global Services', count: stats.services, icon: '⚙️', theme: 'blue', href: '/super-admin-panel/services' },
+    { label: 'Active Cities', count: stats.cities, icon: '🏙️', theme: 'emerald', href: '/super-admin-panel/cities' },
   ];
 
   return (
@@ -76,13 +77,15 @@ export default function SuperAdminDashboard() {
       {/* Stats Cards Grid */}
       <div className="admin-stats-grid">
         {statsCards.map((s, idx) => (
-          <div key={idx} className="admin-stat-card">
-            <div>
-              <p className="admin-stat-number">{loading ? '...' : s.count}</p>
-              <p className="admin-stat-label">{s.label}</p>
+          <Link key={idx} href={s.href} className="admin-stat-card-link" aria-label={`Open ${s.label}`}>
+            <div className="admin-stat-card">
+              <div>
+                <p className="admin-stat-number">{loading ? '...' : s.count}</p>
+                <p className="admin-stat-label">{s.label}</p>
+              </div>
+              <div className={`admin-stat-icon-wrap ${s.theme}`}>{s.icon}</div>
             </div>
-            <div className={`admin-stat-icon-wrap ${s.theme}`}>{s.icon}</div>
-          </div>
+          </Link>
         ))}
       </div>
 

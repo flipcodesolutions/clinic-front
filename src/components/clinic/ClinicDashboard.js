@@ -21,7 +21,7 @@ export default function ClinicDashboard() {
       {/* Header */}
       <div className="clinic-page-header">
         <h1 className="clinic-page-title">Good Morning, Clinic Admin</h1>
-        <p className="clinic-page-subtitle">Here's what's happening at your clinic today.</p>
+        <p className="clinic-page-subtitle">Here what happening at your clinic today.</p>
       </div>
 
       {/* Stats Grid */}
@@ -43,7 +43,7 @@ export default function ClinicDashboard() {
         <div className="clinic-table-card-header">
           <div>
             <h2 className="clinic-table-card-title">Recent Doctors</h2>
-            <p className="clinic-table-card-subtitle">Clinic's registered doctors</p>
+            <p className="clinic-table-card-subtitle">Clinics registered doctors</p>
           </div>
           <Link href="/clinic-panel/doctors" className="clinic-add-btn text-decoration-none d-inline-block">
             Manage Doctors
