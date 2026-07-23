@@ -1,7 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
-import { createClinic, deleteClinic, getClinics, updateClinic } from '@/services/clinicService';
+import {
+  createClinic,
+  deleteClinic,
+  getClinics,
+  getClinicById,
+  updateClinic,
+} from '@/services/clinicService';
+import { showError, showSuccess } from '@/utils/toast';
 
 function formatStatus(status) {
   if (!status) return 'Inactive';
@@ -18,44 +25,92 @@ const emptyForm = {
   status: 'active',
 };
 
+const defaultFilters = {
+  search: '',
+  status: '',
+  page: 1,
+  limit: 10,
+};
+
 export default function ClinicsManager() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState('');
-
-  // Form State
   const [form, setForm] = useState(emptyForm);
-
-  // Search & Filter State
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [loadingForm, setLoadingForm] = useState(false);
+  const [formError, setFormError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [activeFilters, setActiveFilters] = useState({});
+  const [activeFilters, setActiveFilters] = useState(defaultFilters);
+  const [pagination, setPagination] = useState({
+    count: 0,
+    currentPage: 1,
+    totalPages: 1,
+    limit: 10,
+  });
 
-  const loadClinics = async (filters = {}) => {
+  const loadClinics = async (filters = activeFilters) => {
     try {
       setLoading(true);
       setError('');
-      const data = await getClinics(filters);
-      setClinics(data);
+      const result = await getClinics(filters);
+      setClinics(result.data || []);
+      setPagination({
+        count: result.count ?? 0,
+        currentPage: result.currentPage ?? 1,
+        totalPages: result.totalPages ?? 1,
+        limit: result.limit ?? filters.limit ?? 10,
+      });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Something went wrong while loading clinics.');
+      const message = err.response?.data?.message || err.message || 'Something went wrong while loading clinics.';
+      setError(message);
+      showError(err, message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadClinics();
+    let isMounted = true;
+    getClinics(defaultFilters)
+      .then((result) => {
+        if (isMounted) {
+          setClinics(result.data || []);
+          setPagination({
+            count: result.count ?? 0,
+            currentPage: result.currentPage ?? 1,
+            totalPages: result.totalPages ?? 1,
+            limit: result.limit ?? defaultFilters.limit ?? 10,
+          });
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          const message = err.response?.data?.message || err.message || 'Something went wrong while loading clinics.';
+          setError(message);
+          showError(err, message);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleApplyFilter = () => {
     const filters = {
       search: search.trim(),
       status: statusFilter,
+      page: 1,
+      limit: activeFilters.limit,
     };
     setActiveFilters(filters);
     loadClinics(filters);
@@ -64,41 +119,84 @@ export default function ClinicsManager() {
   const handleResetFilter = () => {
     setSearch('');
     setStatusFilter('');
-    setActiveFilters({});
-    loadClinics();
+    setActiveFilters(defaultFilters);
+    loadClinics(defaultFilters);
+  };
+
+  const handleLimitChange = (limit) => {
+    const filters = {
+      ...activeFilters,
+      page: 1,
+      limit: Number(limit),
+    };
+    setActiveFilters(filters);
+    loadClinics(filters);
+  };
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > pagination.totalPages) return;
+
+    const filters = {
+      ...activeFilters,
+      page,
+    };
+    setActiveFilters(filters);
+    loadClinics(filters);
   };
 
   const handleOpenAdd = () => {
-    setEditingItem(null);
+    setEditingId(null);
     setForm(emptyForm);
     setFormError('');
     setShowModal(true);
   };
 
-  const handleOpenEdit = (clinic) => {
-    setEditingItem(clinic);
-    setForm({
-      name: clinic.name || '',
-      email: clinic.email || '',
-      phone: clinic.phone || '',
-      address: clinic.address || '',
-      city: clinic.city || '',
-      state: clinic.state || '',
-      status: clinic.status || 'active',
-    });
+  const handleOpenEdit = async (clinic) => {
+    setEditingId(clinic.id);
     setFormError('');
     setShowModal(true);
+    setLoadingForm(true);
+
+    try {
+      const data = await getClinicById(clinic.id);
+      setForm({
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        address: data.address || '',
+        city: data.city || '',
+        state: data.state || '',
+        status: data.status || 'active',
+      });
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Failed to load clinic details.';
+      setFormError(message);
+      showError(err, message);
+      setForm({
+        name: clinic.name || '',
+        email: clinic.email || '',
+        phone: clinic.phone || '',
+        address: clinic.address || '',
+        city: clinic.city || '',
+        state: clinic.state || '',
+        status: clinic.status || 'active',
+      });
+    } finally {
+      setLoadingForm(false);
+    }
   };
 
   const handleCloseModal = () => {
-    if (saving) return;
+    if (saving || loadingForm) return;
     setShowModal(false);
-    setEditingItem(null);
+    setEditingId(null);
+    setForm(emptyForm);
     setFormError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!form.name.trim()) {
       setFormError('Clinic Name is required.');
       return;
@@ -118,19 +216,26 @@ export default function ClinicsManager() {
         status: form.status,
       };
 
-      if (editingItem) {
-        await updateClinic(editingItem.id, payload);
+      if (editingId) {
+        const result = await updateClinic(editingId, payload);
+        showSuccess(result.message);
         await loadClinics(activeFilters);
       } else {
-        const newClinic = await createClinic(payload);
-        setClinics(prev => [newClinic, ...prev]);
+        const result = await createClinic(payload);
+        showSuccess(result.message);
+        await loadClinics(activeFilters);
       }
 
       setForm(emptyForm);
-      setEditingItem(null);
+      setEditingId(null);
       setShowModal(false);
     } catch (err) {
-      setFormError(err.response?.data?.message || err.message || `Failed to ${editingItem ? 'update' : 'add'} clinic.`);
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        (editingId ? 'Failed to update clinic.' : 'Failed to register clinic.');
+      setFormError(message);
+      showError(err, message);
     } finally {
       setSaving(false);
     }
@@ -151,48 +256,31 @@ export default function ClinicsManager() {
     if (!result.isConfirmed) return;
 
     try {
-      await deleteClinic(clinic.id);
+      const deleteResult = await deleteClinic(clinic.id);
       await loadClinics(activeFilters);
-
-      Swal.fire({
-        title: 'Deleted!',
-        text: 'Clinic has been removed successfully.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
-      });
+      showSuccess(deleteResult.message);
     } catch (err) {
-      Swal.fire({
-        title: 'Error',
-        text: err.response?.data?.message || err.message || 'Failed to delete clinic.',
-        icon: 'error',
-      });
+      showError(err, 'Failed to delete clinic.');
     }
   };
 
   const toggleStatus = async (clinic) => {
-    try {
-      const currentIsActive = formatStatus(clinic.status) === 'Active';
-      const newStatus = currentIsActive ? 'inactive' : 'active';
+    const newStatus = formatStatus(clinic.status) === 'Active' ? 'inactive' : 'active';
 
-      await updateClinic(clinic.id, {
+    try {
+      const result = await updateClinic(clinic.id, {
         ...clinic,
         status: newStatus,
       });
-
+      showSuccess(result.message);
       await loadClinics(activeFilters);
     } catch (err) {
-      Swal.fire({
-        title: 'Error',
-        text: err.response?.data?.message || err.message || 'Failed to update clinic status.',
-        icon: 'error',
-      });
+      showError(err, 'Failed to update status');
     }
   };
 
   return (
     <div className="clinics-manager">
-      {/* Header */}
       <div className="admin-header">
         <div>
           <h1 className="admin-title">Clinics Directory</h1>
@@ -203,7 +291,6 @@ export default function ClinicsManager() {
         </button>
       </div>
 
-      {/* Filter Bar */}
       <div className="admin-filter-bar">
         <input
           className="admin-search-input"
@@ -221,6 +308,16 @@ export default function ClinicsManager() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
+        <select
+          className="admin-filter-select"
+          value={activeFilters.limit}
+          onChange={e => handleLimitChange(e.target.value)}
+        >
+          <option value="10">10 per page</option>
+          <option value="25">25 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
+        </select>
         <button className="admin-btn-apply" onClick={handleApplyFilter}>
           Apply Filter
         </button>
@@ -229,7 +326,6 @@ export default function ClinicsManager() {
         </button>
       </div>
 
-      {/* Table List */}
       <div className="admin-table-card">
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -270,6 +366,7 @@ export default function ClinicsManager() {
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                           {c.logo ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                               src={c.logo}
                               alt={c.name}
@@ -323,107 +420,150 @@ export default function ClinicsManager() {
             </tbody>
           </table>
         </div>
+
+        {!loading && !error && pagination.totalPages > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 20px',
+              borderTop: '1px solid #e2e8f0',
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 14, color: '#64748b' }}>
+              Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total clinics)
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="admin-btn-reset"
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage <= 1}
+              >
+                Previous
+              </button>
+              <button
+                className="admin-btn-apply"
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage >= pagination.totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Modal Dialog */}
       {showModal && (
         <div className="admin-modal-backdrop" onClick={handleCloseModal}>
           <div className="admin-modal-card" onClick={e => e.stopPropagation()}>
             <h3 className="admin-modal-title">
-              {editingItem ? 'Edit Clinic Registration' : 'Register New Clinic'}
+              {editingId ? 'Edit Clinic Registration' : 'Register New Clinic'}
             </h3>
-            <form onSubmit={handleSubmit}>
-              <div className="admin-form-grid">
 
-                <div className="admin-form-full">
-                  <label className="admin-form-label">Clinic Name *</label>
-                  <input
-                    className="admin-input"
-                    placeholder="e.g. Apollo Wellness Clinic"
-                    value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
-                    required
-                  />
+            {loadingForm ? (
+              <p style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                Loading clinic details...
+              </p>
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <div className="admin-form-grid">
+                  <div className="admin-form-full">
+                    <label className="admin-form-label">Clinic Name *</label>
+                    <input
+                      className="admin-input"
+                      placeholder="e.g. Apollo Wellness Clinic"
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Email Address</label>
+                    <input
+                      type="email"
+                      className="admin-input"
+                      placeholder="clinic@example.com"
+                      value={form.email}
+                      onChange={e => setForm({ ...form, email: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Contact Number</label>
+                    <input
+                      className="admin-input"
+                      placeholder="Phone number"
+                      value={form.phone}
+                      onChange={e => setForm({ ...form, phone: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">City</label>
+                    <input
+                      className="admin-input"
+                      placeholder="City name"
+                      value={form.city}
+                      onChange={e => setForm({ ...form, city: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">State</label>
+                    <input
+                      className="admin-input"
+                      placeholder="State name"
+                      value={form.state}
+                      onChange={e => setForm({ ...form, state: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="admin-form-full">
+                    <label className="admin-form-label">Address</label>
+                    <textarea
+                      className="admin-textarea"
+                      placeholder="Complete clinic address..."
+                      value={form.address}
+                      onChange={e => setForm({ ...form, address: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Activation Status</label>
+                    <select
+                      className="admin-select"
+                      value={form.status}
+                      onChange={e => setForm({ ...form, status: e.target.value })}
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="admin-form-label">Email Address</label>
-                  <input
-                    type="email"
-                    className="admin-input"
-                    placeholder="clinic@example.com"
-                    value={form.email}
-                    onChange={e => setForm({ ...form, email: e.target.value })}
-                  />
-                </div>
+                {formError && (
+                  <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
+                )}
 
-                <div>
-                  <label className="admin-form-label">Contact Number</label>
-                  <input
-                    className="admin-input"
-                    placeholder="Phone number"
-                    value={form.phone}
-                    onChange={e => setForm({ ...form, phone: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="admin-form-label">City</label>
-                  <input
-                    className="admin-input"
-                    placeholder="City name"
-                    value={form.city}
-                    onChange={e => setForm({ ...form, city: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="admin-form-label">State</label>
-                  <input
-                    className="admin-input"
-                    placeholder="State name"
-                    value={form.state}
-                    onChange={e => setForm({ ...form, state: e.target.value })}
-                  />
-                </div>
-
-                <div className="admin-form-full">
-                  <label className="admin-form-label">Address</label>
-                  <textarea
-                    className="admin-textarea"
-                    placeholder="Complete clinic address..."
-                    value={form.address}
-                    onChange={e => setForm({ ...form, address: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="admin-form-label">Activation Status</label>
-                  <select
-                    className="admin-select"
-                    value={form.status}
-                    onChange={e => setForm({ ...form, status: e.target.value })}
+                <div className="admin-form-actions">
+                  <button type="submit" className="admin-save-btn" disabled={saving}>
+                    {saving ? 'Saving...' : editingId ? 'Update Clinic' : 'Save Clinic'}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-cancel-btn"
+                    onClick={handleCloseModal}
+                    disabled={saving}
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                    Cancel
+                  </button>
                 </div>
-
-              </div>
-
-              {formError && (
-                <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
-              )}
-
-              <div className="admin-form-actions">
-                <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Saving...' : editingItem ? 'Update Clinic' : 'Save Clinic'}
-                </button>
-                <button type="button" className="admin-cancel-btn" onClick={handleCloseModal} disabled={saving}>
-                  Cancel
-                </button>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
         </div>
       )}

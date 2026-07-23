@@ -52,7 +52,7 @@ export async function createCity(payload) {
  * Get a single city by ID (for edit form).
  */
 export async function getCityById(id) {
-  const response = await apiClient.get(`/admin/city/${id}`);
+  const response = await apiClient.get(`/admin/cities/${id}`);
 
   if (response.data?.success) {
     return response.data.data;

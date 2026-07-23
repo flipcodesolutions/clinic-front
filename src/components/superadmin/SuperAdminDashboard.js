@@ -20,22 +20,28 @@ export default function SuperAdminDashboard() {
       try {
         setLoading(true);
         const [clinicsData, deptsData, servicesData, citiesData] = await Promise.allSettled([
-          getClinics(),
-          getDepartments(),
-          getServices(),
-          getCities(),
+          getClinics({ limit: 10 }),
+          getDepartments({ limit: 1 }),
+          getServices({ limit: 1 }),
+          getCities({ limit: 1 }),
         ]);
 
-        const clinicsList = clinicsData.status === 'fulfilled' ? clinicsData.value || [] : [];
-        const deptsList = deptsData.status === 'fulfilled' ? deptsData.value || [] : [];
-        const servicesList = servicesData.status === 'fulfilled' ? servicesData.value || [] : [];
-        const citiesList = citiesData.status === 'fulfilled' ? citiesData.value || [] : [];
+        const clinicsRes = clinicsData.status === 'fulfilled' ? clinicsData.value : null;
+        const deptsRes = deptsData.status === 'fulfilled' ? deptsData.value : null;
+        const servicesRes = servicesData.status === 'fulfilled' ? servicesData.value : null;
+        const citiesRes = citiesData.status === 'fulfilled' ? citiesData.value : null;
+
+        const clinicsList = Array.isArray(clinicsRes?.data)
+          ? clinicsRes.data
+          : Array.isArray(clinicsRes)
+          ? clinicsRes
+          : [];
 
         setStats({
-          clinics: clinicsList.length,
-          departments: deptsList.length,
-          services: servicesList.length,
-          cities: citiesList.length,
+          clinics: clinicsRes?.count ?? clinicsList.length,
+          departments: deptsRes?.count ?? (Array.isArray(deptsRes?.data) ? deptsRes.data.length : 0),
+          services: servicesRes?.count ?? (Array.isArray(servicesRes?.data) ? servicesRes.data.length : 0),
+          cities: citiesRes?.count ?? (Array.isArray(citiesRes?.data) ? citiesRes.data.length : 0),
         });
 
         // Top 5 recent clinics

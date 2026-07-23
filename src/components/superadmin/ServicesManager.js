@@ -1,7 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
-import { createService, deleteService, getServices, updateService } from '@/services/serviceService';
+import {
+  createService,
+  deleteService,
+  getServices,
+  getServiceById,
+  updateService,
+} from '@/services/serviceService';
+import { showError, showSuccess } from '@/utils/toast';
 
 function formatStatus(status) {
   if (!status) return 'Inactive';
@@ -15,40 +22,92 @@ const emptyForm = {
   status: 'active',
 };
 
+const defaultFilters = {
+  search: '',
+  status: '',
+  page: 1,
+  limit: 10,
+};
+
 export default function ServicesManager() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm);
-  const [editingItem, setEditingItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [loadingForm, setLoadingForm] = useState(false);
   const [formError, setFormError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [activeFilters, setActiveFilters] = useState({});
+  const [activeFilters, setActiveFilters] = useState(defaultFilters);
+  const [pagination, setPagination] = useState({
+    count: 0,
+    currentPage: 1,
+    totalPages: 1,
+    limit: 10,
+  });
 
-  const loadServices = async (filters = {}) => {
+  const loadServices = async (filters = activeFilters) => {
     try {
       setLoading(true);
       setError('');
-      const data = await getServices(filters);
-      setServices(data);
+      const result = await getServices(filters);
+      setServices(result.data || []);
+      setPagination({
+        count: result.count ?? 0,
+        currentPage: result.currentPage ?? 1,
+        totalPages: result.totalPages ?? 1,
+        limit: result.limit ?? filters.limit ?? 10,
+      });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Something went wrong while loading services.');
+      const message = err.response?.data?.message || err.message || 'Something went wrong while loading services.';
+      setError(message);
+      showError(err, message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadServices();
+    let isMounted = true;
+    getServices(defaultFilters)
+      .then((result) => {
+        if (isMounted) {
+          setServices(result.data || []);
+          setPagination({
+            count: result.count ?? 0,
+            currentPage: result.currentPage ?? 1,
+            totalPages: result.totalPages ?? 1,
+            limit: result.limit ?? defaultFilters.limit ?? 10,
+          });
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          const message = err.response?.data?.message || err.message || 'Something went wrong while loading services.';
+          setError(message);
+          showError(err, message);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleApplyFilter = () => {
     const filters = {
       search: search.trim(),
       status: statusFilter,
+      page: 1,
+      limit: activeFilters.limit,
     };
     setActiveFilters(filters);
     loadServices(filters);
@@ -57,33 +116,72 @@ export default function ServicesManager() {
   const handleResetFilter = () => {
     setSearch('');
     setStatusFilter('');
-    setActiveFilters({});
-    loadServices();
+    setActiveFilters(defaultFilters);
+    loadServices(defaultFilters);
+  };
+
+  const handleLimitChange = (limit) => {
+    const filters = {
+      ...activeFilters,
+      page: 1,
+      limit: Number(limit),
+    };
+    setActiveFilters(filters);
+    loadServices(filters);
+  };
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > pagination.totalPages) return;
+
+    const filters = {
+      ...activeFilters,
+      page,
+    };
+    setActiveFilters(filters);
+    loadServices(filters);
   };
 
   const handleOpenAdd = () => {
-    setEditingItem(null);
+    setEditingId(null);
     setForm(emptyForm);
     setFormError('');
     setShowModal(true);
   };
 
-  const handleOpenEdit = (service) => {
-    setEditingItem(service);
-    setForm({
-      name: service.name || '',
-      description: service.description || '',
-      price: service.price || '',
-      status: service.status || 'active',
-    });
+  const handleOpenEdit = async (service) => {
+    setEditingId(service.id);
     setFormError('');
     setShowModal(true);
+    setLoadingForm(true);
+
+    try {
+      const data = await getServiceById(service.id);
+      setForm({
+        name: data.name || '',
+        description: data.description || '',
+        price: data.price || '',
+        status: data.status || 'active',
+      });
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Failed to load service details.';
+      setFormError(message);
+      showError(err, message);
+      setForm({
+        name: service.name || '',
+        description: service.description || '',
+        price: service.price || '',
+        status: service.status || 'active',
+      });
+    } finally {
+      setLoadingForm(false);
+    }
   };
 
   const handleCloseModal = () => {
-    if (saving) return;
+    if (saving || loadingForm) return;
     setShowModal(false);
-    setEditingItem(null);
+    setEditingId(null);
+    setForm(emptyForm);
     setFormError('');
   };
 
@@ -106,19 +204,26 @@ export default function ServicesManager() {
         status: form.status,
       };
 
-      if (editingItem) {
-        await updateService(editingItem.id, payload);
+      if (editingId) {
+        const result = await updateService(editingId, payload);
+        showSuccess(result.message);
         await loadServices(activeFilters);
       } else {
-        const newService = await createService(payload);
-        setServices(prev => [newService, ...prev]);
+        const result = await createService(payload);
+        showSuccess(result.message);
+        await loadServices(activeFilters);
       }
 
       setForm(emptyForm);
-      setEditingItem(null);
+      setEditingId(null);
       setShowModal(false);
     } catch (err) {
-      setFormError(err.response?.data?.message || err.message || `Failed to ${editingItem ? 'update' : 'add'} service.`);
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        (editingId ? 'Failed to update service.' : 'Failed to add service.');
+      setFormError(message);
+      showError(err, message);
     } finally {
       setSaving(false);
     }
@@ -139,44 +244,28 @@ export default function ServicesManager() {
     if (!result.isConfirmed) return;
 
     try {
-      await deleteService(service.id);
+      const deleteResult = await deleteService(service.id);
       await loadServices(activeFilters);
-
-      Swal.fire({
-        title: 'Deleted!',
-        text: 'Service has been removed successfully.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
-      });
+      showSuccess(deleteResult.message);
     } catch (err) {
-      Swal.fire({
-        title: 'Error',
-        text: err.response?.data?.message || err.message || 'Failed to delete service.',
-        icon: 'error',
-      });
+      showError(err, 'Failed to delete service.');
     }
   };
 
   const toggleStatus = async (service) => {
-    try {
-      const currentIsActive = formatStatus(service.status) === 'Active';
-      const newStatus = currentIsActive ? 'inactive' : 'active';
+    const newStatus = formatStatus(service.status) === 'Active' ? 'inactive' : 'active';
 
-      await updateService(service.id, {
+    try {
+      const result = await updateService(service.id, {
         name: service.name,
         description: service.description,
         price: service.price,
         status: newStatus,
       });
-
+      showSuccess(result.message);
       await loadServices(activeFilters);
     } catch (err) {
-      Swal.fire({
-        title: 'Error',
-        text: err.response?.data?.message || err.message || 'Failed to update service status.',
-        icon: 'error',
-      });
+      showError(err, 'Failed to update status');
     }
   };
 
@@ -208,6 +297,16 @@ export default function ServicesManager() {
           <option value="">All Statuses</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
+        </select>
+        <select
+          className="admin-filter-select"
+          value={activeFilters.limit}
+          onChange={e => handleLimitChange(e.target.value)}
+        >
+          <option value="10">10 per page</option>
+          <option value="25">25 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
         </select>
         <button className="admin-btn-apply" onClick={handleApplyFilter}>
           Apply Filter
@@ -293,79 +392,122 @@ export default function ServicesManager() {
             </tbody>
           </table>
         </div>
+
+        {!loading && !error && pagination.totalPages > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 20px',
+              borderTop: '1px solid #e2e8f0',
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 14, color: '#64748b' }}>
+              Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total services)
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="admin-btn-reset"
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage <= 1}
+              >
+                Previous
+              </button>
+              <button
+                className="admin-btn-apply"
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage >= pagination.totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showModal && (
         <div className="admin-modal-backdrop" onClick={handleCloseModal}>
           <div className="admin-modal-card" onClick={e => e.stopPropagation()}>
-            <h3 className="admin-modal-title">{editingItem ? 'Edit Service' : 'Add New Service'}</h3>
-            <form onSubmit={handleSubmit}>
-              <div className="admin-form-grid">
-                <div className="admin-form-full">
-                  <label className="admin-form-label">Service Name *</label>
-                  <input
-                    className="admin-input"
-                    placeholder="e.g. Intensive Care Unit (ICU)"
-                    value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
-                    required
-                    autoFocus
-                  />
+            <h3 className="admin-modal-title">
+              {editingId ? 'Edit Service' : 'Add New Service'}
+            </h3>
+
+            {loadingForm ? (
+              <p style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                Loading service details...
+              </p>
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <div className="admin-form-grid">
+                  <div className="admin-form-full">
+                    <label className="admin-form-label">Service Name *</label>
+                    <input
+                      className="admin-input"
+                      placeholder="e.g. Intensive Care Unit (ICU)"
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="admin-form-full">
+                    <label className="admin-form-label">Description</label>
+                    <textarea
+                      className="admin-textarea"
+                      placeholder="Short description of this service..."
+                      value={form.description}
+                      onChange={e => setForm({ ...form, description: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Price (₹)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="admin-input"
+                      placeholder="e.g. 500"
+                      value={form.price}
+                      onChange={e => setForm({ ...form, price: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Status</label>
+                    <select
+                      className="admin-select"
+                      value={form.status}
+                      onChange={e => setForm({ ...form, status: e.target.value })}
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="admin-form-full">
-                  <label className="admin-form-label">Description</label>
-                  <textarea
-                    className="admin-textarea"
-                    placeholder="Short description of this service..."
-                    value={form.description}
-                    onChange={e => setForm({ ...form, description: e.target.value })}
-                  />
-                </div>
+                {formError && (
+                  <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
+                )}
 
-                <div>
-                  <label className="admin-form-label">Price (₹)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="admin-input"
-                    placeholder="e.g. 500"
-                    value={form.price}
-                    onChange={e => setForm({ ...form, price: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="admin-form-label">Status</label>
-                  <select
-                    className="admin-select"
-                    value={form.status}
-                    onChange={e => setForm({ ...form, status: e.target.value })}
+                <div className="admin-form-actions">
+                  <button type="submit" className="admin-save-btn" disabled={saving}>
+                    {saving ? 'Saving...' : editingId ? 'Update Service' : 'Save Service'}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-cancel-btn"
+                    onClick={handleCloseModal}
+                    disabled={saving}
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                    Cancel
+                  </button>
                 </div>
-              </div>
-
-              {formError && (
-                <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
-              )}
-
-              <div className="admin-form-actions">
-                <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Saving...' : editingItem ? 'Update Service' : 'Save Service'}
-                </button>
-                <button
-                  type="button"
-                  className="admin-cancel-btn"
-                  onClick={handleCloseModal}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
         </div>
       )}
