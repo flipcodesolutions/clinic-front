@@ -5,6 +5,7 @@ import { getCities } from '@/services/cityService';
 import { getClinics } from '@/services/clinicService';
 import { getDepartments } from '@/services/departmentService';
 import { getServices } from '@/services/serviceService';
+import { getUsers } from '@/services/userService';
 
 export default function SuperAdminDashboard() {
   const [stats, setStats] = useState({
@@ -12,6 +13,7 @@ export default function SuperAdminDashboard() {
     departments: 0,
     services: 0,
     cities: 0,
+    users: 0,
   });
   const [recentClinics, setRecentClinics] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,17 +22,19 @@ export default function SuperAdminDashboard() {
     async function fetchDashboardData() {
       try {
         setLoading(true);
-        const [clinicsData, deptsData, servicesData, citiesData] = await Promise.allSettled([
+        const [clinicsData, deptsData, servicesData, citiesData, usersData] = await Promise.allSettled([
           getClinics({ limit: 10 }),
           getDepartments({ limit: 1 }),
           getServices({ limit: 1 }),
           getCities({ limit: 1 }),
+          getUsers({ limit: 1 }),
         ]);
 
         const clinicsRes = clinicsData.status === 'fulfilled' ? clinicsData.value : null;
         const deptsRes = deptsData.status === 'fulfilled' ? deptsData.value : null;
         const servicesRes = servicesData.status === 'fulfilled' ? servicesData.value : null;
         const citiesRes = citiesData.status === 'fulfilled' ? citiesData.value : null;
+        const usersRes = usersData.status === 'fulfilled' ? usersData.value : null;
 
         const clinicsList = Array.isArray(clinicsRes?.data)
           ? clinicsRes.data
@@ -43,6 +47,7 @@ export default function SuperAdminDashboard() {
           departments: deptsRes?.count ?? (Array.isArray(deptsRes?.data) ? deptsRes.data.length : 0),
           services: servicesRes?.count ?? (Array.isArray(servicesRes?.data) ? servicesRes.data.length : 0),
           cities: citiesRes?.count ?? (Array.isArray(citiesRes?.data) ? citiesRes.data.length : 0),
+          users: usersRes?.stats?.total ?? usersRes?.count ?? 0,
         });
 
         // Top 5 recent clinics
@@ -62,6 +67,7 @@ export default function SuperAdminDashboard() {
     { label: 'Total Specialties', count: stats.departments, icon: '🩺', theme: 'purple', href: '/super-admin-panel/departments' },
     { label: 'Global Services', count: stats.services, icon: '⚙️', theme: 'blue', href: '/super-admin-panel/services' },
     { label: 'Active Cities', count: stats.cities, icon: '🏙️', theme: 'emerald', href: '/super-admin-panel/cities' },
+    { label: 'System Users', count: stats.users, icon: '👥', theme: 'indigo', href: '/super-admin-panel/users' },
   ];
 
   return (
