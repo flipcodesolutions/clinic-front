@@ -1,83 +1,213 @@
 'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-const stats = [
-  { label: 'Total Doctors', value: '12', icon: '👨‍⚕️', change: '+2 this month', colorClass: 'purple' },
-  { label: 'Staff Members', value: '28', icon: '👥', change: '+5 this month', colorClass: 'pink' },
-  { label: 'Appointments', value: '340', icon: '📅', change: '+18 today', colorClass: 'amber' },
-  { label: 'Avg Rating', value: '4.8', icon: '⭐', change: '+0.2 this week', colorClass: 'green' },
-];
-
-const recentDoctors = [
-  { name: 'Dr. Priya Sharma', speciality: 'Dentist', status: 'Active', patients: 45 },
-  { name: 'Dr. Arjun Mehta', speciality: 'Cardiologist', status: 'Active', patients: 32 },
-  { name: 'Dr. Neha Patel', speciality: 'Dermatologist', status: 'On Leave', patients: 28 },
-  { name: 'Dr. Rahul Gupta', speciality: 'Orthopedic', status: 'Active', patients: 51 },
-];
+import { getClinicDashboardData } from '@/services/clinicAdminService';
 
 export default function ClinicDashboard() {
+  const [data, setData] = useState({
+    stats: {
+      todayAppointments: 0,
+      doctorsCount: 0,
+      staffCount: 0,
+      departmentsCount: 0,
+      servicesCount: 0,
+    },
+    appointments: [],
+    doctors: [],
+    staff: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        const res = await getClinicDashboardData();
+        setData(res);
+      } catch (err) {
+        console.error('Failed to load clinic dashboard data', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const statsCards = [
+    { label: "Today's Appointments", count: data.stats.todayAppointments, icon: '📅', theme: 'teal', href: '/clinic-panel/dashboard' },
+    { label: 'Active Doctors', count: data.stats.doctorsCount, icon: '🩺', theme: 'cyan', href: '/clinic-panel/doctors' },
+    { label: 'Clinic Staff', count: data.stats.staffCount, icon: '👥', theme: 'emerald', href: '/clinic-panel/staff' },
+    { label: 'Assigned Departments', count: data.stats.departmentsCount, icon: '🏢', theme: 'blue', href: '/clinic-panel/departments' },
+    { label: 'Clinic Services', count: data.stats.servicesCount, icon: '⚙️', theme: 'teal', href: '/clinic-panel/services' },
+  ];
+
   return (
     <div className="clinic-dashboard">
       {/* Header */}
-      <div className="clinic-page-header">
-        <h1 className="clinic-page-title">Good Morning, Clinic Admin</h1>
-        <p className="clinic-page-subtitle">Here what happening at your clinic today.</p>
+      <div className="clinic-header">
+        <div>
+          <h1 className="clinic-title">Clinic Control Center</h1>
+          <p className="clinic-subtitle">Manage daily operations, appointments, doctors, staff, and clinic facilities.</p>
+        </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Cards Grid */}
       <div className="clinic-stats-grid">
-        {stats.map((stat, i) => (
-          <div key={i} className="clinic-stat-card">
-            <div className="clinic-stat-card-top">
-              <div className={`clinic-stat-icon ${stat.colorClass}`}>{stat.icon}</div>
-              <div className="clinic-stat-badge">{stat.change}</div>
+        {statsCards.map((s, idx) => (
+          <Link key={idx} href={s.href} className="clinic-stat-card-link" aria-label={`Open ${s.label}`}>
+            <div className="clinic-stat-card">
+              <div>
+                <p className="clinic-stat-number">{loading ? '...' : s.count}</p>
+                <p className="clinic-stat-label">{s.label}</p>
+              </div>
+              <div className={`clinic-stat-icon-wrap ${s.theme}`}>{s.icon}</div>
             </div>
-            <div className="clinic-stat-value">{stat.value}</div>
-            <div className="clinic-stat-label">{stat.label}</div>
-          </div>
+          </Link>
         ))}
       </div>
 
-      {/* Table Card */}
+      {/* Today's Appointments Section */}
       <div className="clinic-table-card">
-        <div className="clinic-table-card-header">
-          <div>
-            <h2 className="clinic-table-card-title">Recent Doctors</h2>
-            <p className="clinic-table-card-subtitle">Clinics registered doctors</p>
-          </div>
-          <Link href="/clinic-panel/doctors" className="clinic-add-btn text-decoration-none d-inline-block">
-            Manage Doctors
-          </Link>
+        <div className="clinic-table-header">
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>
+            📅 Today's Appointments
+          </h3>
+          <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+            {data.appointments.length} Total Bookings Today
+          </span>
         </div>
         <div className="clinic-table-wrap">
           <table className="clinic-table">
             <thead>
               <tr>
-                {['Doctor', 'Speciality', 'Patients', 'Status'].map(h => (
-                  <th key={h}>{h}</th>
-                ))}
+                <th>Patient Name</th>
+                <th>Assigned Doctor</th>
+                <th>Specialty</th>
+                <th>Time Slot</th>
+                <th>Type</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {recentDoctors.map((doc, i) => (
-                <tr key={i}>
-                  <td>
-                    <div className="clinic-doctor-cell">
-                      <div className="clinic-avatar">{doc.name.charAt(4)}</div>
-                      <span className="clinic-doctor-name">{doc.name}</span>
-                    </div>
-                  </td>
-                  <td>{doc.speciality}</td>
-                  <td>{doc.patients}</td>
-                  <td>
-                    <span className={`clinic-status-badge ${doc.status === 'Active' ? 'active' : 'leave'}`}>
-                      {doc.status}
-                    </span>
+              {loading ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                    Loading appointments...
                   </td>
                 </tr>
-              ))}
+              ) : data.appointments.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                    No appointments scheduled for today.
+                  </td>
+                </tr>
+              ) : (
+                data.appointments.map((app) => (
+                  <tr key={app.id}>
+                    <td>
+                      <span style={{ fontWeight: 600, color: '#0f172a' }}>{app.patient_name}</span>
+                    </td>
+                    <td>{app.doctor_name}</td>
+                    <td>
+                      <span className="clinic-gallery-tag">{app.specialty}</span>
+                    </td>
+                    <td style={{ fontWeight: 600, color: '#0d9488' }}>{app.time}</td>
+                    <td>{app.type}</td>
+                    <td>
+                      <span className={`clinic-badge ${app.status}`}>
+                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Side-by-side Doctor List & Staff List previews */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 }}>
+        {/* Doctor List */}
+        <div className="clinic-table-card" style={{ marginBottom: 0 }}>
+          <div className="clinic-table-header">
+            <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>🩺 Doctors Overview</h4>
+            <Link href="/clinic-panel/doctors" className="clinic-btn clinic-btn-primary clinic-btn-sm">
+              Manage Doctors
+            </Link>
+          </div>
+          <div className="clinic-table-wrap">
+            <table className="clinic-table">
+              <thead>
+                <tr>
+                  <th>Doctor</th>
+                  <th>Specialty</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.doctors.slice(0, 4).map((doc) => (
+                  <tr key={doc.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <img
+                          src={doc.photo_url}
+                          alt={doc.first_name}
+                          style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{doc.first_name} {doc.last_name}</div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>{doc.qualification}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ fontSize: 13 }}>{doc.specialty}</td>
+                    <td>
+                      <span className={`clinic-badge ${doc.status}`}>{doc.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Staff List */}
+        <div className="clinic-table-card" style={{ marginBottom: 0 }}>
+          <div className="clinic-table-header">
+            <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>👥 Clinic Staff Overview</h4>
+            <Link href="/clinic-panel/staff" className="clinic-btn clinic-btn-primary clinic-btn-sm">
+              Manage Staff
+            </Link>
+          </div>
+          <div className="clinic-table-wrap">
+            <table className="clinic-table">
+              <thead>
+                <tr>
+                  <th>Staff Name</th>
+                  <th>Role / Shift</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.staff.slice(0, 4).map((s) => (
+                  <tr key={s.id}>
+                    <td>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{s.first_name} {s.last_name}</div>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>{s.email}</div>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: 13 }}>{s.designation}</div>
+                      <div style={{ fontSize: 11, color: '#0d9488' }}>{s.shift} Shift</div>
+                    </td>
+                    <td>
+                      <span className={`clinic-badge ${s.status}`}>{s.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

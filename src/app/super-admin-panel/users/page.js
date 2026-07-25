@@ -1,5 +1,6 @@
-import UsersManager from '@/components/superadmin/UsersManager';
+import ClinicsManager from '@/components/superadmin/ClinicsManager';
 
 export default function UsersPage() {
-  return <UsersManager />;
+  return <ClinicsManager initialTab="admins" />;
 }
+

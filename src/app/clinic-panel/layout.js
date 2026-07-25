@@ -1,11 +1,16 @@
 import '@/css/Clinic.css';
 import ClinicPanelShell from '@/components/clinic/ClinicPanelShell';
+import ClinicPanelLayout from '@/components/clinic/ClinicPanelLayout';
 
 export const metadata = {
-  title: 'Clinic Panel - Medi Growth',
-  description: 'Manage your clinic dashboard, staff, gallery and more.',
+  title: 'Clinic Admin Panel - Medi Growth',
+  description: 'Manage clinic operations, doctors, staff, gallery, departments and services.',
 };
 
-export default function ClinicPanelLayout({ children }) {
-  return <ClinicPanelShell>{children}</ClinicPanelShell>;
+export default function Layout({ children }) {
+  return (
+    <ClinicPanelShell>
+      <ClinicPanelLayout>{children}</ClinicPanelLayout>
+    </ClinicPanelShell>
+  );
 }

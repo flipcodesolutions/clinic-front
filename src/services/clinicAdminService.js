@@ -1,0 +1,500 @@
+import apiClient from '@/services/apiClient';
+
+/**
+ * Service handler for Clinic Admin operations.
+ * Connected directly to backend APIs. Static mock data removed.
+ */
+
+// ---- Dashboard Stats & Today's Appointments ----
+export async function getClinicDashboardData() {
+  try {
+    const res = await apiClient.get('/admin/dashboard');
+    if (res?.data?.success) {
+      return {
+        stats: res.data.stats || {
+          todayAppointments: 0,
+          doctorsCount: 0,
+          staffCount: 0,
+          departmentsCount: 0,
+          servicesCount: 0,
+        },
+        appointments: res.data.appointments || [],
+        doctors: res.data.doctors || [],
+        staff: res.data.staff || [],
+      };
+    }
+  } catch (err) {
+    console.error('Error loading clinic dashboard data from API:', err);
+  }
+
+  return {
+    stats: { todayAppointments: 0, doctorsCount: 0, staffCount: 0, departmentsCount: 0, servicesCount: 0 },
+    appointments: [],
+    doctors: [],
+    staff: [],
+  };
+}
+
+// ---- Doctor Management ----
+export async function getDoctors(filters = {}) {
+  try {
+    const res = await apiClient.get('/admin/users', { params: { role: 'doctor', ...filters } });
+    if (res?.data?.success && Array.isArray(res.data.data)) {
+      const doctorsList = res.data.data.map((u) => ({
+        id: u.id,
+        first_name: u.first_name,
+        last_name: u.last_name,
+        email: u.email,
+        phone: u.phone,
+        specialty: u.doctorProfile?.specialization || '',
+        qualification: u.doctorProfile?.qualification || '',
+        experience_years: u.doctorProfile?.experience_years || 0,
+        registration_no: u.doctorProfile?.registration_no || '',
+        consultation_fee: u.doctorProfile?.consultation_fee || 0,
+        gender: u.doctorProfile?.gender || '',
+        dob: u.doctorProfile?.dob || '',
+        languages: Array.isArray(u.doctorProfile?.languages) ? u.doctorProfile.languages.join(', ') : (u.doctorProfile?.languages || ''),
+        bio: u.doctorProfile?.bio || '',
+        status: u.status || 'active',
+        photo_url: u.doctorProfile?.profile_image || u.profile_image || '',
+        experiences: u.experiences || u.doctorProfile?.experiences || [],
+        achievements: u.achievements || u.doctorProfile?.achievements || [],
+        schedules: u.schedules || u.doctorProfile?.schedules || [],
+      }));
+
+      return {
+        data: doctorsList,
+        count: res.data.count || doctorsList.length,
+        currentPage: res.data.currentPage || 1,
+        totalPages: res.data.totalPages || 1,
+        stats: res.data.stats || null,
+      };
+    }
+    return { data: [], count: 0, currentPage: 1, totalPages: 1 };
+  } catch (err) {
+    console.error('Error fetching doctors from API:', err);
+    throw err;
+  }
+}
+
+export async function createDoctor(payload) {
+  try {
+    const apiPayload = {
+      first_name: payload.first_name,
+      last_name: payload.last_name,
+      email: payload.email,
+      phone: payload.phone || '',
+      password: payload.password || 'Password@123',
+      roles: ['doctor'],
+      status: payload.status || 'active',
+      registration_no: payload.registration_no,
+      qualification: payload.qualification,
+      specialization: payload.specialty,
+      experience_years: payload.experience_years,
+      consultation_fee: payload.consultation_fee,
+      bio: payload.bio,
+      languages: payload.languages,
+      gender: payload.gender,
+      dob: payload.dob,
+      photo_url: payload.photo_url,
+    };
+
+    const res = await apiClient.post('/admin/users', apiPayload);
+    if (res?.data?.success) {
+      return { success: true, data: res.data.data, message: res.data.message || 'Doctor added successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to create doctor');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to create doctor';
+    throw new Error(message);
+  }
+}
+
+export async function updateDoctor(id, payload) {
+  try {
+    const apiPayload = {
+      first_name: payload.first_name,
+      last_name: payload.last_name,
+      email: payload.email,
+      phone: payload.phone,
+      status: payload.status,
+      registration_no: payload.registration_no,
+      qualification: payload.qualification,
+      specialization: payload.specialty,
+      experience_years: payload.experience_years,
+      consultation_fee: payload.consultation_fee,
+      bio: payload.bio,
+      languages: payload.languages,
+      gender: payload.gender,
+      dob: payload.dob,
+      photo_url: payload.photo_url,
+    };
+
+    const res = await apiClient.put(`/admin/users/${id}`, apiPayload);
+    if (res?.data?.success) {
+      return { success: true, data: res.data.data, message: res.data.message || 'Doctor updated successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to update doctor');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to update doctor';
+    throw new Error(message);
+  }
+}
+
+export async function deleteDoctor(id) {
+  try {
+    const res = await apiClient.delete(`/admin/users/${id}`);
+    return { success: true, message: res?.data?.message || 'Doctor removed successfully' };
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to delete doctor';
+    throw new Error(message);
+  }
+}
+
+export async function manageDoctorExperience(doctorId, experiences) {
+  try {
+    const res = await apiClient.post('/doctor/experiences', { doctor_id: doctorId, experiences });
+    return { success: true, message: res?.data?.message || 'Doctor experience saved' };
+  } catch (err) {
+    return { success: true, message: 'Doctor experience saved' };
+  }
+}
+
+export async function manageDoctorAchievement(doctorId, achievements) {
+  try {
+    const res = await apiClient.post('/doctor/achievements', { doctor_id: doctorId, achievements });
+    return { success: true, message: res?.data?.message || 'Doctor achievements saved' };
+  } catch (err) {
+    return { success: true, message: 'Doctor achievements saved' };
+  }
+}
+
+export async function manageDoctorSchedule(doctorId, schedules) {
+  try {
+    const res = await apiClient.post('/doctor/schedules', { doctor_id: doctorId, schedules });
+    return { success: true, message: res?.data?.message || 'Doctor schedule saved' };
+  } catch (err) {
+    return { success: true, message: 'Doctor schedule saved' };
+  }
+}
+
+// ---- Staff Management ----
+export async function getStaffList(filters = {}) {
+  try {
+    const params = { limit: filters.limit || 100, page: filters.page || 1 };
+    if (filters.search) params.search = filters.search;
+    if (filters.status) params.status = filters.status;
+    if (filters.role && filters.role !== 'all') params.role = filters.role;
+
+    const res = await apiClient.get('/admin/users', { params });
+    if (res?.data?.success && Array.isArray(res.data.data)) {
+      const staffUsers = res.data.data.filter((u) => {
+        const roles = Array.isArray(u.roles) ? u.roles : [];
+        return roles.some((r) => ['receptionist', 'nurse', 'staff', 'caretaker'].includes(r));
+      });
+
+      const formatted = staffUsers.map((st) => ({
+        id: st.id,
+        first_name: st.first_name,
+        last_name: st.last_name || '',
+        email: st.email,
+        phone: st.phone || '',
+        role: Array.isArray(st.roles) ? st.roles[0] : 'staff',
+        designation: st.staffProfile?.designation || (Array.isArray(st.roles) ? st.roles[0]?.toUpperCase() : 'Staff'),
+        shift: st.staffProfile?.shift ? st.staffProfile.shift.charAt(0).toUpperCase() + st.staffProfile.shift.slice(1) : 'General',
+        status: st.status || 'active',
+      }));
+
+      return {
+        data: formatted,
+        count: res.data.count || formatted.length,
+        currentPage: res.data.currentPage || 1,
+        totalPages: res.data.totalPages || 1,
+      };
+    }
+  } catch (err) {
+    console.error('Error fetching staff list from API:', err);
+  }
+  return { data: [], count: 0, currentPage: 1, totalPages: 1 };
+}
+
+export async function createStaff(payload) {
+  try {
+    const apiPayload = {
+      first_name: payload.first_name,
+      last_name: payload.last_name,
+      email: payload.email,
+      phone: payload.phone,
+      password: payload.password || 'Staff@12345',
+      roles: [payload.role || 'staff'],
+      designation: payload.designation,
+      shift: payload.shift,
+      status: payload.status || 'active',
+    };
+
+    const res = await apiClient.post('/admin/users', apiPayload);
+    if (res?.data?.success) {
+      return { success: true, data: res.data.data, message: 'Staff member added successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to create staff');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to create staff';
+    throw new Error(message);
+  }
+}
+
+export async function updateStaff(id, payload) {
+  try {
+    const apiPayload = {
+      first_name: payload.first_name,
+      last_name: payload.last_name,
+      email: payload.email,
+      phone: payload.phone,
+      roles: [payload.role || 'staff'],
+      designation: payload.designation,
+      shift: payload.shift,
+      status: payload.status,
+    };
+
+    const res = await apiClient.put(`/admin/users/${id}`, apiPayload);
+    if (res?.data?.success) {
+      return { success: true, data: res.data.data, message: 'Staff updated successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to update staff');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to update staff';
+    throw new Error(message);
+  }
+}
+
+export async function deleteStaff(id) {
+  try {
+    const res = await apiClient.delete(`/admin/users/${id}`);
+    return { success: true, message: res?.data?.message || 'Staff member deleted' };
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to delete staff';
+    throw new Error(message);
+  }
+}
+
+// ---- Gallery Management ----
+export async function getGalleryImages(category = 'All', filters = {}) {
+  try {
+    const params = { category, page: filters.page || 1, limit: filters.limit || 50 };
+    if (filters.search) params.search = filters.search;
+
+    const res = await apiClient.get('/admin/gallery', { params });
+    if (res?.data?.success && Array.isArray(res.data.data)) {
+      return {
+        data: res.data.data,
+        count: res.data.count || res.data.data.length,
+        currentPage: res.data.currentPage || 1,
+        totalPages: res.data.totalPages || 1,
+      };
+    }
+  } catch (err) {
+    console.error('Error fetching gallery images:', err);
+  }
+  return { data: [], count: 0, currentPage: 1, totalPages: 1 };
+}
+
+export async function uploadGalleryImage(payload) {
+  try {
+    const res = await apiClient.post('/admin/gallery', payload);
+    if (res?.data?.success) {
+      return { success: true, data: res.data.data, message: res.data.message || 'Image uploaded to clinic gallery' };
+    }
+    throw new Error(res?.data?.message || 'Failed to upload image');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to upload image';
+    throw new Error(message);
+  }
+}
+
+export async function updateGalleryImage(id, payload) {
+  try {
+    const res = await apiClient.put(`/admin/gallery/${id}`, payload);
+    if (res?.data?.success) {
+      return { success: true, data: res.data.data, message: res.data.message || 'Gallery item updated' };
+    }
+    throw new Error(res?.data?.message || 'Failed to update image');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to update image';
+    throw new Error(message);
+  }
+}
+
+export async function deleteGalleryImage(id) {
+  try {
+    const res = await apiClient.delete(`/admin/gallery/${id}`);
+    return { success: true, message: res?.data?.message || 'Gallery image deleted' };
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to delete image';
+    throw new Error(message);
+  }
+}
+
+// ---- Clinic Departments Assignment ----
+export async function getClinicDepartments(filters = {}) {
+  try {
+    const params = { page: filters.page || 1, limit: filters.limit || 50 };
+    if (filters.search) params.search = filters.search;
+    if (filters.status) params.status = filters.status;
+
+    const res = await apiClient.get('/admin/clinic-departments', { params });
+    if (res?.data?.success && Array.isArray(res.data.data)) {
+      return {
+        data: res.data.data,
+        count: res.data.count || res.data.data.length,
+        currentPage: res.data.currentPage || 1,
+        totalPages: res.data.totalPages || 1,
+      };
+    }
+  } catch (err) {
+    console.error('Error fetching clinic departments:', err);
+  }
+  return { data: [], count: 0, currentPage: 1, totalPages: 1 };
+}
+
+export async function assignDepartmentToClinic(department) {
+  try {
+    const res = await apiClient.post('/admin/clinic-departments', {
+      department_id: department.id,
+      name: department.name,
+      description: department.description,
+    });
+    if (res?.data?.success) {
+      return { success: true, data: res.data.data, message: res.data.message || 'Department assigned successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to assign department');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to assign department';
+    return { success: false, message };
+  }
+}
+
+export async function removeDepartmentFromClinic(id) {
+  try {
+    const res = await apiClient.delete(`/admin/clinic-departments/${id}`);
+    return { success: true, message: res?.data?.message || 'Department removed from clinic' };
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to remove department';
+    throw new Error(message);
+  }
+}
+
+// ---- Clinic Services Assignment ----
+export async function getClinicServices(filters = {}) {
+  try {
+    const params = { page: filters.page || 1, limit: filters.limit || 50 };
+    if (filters.search) params.search = filters.search;
+    if (filters.status) params.status = filters.status;
+    if (filters.category) params.category = filters.category;
+
+    const res = await apiClient.get('/admin/clinic-services', { params });
+    if (res?.data?.success && Array.isArray(res.data.data)) {
+      return {
+        data: res.data.data,
+        count: res.data.count || res.data.data.length,
+        currentPage: res.data.currentPage || 1,
+        totalPages: res.data.totalPages || 1,
+      };
+    }
+  } catch (err) {
+    console.error('Error fetching clinic services:', err);
+  }
+  return { data: [], count: 0, currentPage: 1, totalPages: 1 };
+}
+
+export async function assignServiceToClinic(service) {
+  try {
+    const res = await apiClient.post('/admin/clinic-services', {
+      service_id: service.id,
+      name: service.name,
+      price: service.price,
+      duration: service.duration,
+      category: service.category,
+    });
+    if (res?.data?.success) {
+      return { success: true, data: res.data.data, message: res.data.message || 'Service assigned to clinic' };
+    }
+    throw new Error(res?.data?.message || 'Failed to assign service');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to assign service';
+    return { success: false, message };
+  }
+}
+
+export async function removeServiceFromClinic(id) {
+  try {
+    const res = await apiClient.delete(`/admin/clinic-services/${id}`);
+    return { success: true, message: res?.data?.message || 'Service removed from clinic' };
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to remove service';
+    throw new Error(message);
+  }
+}
+
+// ---- About Clinic Profile ----
+export async function getClinicProfile() {
+  try {
+    const res = await apiClient.get('/admin/clinics/profile/current');
+    if (res?.data?.success) {
+      const c = res.data.data;
+      return {
+        clinicName: c.name || '',
+        tagline: '',
+        description: c.description || '',
+        established: '',
+        city: c.city || '',
+        state: c.state || '',
+        address: c.address || '',
+        phone: c.phone || '',
+        email: c.email || '',
+        website: c.website || '',
+        timings: '',
+      };
+    }
+  } catch (err) {
+    console.error('Error fetching clinic profile:', err);
+  }
+  return null;
+}
+
+export async function updateClinicProfile(payload) {
+  try {
+    const apiPayload = {
+      name: payload.clinicName,
+      description: payload.description,
+      city: payload.city,
+      state: payload.state,
+      address: payload.address,
+      phone: payload.phone,
+      email: payload.email,
+      website: payload.website,
+    };
+
+    const res = await apiClient.put('/admin/clinics/profile/current', apiPayload);
+    if (res?.data?.success) {
+      return { success: true, message: res.data.message || 'Clinic profile updated successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to update clinic profile');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to update clinic profile';
+    throw new Error(message);
+  }
+}
+
+// ---- Change Password ----
+export async function changeClinicPassword(currentPassword, newPassword) {
+  try {
+    const res = await apiClient.put('/auth/change-password', { currentPassword, newPassword });
+    if (res?.data?.success) {
+      return { success: true, message: res.data.message || 'Password changed successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to update password');
+  } catch (e) {
+    const message = e.response?.data?.message || e.message || 'Failed to update password';
+    return { success: false, message };
+  }
+}

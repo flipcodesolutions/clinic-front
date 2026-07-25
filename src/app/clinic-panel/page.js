@@ -1,5 +1,5 @@
-import ClinicPanel from '@/components/clinic/ClinicPanel';
+import { redirect } from 'next/navigation';
 
-export default function ClinicPanelPage() {
-  return <ClinicPanel />;
+export default function ClinicPage() {
+  redirect('/clinic-panel/dashboard');
 }

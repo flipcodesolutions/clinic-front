@@ -1,0 +1,125 @@
+'use client';
+import { useState } from 'react';
+import { changeClinicPassword } from '@/services/clinicAdminService';
+
+export default function ChangePasswordManager() {
+  const [formData, setFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState({ type: '', message: '' });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFeedback({ type: '', message: '' });
+
+    if (formData.newPassword !== formData.confirmPassword) {
+      setFeedback({ type: 'error', message: 'New password and confirm password do not match.' });
+      return;
+    }
+
+    if (formData.newPassword.length < 6) {
+      setFeedback({ type: 'error', message: 'Password must be at least 6 characters long.' });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await changeClinicPassword(formData.currentPassword, formData.newPassword);
+      if (res.success) {
+        setFeedback({ type: 'success', message: res.message || 'Password changed successfully!' });
+        setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        setFeedback({ type: 'error', message: res.message || 'Failed to update password.' });
+      }
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Something went wrong.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="clinic-change-password-manager" style={{ maxWidth: 600 }}>
+      {/* Header */}
+      <div className="clinic-header">
+        <div>
+          <h1 className="clinic-title">Change Account Password</h1>
+          <p className="clinic-subtitle">Update your Clinic Administrator login password for security.</p>
+        </div>
+      </div>
+
+      {/* Form Card */}
+      <div className="clinic-table-card" style={{ padding: 28 }}>
+        {feedback.message && (
+          <div
+            style={{
+              padding: '12px 16px',
+              borderRadius: 10,
+              marginBottom: 20,
+              fontSize: 14,
+              fontWeight: 500,
+              background: feedback.type === 'success' ? '#d1fae5' : '#fee2e2',
+              color: feedback.type === 'success' ? '#047857' : '#b91c1c',
+              border: `1px solid ${feedback.type === 'success' ? '#a7f3d0' : '#fca5a5'}`,
+            }}
+          >
+            {feedback.type === 'success' ? '✅ ' : '⚠️ '}
+            {feedback.message}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="clinic-form-group">
+            <label>Current Password *</label>
+            <input
+              type="password"
+              className="clinic-form-control"
+              required
+              placeholder="Enter current password"
+              value={formData.currentPassword}
+              onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+            />
+          </div>
+
+          <div className="clinic-form-group">
+            <label>New Password *</label>
+            <input
+              type="password"
+              className="clinic-form-control"
+              required
+              placeholder="Enter new password (min 6 characters)"
+              value={formData.newPassword}
+              onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+            />
+          </div>
+
+          <div className="clinic-form-group">
+            <label>Confirm New Password *</label>
+            <input
+              type="password"
+              className="clinic-form-control"
+              required
+              placeholder="Re-enter new password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            />
+          </div>
+
+          <div style={{ marginTop: 24 }}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="clinic-btn clinic-btn-primary"
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              {loading ? 'Updating Password...' : 'Update Password'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
