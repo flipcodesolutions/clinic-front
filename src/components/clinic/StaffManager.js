@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Swal from 'sweetalert2';
-import { getStaffList, createStaff, updateStaff, deleteStaff, getClinics } from '@/services/clinicAdminService';
+import { getStaffList, createStaff, updateStaff, deleteStaff, getClinics, uploadFile } from '@/services/clinicAdminService';
 import apiClient from '@/services/apiClient';
 
 const showSuccess = (msg) => {
@@ -15,6 +15,15 @@ const showSuccess = (msg) => {
     timer: 3000,
     timerProgressBar: true,
   });
+};
+
+const formatImageUrl = (url) => {
+  if (!url) return 'https://placehold.co/100x100?text=Photo';
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  return `http://localhost:5000${cleanPath}`;
 };
 
 const showError = (err, fallbackMsg = 'An error occurred.') => {
@@ -33,15 +42,6 @@ const showError = (err, fallbackMsg = 'An error occurred.') => {
 function formatStatus(status) {
   if (!status) return 'Active';
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-}
-
-function formatImageUrl(url) {
-  if (!url) return '';
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '') : 'http://localhost:5000';
-  return `${backendUrl}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
 // Searchable Clinic Select Component
@@ -260,6 +260,7 @@ export default function StaffManager() {
   const [photoDoctor, setPhotoDoctor] = useState(null);
   const [photoUrlInput, setPhotoUrlInput] = useState('');
   const [photoPreview, setPhotoPreview] = useState('');
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState(null);
 
   // Form State (Exact 10 Requested Fields)
   const [formData, setFormData] = useState({
@@ -276,17 +277,19 @@ export default function StaffManager() {
     status: 'active',
   });
 
-  const loadStaffData = async (page = 1, limit = pagination.limit) => {
+  const loadStaffData = async (page = 1, limit = pagination.limit, overrideSearch = undefined, overrideStatus = undefined) => {
     try {
       setLoading(true);
       setError('');
-      const res = await getStaffList({ page, limit, search, status: statusFilter });
+      const currentSearch = overrideSearch !== undefined ? overrideSearch : search;
+      const currentStatus = overrideStatus !== undefined ? overrideStatus : statusFilter;
+      const res = await getStaffList({ page, limit, search: currentSearch, status: currentStatus });
       const list = res?.data || (Array.isArray(res) ? res : []);
       setStaff(list);
       setPagination({
-        count: res?.count || list.length,
-        currentPage: res?.currentPage || page,
-        totalPages: res?.totalPages || 1,
+        count: res?.count ?? list.length,
+        currentPage: res?.currentPage ?? page,
+        totalPages: res?.totalPages ?? 1,
         limit,
       });
 
@@ -321,31 +324,15 @@ export default function StaffManager() {
   const handleResetFilter = () => {
     setSearch('');
     setStatusFilter('');
-    loadStaffData(1);
+    loadStaffData(1, pagination.limit, '', '');
   };
 
-  const handleFileUpload = (file, callback) => {
+  const handleFileSelect = (file) => {
     if (!file) return;
+    setSelectedPhotoFile(file);
     const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = e.target.result;
-      setPhotoPreview(dataUrl);
-      if (typeof callback === 'function') callback(dataUrl);
-
-      try {
-        const formDataObj = new FormData();
-        formDataObj.append('file', file);
-        const res = await apiClient.post('/upload/doctors', formDataObj, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        if (res?.data?.success && res.data.data?.url) {
-          const uploadedUrl = res.data.data.url;
-          setPhotoPreview(uploadedUrl);
-          if (typeof callback === 'function') callback(uploadedUrl);
-        }
-      } catch (err) {
-        console.warn('Direct upload fallback used:', err);
-      }
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result);
     };
     reader.readAsDataURL(file);
   };
@@ -354,6 +341,7 @@ export default function StaffManager() {
     setEditingStaff(null);
     setFormError('');
     setCustomDesignation('');
+    setSelectedPhotoFile(null);
     setFormData({
       first_name: '',
       last_name: '',
@@ -364,7 +352,7 @@ export default function StaffManager() {
       designation: '',
       qualification: '',
       joining_date: '',
-      clinic_id: '',
+      clinic_id: clinics.length > 0 ? clinics[0].id : '',
       status: 'active',
     });
     setPhotoPreview('');
@@ -375,6 +363,7 @@ export default function StaffManager() {
     setEditingStaff(st);
     setFormError('');
     setCustomDesignation(st.designation || '');
+    setSelectedPhotoFile(null);
     setFormData({
       first_name: st.first_name || '',
       last_name: st.last_name || '',
@@ -419,11 +408,27 @@ export default function StaffManager() {
     setFormError('');
 
     try {
+      let finalPhotoUrl = formData.photo_url;
+      if (selectedPhotoFile) {
+        try {
+          const uploadRes = await uploadFile(selectedPhotoFile, 'staff');
+          finalPhotoUrl = uploadRes?.data?.fullUrl || uploadRes?.data?.url || uploadRes?.url || finalPhotoUrl;
+        } catch (uploadErr) {
+          console.warn('File upload error during save:', uploadErr);
+        }
+      }
+
+      const payload = {
+        ...formData,
+        photo_url: finalPhotoUrl,
+        profile_image: finalPhotoUrl,
+      };
+
       if (editingStaff) {
-        const result = await updateStaff(editingStaff.id, formData);
+        const result = await updateStaff(editingStaff.id, payload);
         showSuccess(result?.message || 'Staff updated successfully');
       } else {
-        const result = await createStaff(formData);
+        const result = await createStaff(payload);
         showSuccess(result?.message || 'Staff added successfully');
       }
       setShowModal(false);
@@ -764,6 +769,9 @@ export default function StaffManager() {
                         src={formatImageUrl(photoPreview)}
                         alt="Preview"
                         className="doctor-avatar-img"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://placehold.co/100x100?text=Photo';
+                        }}
                       />
                     )}
                     <input
@@ -773,9 +781,7 @@ export default function StaffManager() {
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
-                          handleFileUpload(file, (url) => {
-                            setFormData((prev) => ({ ...prev, photo_url: url }));
-                          });
+                          handleFileSelect(file);
                         }
                       }}
                     />
@@ -839,11 +845,21 @@ export default function StaffManager() {
                 {/* Clinic */}
                 <div>
                   <label className="admin-form-label">Clinic</label>
-                  <SearchableClinicSelect
-                    clinics={clinics}
-                    value={formData.clinic_id}
-                    onChange={(val) => setFormData({ ...formData, clinic_id: val })}
-                  />
+                  {clinics.length <= 1 ? (
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={clinics[0]?.name ? `${clinics[0].name} (${clinics[0].city || 'Assigned Clinic'}) 🔒` : 'My Clinic 🔒'}
+                      disabled
+                      style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed', color: '#475569', fontWeight: 600 }}
+                    />
+                  ) : (
+                    <SearchableClinicSelect
+                      clinics={clinics}
+                      value={formData.clinic_id}
+                      onChange={(val) => setFormData({ ...formData, clinic_id: val })}
+                    />
+                  )}
                 </div>
 
                 {/* Status */}

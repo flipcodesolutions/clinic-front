@@ -1,248 +1,428 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
 import {
   getGalleryImages,
   uploadGalleryImage,
   updateGalleryImage,
   deleteGalleryImage,
+  uploadFile,
 } from '@/services/clinicAdminService';
+import { showError, showSuccess } from '@/utils/toast';
+
+const formatImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+    return path;
+  }
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `http://localhost:5000${cleanPath}`;
+};
+
+const defaultFilters = {
+  search: '',
+  page: 1,
+  limit: 10,
+};
 
 export default function GalleryManager() {
   const [gallery, setGallery] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState(defaultFilters);
+  const [pagination, setPagination] = useState({
+    count: 0,
+    currentPage: 1,
+    totalPages: 1,
+    limit: 10,
+  });
 
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
-    category: 'Reception',
     image_url: '',
-    caption: '',
   });
 
-  const loadGalleryData = async () => {
-    setLoading(true);
-    const res = await getGalleryImages(selectedCategory);
-    const list = Array.isArray(res) ? res : (res?.data || []);
-    setGallery(list);
-    setLoading(false);
+  const loadGalleryData = async (filters = activeFilters) => {
+    try {
+      setLoading(true);
+      const res = await getGalleryImages(filters);
+      const list = res?.data || (Array.isArray(res) ? res : []);
+      setGallery(list);
+      setPagination({
+        count: res?.count || list.length,
+        currentPage: res?.currentPage || Number(filters.page) || 1,
+        totalPages: res?.totalPages || 1,
+        limit: Number(filters.limit) || 10,
+      });
+    } catch (err) {
+      showError(err, 'Failed to load clinic gallery data.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadGalleryData();
+    Promise.resolve().then(() => {
+      loadGalleryData(defaultFilters);
+    });
   }, []);
 
-  const categories = ['All', 'Reception', 'Operation Theater', 'Ward', 'Exterior', 'General'];
+  const handleApplyFilter = () => {
+    const filters = {
+      search: search.trim(),
+      page: 1,
+      limit: activeFilters.limit,
+    };
+    setActiveFilters(filters);
+    loadGalleryData(filters);
+  };
+
+  const handleResetFilter = () => {
+    setSearch('');
+    setActiveFilters(defaultFilters);
+    loadGalleryData(defaultFilters);
+  };
+
+  const handleLimitChange = (limit) => {
+    const filters = { ...activeFilters, page: 1, limit: Number(limit) };
+    setActiveFilters(filters);
+    loadGalleryData(filters);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return;
+    const filters = { ...activeFilters, page: newPage };
+    setActiveFilters(filters);
+    loadGalleryData(filters);
+  };
 
   const openUploadModal = () => {
     setEditingImage(null);
-    setFormData({
-      title: '',
-      category: 'Reception',
-      image_url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&auto=format&fit=crop&q=80',
-      caption: '',
-    });
+    setFormData({ title: '', image_url: '' });
+    setPhotoPreview('');
     setShowUploadModal(true);
   };
 
   const openEditModal = (img) => {
     setEditingImage(img);
+    const imgUrl = img.photo || img.image_url || '';
     setFormData({
       title: img.title || '',
-      category: img.category || 'General',
-      image_url: img.image_url || '',
-      caption: img.caption || '',
+      image_url: imgUrl,
     });
+    setPhotoPreview(imgUrl);
     setShowUploadModal(true);
+  };
+
+  const handleFileUpload = async (file) => {
+    try {
+      setSaving(true);
+      const res = await uploadFile(file, 'gallery');
+      const uploadedUrl = res?.data?.fullUrl || res?.data?.url || res?.url;
+      if (uploadedUrl) {
+        setFormData((prev) => ({ ...prev, image_url: uploadedUrl }));
+        setPhotoPreview(uploadedUrl);
+        showSuccess('Image uploaded successfully.');
+      } else {
+        throw new Error('Upload response did not contain file URL');
+      }
+    } catch (err) {
+      console.warn('File upload fallback to Base64 data URL:', err);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const localUrl = reader.result;
+        setFormData((prev) => ({ ...prev, image_url: localUrl }));
+        setPhotoPreview(localUrl);
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSaveGallery = async (e) => {
     e.preventDefault();
+    if (!formData.title.trim()) {
+      showError(null, 'Image title is required.');
+      return;
+    }
+    if (!formData.image_url) {
+      showError(null, 'Please choose an image file to upload.');
+      return;
+    }
+
     try {
+      setSaving(true);
+      const payload = {
+        title: formData.title,
+        image_url: formData.image_url,
+        photo: formData.image_url,
+      };
+
       if (editingImage) {
-        await updateGalleryImage(editingImage.id, formData);
+        const res = await updateGalleryImage(editingImage.id, payload);
+        showSuccess(res?.message || 'Gallery image updated successfully.');
       } else {
-        await uploadGalleryImage(formData);
+        const res = await uploadGalleryImage(payload);
+        showSuccess(res?.message || 'Gallery image uploaded successfully.');
       }
       setShowUploadModal(false);
-      loadGalleryData();
+      await loadGalleryData(activeFilters);
     } catch (err) {
-      alert(err.message || 'Failed to save gallery image');
+      showError(err, 'Failed to save gallery image.');
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDeleteImage = async (id) => {
-    if (window.confirm('Are you sure you want to delete this image from clinic gallery?')) {
-      try {
-        await deleteGalleryImage(id);
-        loadGalleryData();
-      } catch (err) {
-        alert(err.message || 'Failed to delete gallery image');
-      }
+    const result = await Swal.fire({
+      title: 'Delete gallery photo?',
+      text: 'This photo will be permanently removed from clinic gallery.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, delete photo',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await deleteGalleryImage(id);
+      showSuccess(res?.message || 'Gallery photo deleted successfully.');
+      await loadGalleryData(activeFilters);
+    } catch (err) {
+      showError(err, 'Failed to delete gallery photo.');
     }
   };
 
-  const filteredGallery = gallery.filter((img) => {
-    if (selectedCategory === 'All') return true;
-    return img.category.toLowerCase() === selectedCategory.toLowerCase();
-  });
-
   return (
-    <div className="clinic-gallery-manager">
-      {/* Header */}
-      <div className="clinic-header">
+    <div className="cities-manager">
+      {/* Header - 1:1 match with CitiesManager */}
+      <div className="admin-header">
         <div>
-          <h1 className="clinic-title">Clinic Gallery Management</h1>
-          <p className="clinic-subtitle">Upload clinic facility photos, update titles & showcase clinic infrastructure.</p>
+          <h1 className="admin-title">Clinic Gallery Directory</h1>
+          <p className="admin-subtitle">Manage clinic infrastructure photos and gallery records.</p>
         </div>
-        <button onClick={openUploadModal} className="clinic-btn clinic-btn-primary">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Upload New Image
+        <button className="admin-add-btn" onClick={openUploadModal}>
+          <span>+</span> Add Photo
         </button>
       </div>
 
-      {/* Category Tabs */}
-      <div className="clinic-tabs">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            className={`clinic-tab-btn ${selectedCategory === cat ? 'active' : ''}`}
-            onClick={() => setSelectedCategory(cat)}
-          >
-            {cat}
-          </button>
-        ))}
+      {/* Filter Bar - 1:1 match with CitiesManager */}
+      <div className="admin-filter-bar">
+        <input
+          className="admin-search-input"
+          placeholder="Search gallery photos by title..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
+        />
+        <select
+          className="admin-filter-select"
+          value={activeFilters.limit}
+          onChange={(e) => handleLimitChange(e.target.value)}
+        >
+          <option value="10">10 per page</option>
+          <option value="25">25 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
+        </select>
+        <button className="admin-btn-apply" onClick={handleApplyFilter}>
+          Apply Filter
+        </button>
+        <button className="admin-btn-reset" onClick={handleResetFilter}>
+          Reset
+        </button>
       </div>
 
-      {/* Gallery Grid */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
-          Loading clinic gallery images...
-        </div>
-      ) : filteredGallery.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#64748b', background: '#fff', borderRadius: 16 }}>
-          No gallery images uploaded in this category yet.
-        </div>
-      ) : (
-        <div className="clinic-gallery-grid">
-          {filteredGallery.map((img) => (
-            <div key={img.id} className="clinic-gallery-card">
-              <img
-                src={img.image_url}
-                alt={img.title}
-                className="clinic-gallery-img"
-                onClick={() => setPreviewImage(img)}
-                style={{ cursor: 'pointer' }}
-              />
-              <div className="clinic-gallery-info">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span className="clinic-gallery-tag">{img.category}</span>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button
-                      onClick={() => openEditModal(img)}
-                      className="clinic-btn clinic-btn-secondary clinic-btn-sm"
-                      style={{ padding: '2px 6px', fontSize: 11 }}
-                      title="Edit Details"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => handleDeleteImage(img.id)}
-                      className="clinic-btn clinic-btn-danger clinic-btn-sm"
-                      style={{ padding: '2px 6px', fontSize: 11 }}
-                      title="Delete Image"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-                <h4 className="clinic-gallery-title">{img.title}</h4>
-                {img.caption && (
-                  <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>{img.caption}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Table Card - 1:1 match with CitiesManager */}
+      <div className="admin-table-card">
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                    Loading gallery photos...
+                  </td>
+                </tr>
+              ) : gallery.length === 0 ? (
+                <tr>
+                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                    No gallery photos found.
+                  </td>
+                </tr>
+              ) : (
+                gallery.map((img) => {
+                  const displayUrl = formatImageUrl(img.photo || img.image_url);
 
-      {/* Upload / Edit Image Modal */}
-      {showUploadModal && (
-        <div className="clinic-modal-overlay">
-          <div className="clinic-modal">
-            <div className="clinic-modal-header">
-              <h3 className="clinic-modal-title">
-                {editingImage ? 'Update Gallery Image' : 'Upload Image to Gallery'}
-              </h3>
-              <button className="clinic-modal-close" onClick={() => setShowUploadModal(false)}>
-                ✕
+                  return (
+                    <tr key={img.id}>
+                      <td>
+                        <div
+                          onClick={() => setPreviewImage(img)}
+                          style={{
+                            width: 70,
+                            height: 50,
+                            borderRadius: 8,
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            background: '#f8fafc',
+                            border: '1px solid #e2e8f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          title="Click to preview"
+                        >
+                          {displayUrl ? (
+                            <img
+                              src={displayUrl}
+                              alt={img.title || 'Photo'}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://placehold.co/120x80?text=Photo';
+                              }}
+                            />
+                          ) : (
+                            <span>🖼️</span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ fontWeight: 600 }}>{img.title}</span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <button className="admin-action-btn-edit" onClick={() => openEditModal(img)}>
+                            Edit
+                          </button>
+                          <button className="admin-action-btn-delete" onClick={() => handleDeleteImage(img.id)}>
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Footer - 1:1 match with CitiesManager */}
+        {!loading && pagination.totalPages > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 20px',
+              borderTop: '1px solid #e2e8f0',
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 14, color: '#64748b' }}>
+              Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total photos)
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="admin-btn-reset"
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage <= 1}
+              >
+                Previous
+              </button>
+              <button
+                className="admin-btn-apply"
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage >= pagination.totalPages}
+              >
+                Next
               </button>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Upload / Edit Modal - 1:1 match with CitiesManager modal */}
+      {showUploadModal && (
+        <div className="admin-modal-backdrop" onClick={() => !saving && setShowUploadModal(false)}>
+          <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3 className="admin-modal-title">
+              {editingImage ? 'Edit Gallery Photo' : 'Add Gallery Photo'}
+            </h3>
+
             <form onSubmit={handleSaveGallery}>
-              <div className="clinic-modal-body">
-                <div className="clinic-form-group">
-                  <label>Image Title *</label>
+              <div className="admin-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+                <div>
+                  <label className="admin-form-label">Image Title *</label>
                   <input
                     type="text"
-                    className="clinic-form-control"
+                    className="admin-input"
                     required
-                    placeholder="e.g. Operation Theater Room 1"
+                    placeholder="e.g. Reception Waiting Area"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   />
                 </div>
-                <div className="clinic-form-group">
-                  <label>Category</label>
-                  <select
-                    className="clinic-form-control"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  >
-                    <option value="Reception">Reception</option>
-                    <option value="Operation Theater">Operation Theater</option>
-                    <option value="Ward">Ward</option>
-                    <option value="Exterior">Exterior</option>
-                    <option value="General">General</option>
-                  </select>
-                </div>
-                <div className="clinic-form-group">
-                  <label>Image URL *</label>
+
+                <div>
+                  <label className="admin-form-label">Upload Image *</label>
+                  {photoPreview && (
+                    <div style={{ marginBottom: 12, textAlign: 'center' }}>
+                      <img
+                        src={formatImageUrl(photoPreview)}
+                        alt="Preview"
+                        style={{ height: 140, maxWidth: '100%', objectFit: 'cover', borderRadius: 8, border: '1px solid #cbd5e1' }}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://placehold.co/300x180?text=Preview';
+                        }}
+                      />
+                    </div>
+                  )}
                   <input
-                    type="text"
-                    className="clinic-form-control"
-                    required
-                    placeholder="https://..."
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  />
-                </div>
-                <div className="clinic-form-group">
-                  <label>Caption / Short Description</label>
-                  <textarea
-                    className="clinic-form-control"
-                    rows="3"
-                    placeholder="Brief description of the facility photo..."
-                    value={formData.caption}
-                    onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
+                    type="file"
+                    accept="image/*"
+                    className="admin-input"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) handleFileUpload(file);
+                    }}
                   />
                 </div>
               </div>
-              <div className="clinic-modal-footer">
+
+              <div className="admin-form-actions" style={{ marginTop: 20 }}>
                 <button
                   type="button"
-                  className="clinic-btn clinic-btn-secondary"
+                  className="admin-btn-reset"
                   onClick={() => setShowUploadModal(false)}
+                  disabled={saving}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="clinic-btn clinic-btn-primary">
-                  Save Gallery Image
+                <button type="submit" className="admin-save-btn" disabled={saving}>
+                  {saving ? 'Saving...' : editingImage ? 'Update' : 'Save'}
                 </button>
               </div>
             </form>
@@ -252,17 +432,22 @@ export default function GalleryManager() {
 
       {/* Lightbox Preview Modal */}
       {previewImage && (
-        <div className="clinic-modal-overlay" onClick={() => setPreviewImage(null)}>
-          <div className="clinic-modal" style={{ maxWidth: 800, padding: 0 }} onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-backdrop" onClick={() => setPreviewImage(null)}>
+          <div className="admin-modal-card" style={{ maxWidth: 800, padding: 0, overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
             <img
-              src={previewImage.image_url}
+              src={formatImageUrl(previewImage.photo || previewImage.image_url)}
               alt={previewImage.title}
-              style={{ width: '100%', height: 'auto', maxHeight: '75vh', objectFit: 'contain', display: 'block' }}
+              style={{ width: '100%', height: 'auto', maxHeight: '75vh', objectFit: 'contain', display: 'block', background: '#0f172a' }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://placehold.co/800x500?text=Photo+Preview';
+              }}
             />
-            <div style={{ padding: 20, background: '#fff' }}>
-              <span className="clinic-gallery-tag">{previewImage.category}</span>
-              <h3 style={{ margin: '8px 0 4px 0' }}>{previewImage.title}</h3>
-              <p style={{ margin: 0, color: '#64748b' }}>{previewImage.caption}</p>
+            <div style={{ padding: 16, background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: '#0f172a', fontSize: 16 }}>{previewImage.title}</h3>
+              <button className="admin-btn-reset" onClick={() => setPreviewImage(null)}>
+                Close
+              </button>
             </div>
           </div>
         </div>

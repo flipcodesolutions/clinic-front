@@ -210,28 +210,23 @@ export async function manageDoctorSchedule(doctorId, schedules) {
 // ---- Staff Management ----
 export async function getStaffList(filters = {}) {
   try {
-    const params = { limit: filters.limit || 100, page: filters.page || 1 };
+    const params = { limit: filters.limit || 10, page: filters.page || 1 };
     if (filters.search) params.search = filters.search;
     if (filters.status) params.status = filters.status;
 
     const res = await apiClient.get('/clinic/staff', { params });
     if (res?.data?.success && Array.isArray(res.data.data)) {
-      const staffUsers = res.data.data.filter((u) => {
-        const roles = Array.isArray(u.roles) ? u.roles : [];
-        return roles.some((r) => ['receptionist', 'nurse', 'staff', 'caretaker'].includes(r));
-      });
-
-      const formatted = staffUsers.map((st) => ({
+      const formatted = res.data.data.map((st) => ({
         id: st.id,
         first_name: st.first_name,
         last_name: st.last_name || '',
         email: st.email,
         phone: st.phone || '',
         photo_url: st.profile_image || st.photo_url || '',
-        role: Array.isArray(st.roles) ? st.roles[0] : 'staff',
-        designation: st.staffProfile?.designation || 'Staff Member',
-        qualification: st.staffProfile?.qualification || '',
-        joining_date: st.staffProfile?.joining_date || '',
+        role: Array.isArray(st.roles) ? st.roles[0] : (st.roles || 'staff'),
+        designation: st.designation || st.staffProfile?.designation || 'Staff Member',
+        qualification: st.qualification || st.staffProfile?.qualification || '',
+        joining_date: st.joining_date || st.staffProfile?.joining_date || '',
         clinic_id: st.clinics?.[0]?.id || '',
         clinic_name: st.clinics?.[0]?.name || '',
         status: st.status || 'active',
@@ -239,13 +234,13 @@ export async function getStaffList(filters = {}) {
 
       return {
         data: formatted,
-        count: res.data.count || formatted.length,
-        currentPage: res.data.currentPage || 1,
-        totalPages: res.data.totalPages || 1,
+        count: res.data.count ?? formatted.length,
+        currentPage: res.data.currentPage ?? 1,
+        totalPages: res.data.totalPages ?? 1,
       };
     }
   } catch (err) {
-    console.error('Error fetching staff list from API:', err);
+    console.error('Error fetching staff list:', err);
   }
   return { data: [], count: 0, currentPage: 1, totalPages: 1 };
 }
@@ -321,24 +316,31 @@ export async function deleteStaff(id) {
 }
 
 // ---- Gallery Management ----
-export async function getGalleryImages(category = 'All', filters = {}) {
+export async function getGalleryImages(filters = {}) {
   try {
-    const params = { category, page: filters.page || 1, limit: filters.limit || 50 };
-    if (filters.search) params.search = filters.search;
+    const params = {};
+    if (typeof filters === 'string') {
+      params.search = filters;
+    } else if (filters && typeof filters === 'object') {
+      if (filters.search) params.search = filters.search;
+      if (filters.page) params.page = filters.page;
+      if (filters.limit) params.limit = filters.limit;
+    }
 
     const res = await apiClient.get('/clinic/gallery', { params });
     if (res?.data?.success && Array.isArray(res.data.data)) {
       return {
         data: res.data.data,
-        count: res.data.count || res.data.data.length,
-        currentPage: res.data.currentPage || 1,
-        totalPages: res.data.totalPages || 1,
+        count: res.data.count ?? res.data.data.length,
+        currentPage: res.data.currentPage ?? 1,
+        totalPages: res.data.totalPages ?? 1,
+        limit: res.data.limit ?? 10,
       };
     }
   } catch (err) {
     console.error('Error fetching gallery images:', err);
   }
-  return { data: [], count: 0, currentPage: 1, totalPages: 1 };
+  return { data: [], count: 0, currentPage: 1, totalPages: 1, limit: 10 };
 }
 
 export async function uploadGalleryImage(payload) {
@@ -551,3 +553,23 @@ export async function changeClinicPassword(currentPassword, newPassword) {
     return { success: false, message };
   }
 }
+
+// ---- File Upload Service ----
+export async function uploadFile(file, category = 'gallery') {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await apiClient.post(`/upload/${category}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error('Error uploading file:', err);
+    throw err;
+  }
+}
+

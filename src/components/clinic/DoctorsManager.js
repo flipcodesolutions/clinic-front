@@ -423,8 +423,8 @@ export default function DoctorsManager() {
       languages: '',
       gender: 'male',
       dob: '',
-      department_id: '',
-      clinic_id: '',
+      department_id: departments.length > 0 ? departments[0].id : '',
+      clinic_id: clinics.length > 0 ? clinics[0].id : '',
       status: 'active',
     });
     setPhotoPreview('');
@@ -1118,11 +1118,21 @@ export default function DoctorsManager() {
                 {/* Clinic */}
                 <div>
                   <label className="admin-form-label">Clinic</label>
-                  <SearchableClinicSelect
-                    clinics={clinics}
-                    value={formData.clinic_id}
-                    onChange={(val) => setFormData({ ...formData, clinic_id: val })}
-                  />
+                  {clinics.length <= 1 ? (
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={clinics[0]?.name ? `${clinics[0].name} (${clinics[0].city || 'Assigned Clinic'}) 🔒` : 'My Clinic 🔒'}
+                      disabled
+                      style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed', color: '#475569', fontWeight: 600 }}
+                    />
+                  ) : (
+                    <SearchableClinicSelect
+                      clinics={clinics}
+                      value={formData.clinic_id}
+                      onChange={(val) => setFormData({ ...formData, clinic_id: val })}
+                    />
+                  )}
                 </div>
 
                 {/* Status */}
