@@ -401,30 +401,48 @@ export async function getClinicDepartments(filters = {}) {
   return { data: [], count: 0, currentPage: 1, totalPages: 1 };
 }
 
-export async function assignDepartmentToClinic(department) {
+export async function assignDepartmentToClinic(departmentData) {
   try {
-    const res = await apiClient.post('/clinic/departments', {
-      department_id: department.id,
-      name: department.name,
-      description: department.description,
-    });
+    const payload = Array.isArray(departmentData?.department_ids)
+      ? { department_ids: departmentData.department_ids }
+      : {
+          department_id: departmentData.id || departmentData.department_id,
+          name: departmentData.name,
+          description: departmentData.description,
+        };
+
+    const res = await apiClient.post('/clinic/departments', payload);
     if (res?.data?.success) {
-      return { success: true, data: res.data.data, message: res.data.message || 'Department assigned successfully' };
+      return { success: true, data: res.data.data, message: res.data.message || 'Department(s) assigned successfully' };
     }
-    throw new Error(res?.data?.message || 'Failed to assign department');
+    throw new Error(res?.data?.message || 'Failed to assign department(s)');
   } catch (err) {
-    const message = err.response?.data?.message || err.message || 'Failed to assign department';
+    const message = err.response?.data?.message || err.message || 'Failed to assign department(s)';
     return { success: false, message };
   }
 }
 
-export async function removeDepartmentFromClinic(id) {
+export async function removeDepartmentFromClinic(idOrIds) {
   try {
-    const res = await apiClient.delete(`/clinic/departments/${id}`);
+    if (Array.isArray(idOrIds)) {
+      const res = await apiClient.delete('/clinic/departments/bulk', { data: { ids: idOrIds } });
+      return { success: true, message: res?.data?.message || 'Departments removed from clinic' };
+    }
+    const res = await apiClient.delete(`/clinic/departments/${idOrIds}`);
     return { success: true, message: res?.data?.message || 'Department removed from clinic' };
   } catch (err) {
     const message = err.response?.data?.message || err.message || 'Failed to remove department';
     throw new Error(message);
+  }
+}
+
+export async function toggleClinicDepartmentStatus(id, status) {
+  try {
+    const res = await apiClient.put(`/clinic/departments/${id}/status`, { status });
+    return { success: true, message: res?.data?.message || 'Department status updated successfully' };
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to update status';
+    return { success: false, message };
   }
 }
 
@@ -451,21 +469,24 @@ export async function getClinicServices(filters = {}) {
   return { data: [], count: 0, currentPage: 1, totalPages: 1 };
 }
 
-export async function assignServiceToClinic(service) {
+export async function assignServiceToClinic(serviceData) {
   try {
-    const res = await apiClient.post('/clinic/services', {
-      service_id: service.id,
-      name: service.name,
-      price: service.price,
-      duration: service.duration,
-      category: service.category,
-    });
+    const payload = Array.isArray(serviceData?.service_ids)
+      ? { service_ids: serviceData.service_ids }
+      : {
+          service_id: serviceData.id || serviceData.service_id,
+          name: serviceData.name,
+          price: serviceData.price,
+          category: serviceData.category,
+        };
+
+    const res = await apiClient.post('/clinic/services', payload);
     if (res?.data?.success) {
-      return { success: true, data: res.data.data, message: res.data.message || 'Service assigned to clinic' };
+      return { success: true, data: res.data.data, message: res.data.message || 'Service(s) assigned to clinic' };
     }
-    throw new Error(res?.data?.message || 'Failed to assign service');
+    throw new Error(res?.data?.message || 'Failed to assign service(s)');
   } catch (err) {
-    const message = err.response?.data?.message || err.message || 'Failed to assign service';
+    const message = err.response?.data?.message || err.message || 'Failed to assign service(s)';
     return { success: false, message };
   }
 }
@@ -477,6 +498,16 @@ export async function removeServiceFromClinic(id) {
   } catch (err) {
     const message = err.response?.data?.message || err.message || 'Failed to remove service';
     throw new Error(message);
+  }
+}
+
+export async function toggleClinicServiceStatus(id, status) {
+  try {
+    const res = await apiClient.put(`/clinic/services/${id}/status`, { status });
+    return { success: true, message: res?.data?.message || 'Service status updated successfully' };
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to update service status';
+    return { success: false, message };
   }
 }
 

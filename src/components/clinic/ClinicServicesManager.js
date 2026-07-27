@@ -4,68 +4,168 @@ import {
   getClinicServices,
   assignServiceToClinic,
   removeServiceFromClinic,
+  toggleClinicServiceStatus,
 } from '@/services/clinicAdminService';
-import { getServices } from '@/services/serviceService';
+import apiClient from '@/services/apiClient';
+
+const defaultFilters = {
+  search: '',
+  status: '',
+  page: 1,
+  limit: 10,
+};
 
 export default function ClinicServicesManager() {
   const [assignedServices, setAssignedServices] = useState([]);
   const [globalServices, setGlobalServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Modal Checkbox State
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    price: 500,
-    duration: '20 mins',
-    category: 'Consultation',
+  const [selectedAssignIds, setSelectedAssignIds] = useState([]);
+  const [modalSearch, setModalSearch] = useState('');
+
+  // Filters & Pagination State
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [activeFilters, setActiveFilters] = useState(defaultFilters);
+  const [pagination, setPagination] = useState({
+    count: 0,
+    currentPage: 1,
+    totalPages: 1,
+    limit: 10,
   });
 
-  const loadServicesData = useCallback(async () => {
+  const loadServicesData = useCallback(async (filters = activeFilters) => {
     setLoading(true);
-    const assigned = await getClinicServices();
+    const assigned = await getClinicServices(filters);
     const assignedList = Array.isArray(assigned) ? assigned : (assigned?.data || []);
     setAssignedServices(assignedList);
+    if (assigned && !Array.isArray(assigned)) {
+      setPagination({
+        count: assigned.count ?? assignedList.length,
+        currentPage: assigned.currentPage ?? 1,
+        totalPages: assigned.totalPages ?? 1,
+        limit: assigned.limit ?? filters.limit ?? 10,
+      });
+    }
 
-    // Fetch system services
-    const globalRes = await getServices({ limit: 50 }).catch(() => null);
-    const globalList = Array.isArray(globalRes?.data) ? globalRes.data : [
-      { id: 1, name: 'General OPD Consultation', price: 500, category: 'Consultation' },
-      { id: 2, name: '12-Lead ECG Test', price: 800, category: 'Diagnostics' },
-      { id: 3, name: 'Complete Blood Count (CBC)', price: 400, category: 'Lab Test' },
-      { id: 4, name: 'Chest X-Ray', price: 600, category: 'Radiology' },
-      { id: 5, name: 'Ultrasound Scan', price: 1500, category: 'Radiology' },
-    ];
-    setGlobalServices(globalList);
+    // Fetch master services via clinic-authorized endpoint
+    try {
+      const globalRes = await apiClient.get('/clinic/master-services', { params: { limit: 100 } }).catch(() => null);
+      if (globalRes?.data?.success && Array.isArray(globalRes.data.data)) {
+        setGlobalServices(globalRes.data.data);
+      } else {
+        setGlobalServices([]);
+      }
+    } catch (err) {
+      console.error('Failed to load master services', err);
+      setGlobalServices([]);
+    }
     setLoading(false);
-  }, []);
+  }, [activeFilters]);
 
   useEffect(() => {
-    loadServicesData();
-  }, [loadServicesData]);
+    loadServicesData(defaultFilters);
+  }, []);
 
-  const handleSelectPredefinedService = (serviceId) => {
-    const selected = globalServices.find((s) => s.id === parseInt(serviceId));
-    if (selected) {
-      setFormData({
-        name: selected.name,
-        price: selected.price || 500,
-        duration: '20 mins',
-        category: selected.category || 'General',
-      });
+  const handleApplyFilter = () => {
+    const filters = {
+      search: search.trim(),
+      status: statusFilter,
+      page: 1,
+      limit: activeFilters.limit,
+    };
+    setActiveFilters(filters);
+    loadServicesData(filters);
+  };
+
+  const handleResetFilter = () => {
+    setSearch('');
+    setStatusFilter('');
+    setActiveFilters(defaultFilters);
+    loadServicesData(defaultFilters);
+  };
+
+  const handleLimitChange = (limit) => {
+    const filters = {
+      ...activeFilters,
+      page: 1,
+      limit: Number(limit),
+    };
+    setActiveFilters(filters);
+    loadServicesData(filters);
+  };
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > pagination.totalPages) return;
+    const filters = {
+      ...activeFilters,
+      page,
+    };
+    setActiveFilters(filters);
+    loadServicesData(filters);
+  };
+
+  // --- Assign Modal Handlers ---
+  const handleOpenAssignModal = () => {
+    setSelectedAssignIds([]);
+    setModalSearch('');
+    setShowAssignModal(true);
+  };
+
+  const availableServices = globalServices.filter(
+    (gs) => !assignedServices.some(
+      (as) => parseInt(as.service_id) === parseInt(gs.id) || as.name?.toLowerCase() === gs.name?.toLowerCase()
+    )
+  );
+
+  const filteredAvailable = availableServices.filter((s) => {
+    const q = modalSearch.toLowerCase();
+    return s.name.toLowerCase().includes(q) || (s.description && s.description.toLowerCase().includes(q));
+  });
+
+  const toggleSelectAllAssignModal = () => {
+    if (selectedAssignIds.length === filteredAvailable.length && filteredAvailable.length > 0) {
+      setSelectedAssignIds([]);
+    } else {
+      setSelectedAssignIds(filteredAvailable.map((s) => s.id));
     }
   };
 
-  const handleAssignService = async (e) => {
+  const toggleAssignSelection = (id) => {
+    setSelectedAssignIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleAssignServices = async (e) => {
     e.preventDefault();
-    if (!formData.name) return;
-    await assignServiceToClinic(formData);
-    setShowAssignModal(false);
-    loadServicesData();
+    if (selectedAssignIds.length === 0) return;
+    const res = await assignServiceToClinic({ service_ids: selectedAssignIds });
+    if (!res.success) {
+      alert(res.message);
+    } else {
+      setShowAssignModal(false);
+      setSelectedAssignIds([]);
+      loadServicesData();
+    }
   };
 
   const handleRemoveService = async (id) => {
-    if (window.confirm('Are you sure you want to remove this service from your clinic?')) {
+    if (window.confirm('Are you sure you want to delete this service from your clinic?')) {
       await removeServiceFromClinic(id);
+      loadServicesData();
+    }
+  };
+
+  const toggleStatus = async (svc) => {
+    const currentStatus = (svc.status || 'active').toLowerCase();
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const res = await toggleClinicServiceStatus(svc.id, newStatus);
+    if (!res.success) {
+      alert(res.message);
+    } else {
       loadServicesData();
     }
   };
@@ -76,20 +176,50 @@ export default function ClinicServicesManager() {
       <div className="clinic-header">
         <div>
           <h1 className="clinic-title">Clinic Services & Pricing</h1>
-          <p className="clinic-subtitle">Assign medical procedures, consultations & diagnostic services with custom prices.</p>
+          <p className="clinic-subtitle">Assign medical procedures, consultations & diagnostic services available at your clinic.</p>
         </div>
-        <button
-          onClick={() => {
-            setFormData({ name: '', price: 500, duration: '20 mins', category: 'Consultation' });
-            setShowAssignModal(true);
-          }}
-          className="clinic-btn clinic-btn-primary"
-        >
+        <button onClick={handleOpenAssignModal} className="clinic-btn clinic-btn-primary">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          Assign New Service
+          Assign Services
+        </button>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="admin-filter-bar" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <input
+          className="admin-search-input"
+          placeholder="Search assigned services by name..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
+        />
+        <select
+          className="admin-filter-select"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <select
+          className="admin-filter-select"
+          value={activeFilters.limit}
+          onChange={(e) => handleLimitChange(e.target.value)}
+        >
+          <option value="10">10 per page</option>
+          <option value="25">25 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
+        </select>
+        <button className="admin-btn-apply" onClick={handleApplyFilter}>
+          Apply Filter
+        </button>
+        <button className="admin-btn-reset" onClick={handleResetFilter}>
+          Reset
         </button>
       </div>
 
@@ -106,8 +236,6 @@ export default function ClinicServicesManager() {
             <thead>
               <tr>
                 <th>Service Name</th>
-                <th>Category</th>
-                <th>Estimated Duration</th>
                 <th>Service Fee</th>
                 <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Action</th>
@@ -116,14 +244,14 @@ export default function ClinicServicesManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
                     Loading clinic services...
                   </td>
                 </tr>
               ) : assignedServices.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
-                    No services configured for this clinic yet. Click &apos;Assign New Service&apos; to add one.
+                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                    No services configured for this clinic yet. Click &apos;Assign Services&apos; to add.
                   </td>
                 </tr>
               ) : (
@@ -131,26 +259,31 @@ export default function ClinicServicesManager() {
                   <tr key={svc.id}>
                     <td>
                       <div style={{ fontWeight: 700, color: '#0f172a' }}>{svc.name}</div>
+                      {svc.description && <div style={{ fontSize: 12, color: '#64748b' }}>{svc.description}</div>}
                     </td>
-                    <td>
-                      <span className="clinic-gallery-tag">{svc.category}</span>
-                    </td>
-                    <td style={{ color: '#475569', fontSize: 13 }}>{svc.duration}</td>
                     <td>
                       <span style={{ fontWeight: 700, color: '#0d9488', fontSize: 15 }}>
                         ₹{svc.price}
                       </span>
                     </td>
                     <td>
-                      <span className="clinic-badge active">{svc.status || 'Active'}</span>
+                      <button
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                        onClick={() => toggleStatus(svc)}
+                        title="Click to toggle status"
+                      >
+                        <span className={`admin-badge ${(svc.status === 'active' || svc.status === 'Active') ? 'active' : 'inactive'}`}>
+                          {(svc.status === 'active' || svc.status === 'Active') ? 'Active' : 'Inactive'}
+                        </span>
+                      </button>
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <button
+                        className="admin-action-btn-delete"
                         onClick={() => handleRemoveService(svc.id)}
-                        className="clinic-btn clinic-btn-danger clinic-btn-sm"
-                        title="Remove Service"
+                        title="Delete Service"
                       >
-                        Remove Service
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -159,83 +292,148 @@ export default function ClinicServicesManager() {
             </tbody>
           </table>
         </div>
+
+        {!loading && pagination.totalPages > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 20px',
+              borderTop: '1px solid #e2e8f0',
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 14, color: '#64748b' }}>
+              Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total services)
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="admin-btn-reset"
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage <= 1}
+              >
+                Previous
+              </button>
+              <button
+                className="admin-btn-apply"
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage >= pagination.totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Assign Service Modal */}
+      {/* Bulk Assign Services Modal */}
       {showAssignModal && (
         <div className="clinic-modal-overlay">
-          <div className="clinic-modal">
+          <div className="clinic-modal" style={{ maxWidth: 580, width: '90%' }}>
             <div className="clinic-modal-header">
-              <h3 className="clinic-modal-title">Assign Service to Clinic</h3>
+              <div>
+                <h3 className="clinic-modal-title">Assign Services to Clinic</h3>
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
+                  Select multiple master services created by Super Admin to add to your clinic.
+                </p>
+              </div>
               <button className="clinic-modal-close" onClick={() => setShowAssignModal(false)}>
                 ✕
               </button>
             </div>
-            <form onSubmit={handleAssignService}>
+            <form onSubmit={handleAssignServices}>
               <div className="clinic-modal-body">
-                <div className="clinic-form-group">
-                  <label>Quick Select Predefined Service</label>
-                  <select
-                    className="clinic-form-control"
-                    onChange={(e) => handleSelectPredefinedService(e.target.value)}
-                  >
-                    <option value="">-- Choose from Master Services --</option>
-                    {globalServices.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} (Default ₹{s.price})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {availableServices.length === 0 ? (
+                  <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', margin: '20px 0' }}>
+                    All available master services are already assigned to this clinic.
+                  </p>
+                ) : (
+                  <>
+                    <div style={{ marginBottom: 12 }}>
+                      <input
+                        className="admin-search-input"
+                        style={{ width: '100%' }}
+                        placeholder="Search available services by name or description..."
+                        value={modalSearch}
+                        onChange={(e) => setModalSearch(e.target.value)}
+                      />
+                    </div>
 
-                <div className="clinic-form-group">
-                  <label>Service Name *</label>
-                  <input
-                    type="text"
-                    className="clinic-form-control"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 10,
+                        padding: '8px 12px',
+                        background: '#f8fafc',
+                        borderRadius: 6,
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600, fontSize: 13, color: '#334155' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedAssignIds.length === filteredAvailable.length && filteredAvailable.length > 0}
+                          onChange={toggleSelectAllAssignModal}
+                          style={{ cursor: 'pointer', width: 16, height: 16 }}
+                        />
+                        Select All ({filteredAvailable.length})
+                      </label>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#2563eb' }}>
+                        {selectedAssignIds.length} Selected
+                      </span>
+                    </div>
 
-                <div className="clinic-form-grid">
-                  <div className="clinic-form-group">
-                    <label>Price (₹) *</label>
-                    <input
-                      type="number"
-                      className="clinic-form-control"
-                      required
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
-                    />
-                  </div>
-                  <div className="clinic-form-group">
-                    <label>Estimated Duration</label>
-                    <input
-                      type="text"
-                      className="clinic-form-control"
-                      placeholder="e.g. 20 mins"
-                      value={formData.duration}
-                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="clinic-form-group">
-                  <label>Category</label>
-                  <select
-                    className="clinic-form-control"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  >
-                    <option value="Consultation">Consultation</option>
-                    <option value="Diagnostics">Diagnostics</option>
-                    <option value="Lab Test">Lab Test</option>
-                    <option value="Radiology">Radiology</option>
-                    <option value="Procedure">Procedure</option>
-                  </select>
-                </div>
+                    <div style={{ maxHeight: 280, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 8, padding: 8 }}>
+                      {filteredAvailable.length === 0 ? (
+                        <div style={{ padding: 16, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+                          No matching services found.
+                        </div>
+                      ) : (
+                        filteredAvailable.map((svc) => {
+                          const isChecked = selectedAssignIds.includes(svc.id);
+                          return (
+                            <div
+                              key={svc.id}
+                              onClick={() => toggleAssignSelection(svc.id)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 12,
+                                padding: '10px 12px',
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                background: isChecked ? '#eff6ff' : 'transparent',
+                                border: isChecked ? '1px solid #bfdbfe' : '1px solid transparent',
+                                marginBottom: 4,
+                                transition: 'all 0.15s ease',
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {}}
+                                style={{ width: 18, height: 18, cursor: 'pointer' }}
+                              />
+                              <span style={{ fontSize: 20 }}>⚙️</span>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{svc.name}</div>
+                                {svc.price && (
+                                  <div style={{ fontSize: 12, color: '#64748b' }}>
+                                    Fee: ₹{svc.price}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
               <div className="clinic-modal-footer">
                 <button
@@ -245,9 +443,15 @@ export default function ClinicServicesManager() {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="clinic-btn clinic-btn-primary">
-                  Assign Service
-                </button>
+                {availableServices.length > 0 && (
+                  <button
+                    type="submit"
+                    className="clinic-btn clinic-btn-primary"
+                    disabled={selectedAssignIds.length === 0}
+                  >
+                    Assign Selected ({selectedAssignIds.length})
+                  </button>
+                )}
               </div>
             </form>
           </div>
