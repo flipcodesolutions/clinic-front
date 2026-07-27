@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   getClinicDepartments,
   assignDepartmentToClinic,
@@ -26,7 +26,7 @@ export default function ClinicDepartmentsManager() {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedDeptId, setSelectedDeptId] = useState('');
 
-  const loadDeptData = async () => {
+  const loadDeptData = useCallback(async () => {
     setLoading(true);
     const assigned = await getClinicDepartments();
     const assignedList = Array.isArray(assigned) ? assigned : (assigned?.data || []);
@@ -45,11 +45,11 @@ export default function ClinicDepartmentsManager() {
       setGlobalDepartments(DEFAULT_FALLBACK_DEPTS);
     }
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     loadDeptData();
-  }, []);
+  }, [loadDeptData]);
 
   const handleAssignDepartment = async (e) => {
     e.preventDefault();
@@ -128,7 +128,7 @@ export default function ClinicDepartmentsManager() {
               ) : assignedDepartments.length === 0 ? (
                 <tr>
                   <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
-                    No departments assigned to this clinic yet. Click 'Assign New Department' to add one.
+                    No departments assigned to this clinic yet. Click Assign New Department to add one.
                   </td>
                 </tr>
               ) : (

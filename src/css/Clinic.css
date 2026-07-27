@@ -1523,3 +1523,179 @@
   align-items: center;
   gap: 10px;
 }
+
+/* ============================================================
+   ABOUT MANAGER
+   ============================================================ */
+.about-manager {
+  padding: 32px;
+  max-width: 860px;
+}
+
+/* Header row */
+.about-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.about-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--clinic-text);
+  margin: 0 0 4px;
+  letter-spacing: -0.5px;
+}
+
+.about-subtitle {
+  font-size: 14px;
+  color: var(--clinic-muted);
+  margin: 0;
+}
+
+/* Save button */
+.about-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 28px;
+  background: var(--clinic-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.25);
+  white-space: nowrap;
+}
+
+.about-save-btn:hover:not(:disabled) {
+  background: var(--clinic-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.35);
+}
+
+.about-save-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.about-save-btn.saved {
+  background: #16a34a;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25);
+}
+
+/* Section card */
+.about-section {
+  background: var(--clinic-white);
+  border: 1px solid var(--clinic-border);
+  border-radius: var(--clinic-radius);
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--clinic-shadow);
+  transition: box-shadow 0.2s;
+}
+
+.about-section:hover {
+  box-shadow: var(--clinic-shadow-hover);
+}
+
+.about-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--clinic-text);
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--clinic-primary-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 2-col grid */
+.about-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.about-form-col-full {
+  grid-column: 1 / -1;
+}
+
+/* Label */
+.about-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--clinic-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* Input */
+.about-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--clinic-border);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--clinic-text);
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
+}
+
+.about-input:focus {
+  border-color: var(--clinic-primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+/* Textarea */
+.about-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--clinic-border);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--clinic-text);
+  background: #f8fafc;
+  outline: none;
+  resize: vertical;
+  min-height: 110px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.about-textarea:focus {
+  border-color: var(--clinic-primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .about-manager {
+    padding: 20px 16px;
+  }
+  .about-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .about-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .about-save-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

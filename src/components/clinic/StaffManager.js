@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Swal from 'sweetalert2';
 import { getStaffList, createStaff, updateStaff, deleteStaff, getClinics, uploadFile } from '@/services/clinicAdminService';
 import apiClient from '@/services/apiClient';
+import Image from 'next/image';
 
 const showSuccess = (msg) => {
   Swal.fire({
@@ -221,7 +222,7 @@ function SearchableDesignationSelect({ value, onChange }) {
               style={{ color: '#4f46e5', fontWeight: 600, borderTop: '1px dashed #e2e8f0' }}
             >
               <span>✏️</span>
-              <span>Use Custom: "{searchTerm}"</span>
+              <span>Use Custom: &quot;{searchTerm}&quot;</span>
             </div>
           )}
         </div>

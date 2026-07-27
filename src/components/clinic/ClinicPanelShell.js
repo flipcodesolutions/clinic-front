@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthToken, getUserAuth } from '@/utils/auth';
 
+const CLINIC_ROLES = ['clinic', 'clinic_admin'];
+
 export default function ClinicPanelShell({ children }) {
   const router = useRouter();
   const [authed, setAuthed] = useState(false);
@@ -13,9 +15,18 @@ export default function ClinicPanelShell({ children }) {
       const user = getUserAuth();
       const token = getAuthToken();
 
-      if (!user && !token) {
-        setAuthed(true);
-        setLoading(false);
+      // ✅ No session → redirect to login
+      if (!user || !token) {
+        router.replace('/login');
+        return;
+      }
+
+      // ✅ Wrong role → redirect to login
+      const hasClinicRole = user.roles?.some(r => CLINIC_ROLES.includes(r))
+        || CLINIC_ROLES.includes(user.role);
+
+      if (!hasClinicRole) {
+        router.replace('/login');
         return;
       }
 

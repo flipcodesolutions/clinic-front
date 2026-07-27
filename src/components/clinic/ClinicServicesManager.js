@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   getClinicServices,
   assignServiceToClinic,
@@ -20,7 +20,7 @@ export default function ClinicServicesManager() {
     category: 'Consultation',
   });
 
-  const loadServicesData = async () => {
+  const loadServicesData = useCallback(async () => {
     setLoading(true);
     const assigned = await getClinicServices();
     const assignedList = Array.isArray(assigned) ? assigned : (assigned?.data || []);
@@ -37,11 +37,11 @@ export default function ClinicServicesManager() {
     ];
     setGlobalServices(globalList);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     loadServicesData();
-  }, []);
+  }, [loadServicesData]);
 
   const handleSelectPredefinedService = (serviceId) => {
     const selected = globalServices.find((s) => s.id === parseInt(serviceId));
@@ -123,7 +123,7 @@ export default function ClinicServicesManager() {
               ) : assignedServices.length === 0 ? (
                 <tr>
                   <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
-                    No services configured for this clinic yet. Click 'Assign New Service' to add one.
+                    No services configured for this clinic yet. Click &apos;Assign New Service&apos; to add one.
                   </td>
                 </tr>
               ) : (

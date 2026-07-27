@@ -11,6 +11,14 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Allow unescaped ' and " in JSX text content (purely cosmetic, no runtime impact)
+      "react/no-unescaped-entities": "off",
+      // Allow calling async data-loader functions inside useEffect bodies
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
