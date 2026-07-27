@@ -9,7 +9,7 @@ export { getClinics } from '@/services/clinicService';
 // ---- Dashboard Stats & Today's Appointments ----
 export async function getClinicDashboardData() {
   try {
-    const res = await apiClient.get('/admin/dashboard');
+    const res = await apiClient.get('/clinic/dashboard');
     if (res?.data?.success) {
       return {
         stats: res.data.stats || {
@@ -326,7 +326,7 @@ export async function getGalleryImages(category = 'All', filters = {}) {
     const params = { category, page: filters.page || 1, limit: filters.limit || 50 };
     if (filters.search) params.search = filters.search;
 
-    const res = await apiClient.get('/admin/gallery', { params });
+    const res = await apiClient.get('/clinic/gallery', { params });
     if (res?.data?.success && Array.isArray(res.data.data)) {
       return {
         data: res.data.data,
@@ -343,7 +343,7 @@ export async function getGalleryImages(category = 'All', filters = {}) {
 
 export async function uploadGalleryImage(payload) {
   try {
-    const res = await apiClient.post('/admin/gallery', payload);
+    const res = await apiClient.post('/clinic/gallery', payload);
     if (res?.data?.success) {
       return { success: true, data: res.data.data, message: res.data.message || 'Image uploaded to clinic gallery' };
     }
@@ -356,7 +356,7 @@ export async function uploadGalleryImage(payload) {
 
 export async function updateGalleryImage(id, payload) {
   try {
-    const res = await apiClient.put(`/admin/gallery/${id}`, payload);
+    const res = await apiClient.put(`/clinic/gallery/${id}`, payload);
     if (res?.data?.success) {
       return { success: true, data: res.data.data, message: res.data.message || 'Gallery item updated' };
     }
@@ -369,7 +369,7 @@ export async function updateGalleryImage(id, payload) {
 
 export async function deleteGalleryImage(id) {
   try {
-    const res = await apiClient.delete(`/admin/gallery/${id}`);
+    const res = await apiClient.delete(`/clinic/gallery/${id}`);
     return { success: true, message: res?.data?.message || 'Gallery image deleted' };
   } catch (err) {
     const message = err.response?.data?.message || err.message || 'Failed to delete image';
@@ -384,7 +384,7 @@ export async function getClinicDepartments(filters = {}) {
     if (filters.search) params.search = filters.search;
     if (filters.status) params.status = filters.status;
 
-    const res = await apiClient.get('/admin/clinic-departments', { params });
+    const res = await apiClient.get('/clinic/departments', { params });
     if (res?.data?.success && Array.isArray(res.data.data)) {
       return {
         data: res.data.data,
@@ -401,7 +401,7 @@ export async function getClinicDepartments(filters = {}) {
 
 export async function assignDepartmentToClinic(department) {
   try {
-    const res = await apiClient.post('/admin/clinic-departments', {
+    const res = await apiClient.post('/clinic/departments', {
       department_id: department.id,
       name: department.name,
       description: department.description,
@@ -418,7 +418,7 @@ export async function assignDepartmentToClinic(department) {
 
 export async function removeDepartmentFromClinic(id) {
   try {
-    const res = await apiClient.delete(`/admin/clinic-departments/${id}`);
+    const res = await apiClient.delete(`/clinic/departments/${id}`);
     return { success: true, message: res?.data?.message || 'Department removed from clinic' };
   } catch (err) {
     const message = err.response?.data?.message || err.message || 'Failed to remove department';
@@ -434,7 +434,7 @@ export async function getClinicServices(filters = {}) {
     if (filters.status) params.status = filters.status;
     if (filters.category) params.category = filters.category;
 
-    const res = await apiClient.get('/admin/clinic-services', { params });
+    const res = await apiClient.get('/clinic/services', { params });
     if (res?.data?.success && Array.isArray(res.data.data)) {
       return {
         data: res.data.data,
@@ -451,7 +451,7 @@ export async function getClinicServices(filters = {}) {
 
 export async function assignServiceToClinic(service) {
   try {
-    const res = await apiClient.post('/admin/clinic-services', {
+    const res = await apiClient.post('/clinic/services', {
       service_id: service.id,
       name: service.name,
       price: service.price,
@@ -470,7 +470,7 @@ export async function assignServiceToClinic(service) {
 
 export async function removeServiceFromClinic(id) {
   try {
-    const res = await apiClient.delete(`/admin/clinic-services/${id}`);
+    const res = await apiClient.delete(`/clinic/services/${id}`);
     return { success: true, message: res?.data?.message || 'Service removed from clinic' };
   } catch (err) {
     const message = err.response?.data?.message || err.message || 'Failed to remove service';
