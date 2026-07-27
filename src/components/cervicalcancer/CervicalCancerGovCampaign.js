@@ -8,7 +8,7 @@ const CervicalCancerGovCampaign = () => {
   return (
     <section className="gov-campaign-section">
       <div className="gov-campaign-container">
-        
+
         {/* Top Header Row with Government Emblem details */}
         <div className="gov-campaign-top">
           <div className="gov-campaign-text-col">
@@ -36,7 +36,7 @@ const CervicalCancerGovCampaign = () => {
         {/* Panel 2: What the campaign means for you */}
         <div className="gov-campaign-means-card">
           <h3 className="gov-means-title">What the campaign means for you</h3>
-          
+
           <div className="gov-features-grid">
             {/* Feature 1 */}
             <div className="gov-feature-card">
@@ -108,7 +108,7 @@ const CervicalCancerGovCampaign = () => {
               <strong>The global goal — WHO “90-70-90” by 2030:</strong> India's 2026 campaign is a major step toward this target.
             </p>
           </div>
-          
+
           <div className="gov-stats-grid">
             {/* Stat 1: 90% */}
             <div className="gov-stat-col">

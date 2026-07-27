@@ -9,18 +9,19 @@ export default function ClinicPanelShell({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const user = getUserAuth();
-    const token = getAuthToken();
+    Promise.resolve().then(() => {
+      const user = getUserAuth();
+      const token = getAuthToken();
 
-    if (!user && !token) {
-      // Allow fallback view for demonstration if token missing in local dev
+      if (!user && !token) {
+        setAuthed(true);
+        setLoading(false);
+        return;
+      }
+
       setAuthed(true);
       setLoading(false);
-      return;
-    }
-
-    setAuthed(true);
-    setLoading(false);
+    });
   }, [router]);
 
   if (loading) {

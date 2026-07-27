@@ -39,7 +39,7 @@ export async function getClinicDashboardData() {
 // ---- Doctor Management ----
 export async function getDoctors(filters = {}) {
   try {
-    const res = await apiClient.get('/admin/users', { params: { role: 'doctor', ...filters } });
+    const res = await apiClient.get('/clinic/doctors', { params: filters });
     if (res?.data?.success && Array.isArray(res.data.data)) {
       const doctorsList = res.data.data.map((u) => ({
         id: u.id,
@@ -104,7 +104,7 @@ export async function createDoctor(payload) {
       clinic_id: payload.clinic_id,
     };
 
-    const res = await apiClient.post('/admin/users', apiPayload);
+    const res = await apiClient.post('/clinic/doctors', apiPayload);
     if (res?.data?.success) {
       return { success: true, data: res.data.data, message: res.data.message || 'Doctor added successfully' };
     }
@@ -142,7 +142,7 @@ export async function updateDoctor(id, payload) {
       apiPayload.status = payload.status;
     }
 
-    const res = await apiClient.put(`/admin/users/${id}`, apiPayload);
+    const res = await apiClient.put(`/clinic/doctors/${id}`, apiPayload);
     if (res?.data?.success) {
       return { success: true, data: res.data.data, message: res.data.message || 'Doctor updated successfully' };
     }
@@ -155,7 +155,7 @@ export async function updateDoctor(id, payload) {
 
 export async function deleteDoctor(id) {
   try {
-    const res = await apiClient.delete(`/admin/users/${id}`);
+    const res = await apiClient.delete(`/clinic/doctors/${id}`);
     return { success: true, message: res?.data?.message || 'Doctor removed successfully' };
   } catch (err) {
     const message = err.response?.data?.message || err.message || 'Failed to delete doctor';
@@ -165,7 +165,7 @@ export async function deleteDoctor(id) {
 
 export async function manageDoctorExperience(doctorId, experiences) {
   try {
-    const res = await apiClient.put(`/admin/users/${doctorId}`, { experiences });
+    const res = await apiClient.put(`/clinic/doctors/${doctorId}`, { experiences });
     return { success: true, message: res?.data?.message || 'Doctor experience saved successfully' };
   } catch (err) {
     try {
@@ -179,7 +179,7 @@ export async function manageDoctorExperience(doctorId, experiences) {
 
 export async function manageDoctorAchievement(doctorId, achievements) {
   try {
-    const res = await apiClient.put(`/admin/users/${doctorId}`, { achievements });
+    const res = await apiClient.put(`/clinic/doctors/${doctorId}`, { achievements });
     return { success: true, message: res?.data?.message || 'Doctor achievements saved successfully' };
   } catch (err) {
     try {
@@ -194,7 +194,7 @@ export async function manageDoctorAchievement(doctorId, achievements) {
 
 export async function manageDoctorSchedule(doctorId, schedules) {
   try {
-    const res = await apiClient.put(`/admin/users/${doctorId}`, { schedules });
+    const res = await apiClient.put(`/clinic/doctors/${doctorId}`, { schedules });
     return { success: true, message: res?.data?.message || 'Doctor schedule saved successfully' };
   } catch (err) {
     try {
@@ -214,7 +214,7 @@ export async function getStaffList(filters = {}) {
     if (filters.search) params.search = filters.search;
     if (filters.status) params.status = filters.status;
 
-    const res = await apiClient.get('/admin/users', { params });
+    const res = await apiClient.get('/clinic/staff', { params });
     if (res?.data?.success && Array.isArray(res.data.data)) {
       const staffUsers = res.data.data.filter((u) => {
         const roles = Array.isArray(u.roles) ? u.roles : [];
@@ -267,7 +267,7 @@ export async function createStaff(payload) {
       clinic_id: payload.clinic_id,
     };
 
-    const res = await apiClient.post('/admin/users', apiPayload);
+    const res = await apiClient.post('/clinic/staff', apiPayload);
     if (res?.data?.success) {
       return { success: true, data: res.data.data, message: 'Staff member added successfully' };
     }
@@ -299,7 +299,7 @@ export async function updateStaff(id, payload) {
       apiPayload.status = payload.status;
     }
 
-    const res = await apiClient.put(`/admin/users/${id}`, apiPayload);
+    const res = await apiClient.put(`/clinic/staff/${id}`, apiPayload);
     if (res?.data?.success) {
       return { success: true, data: res.data.data, message: 'Staff updated successfully' };
     }
@@ -312,7 +312,7 @@ export async function updateStaff(id, payload) {
 
 export async function deleteStaff(id) {
   try {
-    const res = await apiClient.delete(`/admin/users/${id}`);
+    const res = await apiClient.delete(`/clinic/staff/${id}`);
     return { success: true, message: res?.data?.message || 'Staff member deleted' };
   } catch (err) {
     const message = err.response?.data?.message || err.message || 'Failed to delete staff';
@@ -481,7 +481,12 @@ export async function removeServiceFromClinic(id) {
 // ---- About Clinic Profile ----
 export async function getClinicProfile() {
   try {
-    const res = await apiClient.get('/admin/clinics/profile/current');
+    let res;
+    try {
+      res = await apiClient.get('/clinic/profile');
+    } catch (e) {
+      res = await apiClient.get('/admin/clinics/profile/current');
+    }
     if (res?.data?.success) {
       const c = res.data.data;
       return {
@@ -517,7 +522,12 @@ export async function updateClinicProfile(payload) {
       website: payload.website,
     };
 
-    const res = await apiClient.put('/admin/clinics/profile/current', apiPayload);
+    let res;
+    try {
+      res = await apiClient.put('/clinic/profile', apiPayload);
+    } catch (e) {
+      res = await apiClient.put('/admin/clinics/profile/current', apiPayload);
+    }
     if (res?.data?.success) {
       return { success: true, message: res.data.message || 'Clinic profile updated successfully' };
     }

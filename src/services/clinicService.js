@@ -19,7 +19,16 @@ export async function getClinics(filters = {}) {
   params.page = filters.page || 1;
   params.limit = filters.limit || 10;
 
-  const response = await apiClient.get('/admin/clinics', { params });
+  let response;
+  try {
+    response = await apiClient.get('/clinic/clinics', { params });
+  } catch (err) {
+    if (err.response?.status === 403 || err.response?.status === 404) {
+      response = await apiClient.get('/admin/clinics', { params });
+    } else {
+      throw err;
+    }
+  }
 
   if (response.data?.success) {
     return {

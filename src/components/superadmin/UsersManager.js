@@ -86,7 +86,10 @@ export default function UsersManager() {
   };
 
   useEffect(() => {
-    loadUsers(defaultFilters);
+    Promise.resolve().then(() => {
+      loadUsers(defaultFilters);
+    });
+
     getClinics({ limit: 100 })
       .then((res) => setClinicsList(res.data || []))
       .catch((err) => console.error('Failed to load clinics dropdown', err));
@@ -98,7 +101,6 @@ export default function UsersManager() {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredClinics = clinicsList.filter((c) => {

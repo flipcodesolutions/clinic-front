@@ -170,8 +170,11 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
   };
 
   useEffect(() => {
-    loadClinics(defaultFilters);
-    loadUsers({ ...defaultFilters, role: 'clinic_admin' });
+    Promise.resolve().then(() => {
+      loadClinics(defaultFilters);
+      loadUsers({ ...defaultFilters, role: 'clinic_admin' });
+    });
+
     getClinics({ limit: 100 })
       .then((res) => setClinicsList(res.data || []))
       .catch((err) => console.error('Failed to fetch dropdown clinics list', err));

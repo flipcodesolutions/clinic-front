@@ -328,7 +328,9 @@ export default function DoctorsManager() {
   };
 
   useEffect(() => {
-    loadDoctorsList(defaultFilters);
+    Promise.resolve().then(() => {
+      loadDoctorsList(defaultFilters);
+    });
   }, []);
 
   // Filter Actions

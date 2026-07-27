@@ -127,6 +127,109 @@ function SearchableClinicSelect({ clinics, value, onChange }) {
   );
 }
 
+// Static Designation Options
+const DESIGNATION_OPTIONS = [
+  'Receptionist',
+  'Nurse',
+  'Lab Technician',
+  'Pharmacist',
+  'Accountant',
+  'Manager',
+  'Front Desk Executive',
+  'Assistant',
+  'Caretaker',
+  'Other',
+];
+
+// Searchable Designation Select Component
+function SearchableDesignationSelect({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filtered = DESIGNATION_OPTIONS.filter((opt) =>
+    opt.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div ref={wrapperRef} className="clinic-search-select-wrap">
+      <div className="clinic-search-select-box">
+        <input
+          type="text"
+          className="admin-input"
+          placeholder="Select Designation..."
+          value={isOpen ? searchTerm : (value || '')}
+          onFocus={() => {
+            setSearchTerm('');
+            setIsOpen(true);
+          }}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setIsOpen(true);
+          }}
+        />
+        <span className="clinic-search-select-arrow">▼</span>
+      </div>
+
+      {isOpen && (
+        <div className="clinic-search-select-menu">
+          <div
+            onClick={() => {
+              onChange('');
+              setIsOpen(false);
+            }}
+            className={`clinic-search-select-item ${!value ? 'selected' : ''}`}
+            style={{ color: '#64748b', fontWeight: 600 }}
+          >
+            <span>👔</span>
+            <span>Select Designation</span>
+          </div>
+
+          {filtered.map((opt) => (
+            <div
+              key={opt}
+              onClick={() => {
+                onChange(opt);
+                setIsOpen(false);
+                setSearchTerm('');
+              }}
+              className={`clinic-search-select-item ${value === opt ? 'selected' : ''}`}
+            >
+              <span>👔</span>
+              <span>{opt}</span>
+            </div>
+          ))}
+
+          {searchTerm && !DESIGNATION_OPTIONS.some((o) => o.toLowerCase() === searchTerm.toLowerCase()) && (
+            <div
+              onClick={() => {
+                onChange(searchTerm);
+                setIsOpen(false);
+                setSearchTerm('');
+              }}
+              className="clinic-search-select-item"
+              style={{ color: '#4f46e5', fontWeight: 600, borderTop: '1px dashed #e2e8f0' }}
+            >
+              <span>✏️</span>
+              <span>Use Custom: "{searchTerm}"</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StaffManager() {
   const [staff, setStaff] = useState([]);
   const [clinics, setClinics] = useState([]);
@@ -134,6 +237,7 @@ export default function StaffManager() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
+  const [customDesignation, setCustomDesignation] = useState('');
 
   // Filters & Pagination
   const [search, setSearch] = useState('');
@@ -205,7 +309,9 @@ export default function StaffManager() {
   };
 
   useEffect(() => {
-    loadStaffData(1);
+    Promise.resolve().then(() => {
+      loadStaffData(1);
+    });
   }, [statusFilter]);
 
   const handleApplyFilter = () => {
@@ -247,6 +353,7 @@ export default function StaffManager() {
   const openAddModal = () => {
     setEditingStaff(null);
     setFormError('');
+    setCustomDesignation('');
     setFormData({
       first_name: '',
       last_name: '',
@@ -267,6 +374,7 @@ export default function StaffManager() {
   const openEditModal = (st) => {
     setEditingStaff(st);
     setFormError('');
+    setCustomDesignation(st.designation || '');
     setFormData({
       first_name: st.first_name || '',
       last_name: st.last_name || '',
@@ -677,13 +785,32 @@ export default function StaffManager() {
                 {/* Designation */}
                 <div>
                   <label className="admin-form-label">Designation</label>
-                  <input
-                    type="text"
-                    className="admin-input"
-                    placeholder="e.g. Senior Receptionist, Staff Nurse"
+                  <SearchableDesignationSelect
                     value={formData.designation}
-                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                    onChange={(val) => {
+                      if (val === 'Other') {
+                        setFormData({ ...formData, designation: 'Other' });
+                        setCustomDesignation('');
+                      } else {
+                        setFormData({ ...formData, designation: val });
+                        setCustomDesignation(val);
+                      }
+                    }}
                   />
+                  {(formData.designation === 'Other' || (formData.designation && !DESIGNATION_OPTIONS.includes(formData.designation))) && (
+                    <input
+                      type="text"
+                      className="admin-input"
+                      style={{ marginTop: 8 }}
+                      placeholder="Enter custom designation (e.g. Senior OT Specialist)..."
+                      value={customDesignation === 'Other' ? '' : customDesignation}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomDesignation(val);
+                        setFormData({ ...formData, designation: val || 'Other' });
+                      }}
+                    />
+                  )}
                 </div>
 
                 {/* Qualification */}

@@ -69,7 +69,9 @@ export default function CitiesManager() {
   };
 
   useEffect(() => {
-    loadCities(defaultFilters);
+    Promise.resolve().then(() => {
+      loadCities(defaultFilters);
+    });
   }, []);
 
   const handleApplyFilter = () => {

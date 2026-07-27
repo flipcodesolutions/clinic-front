@@ -25,8 +25,10 @@ export default function DoctorPanelShell({ children }) {
       return;
     }
 
-    setAuthed(true);
-    setLoading(false);
+    Promise.resolve().then(() => {
+      setAuthed(true);
+      setLoading(false);
+    });
   }, [router]);
 
   if (loading || !authed) {

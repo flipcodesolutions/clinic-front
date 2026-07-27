@@ -13,13 +13,15 @@ export default function ClinicPanelLayout({ children }) {
   const [userInitial, setUserInitial] = useState('C');
 
   useEffect(() => {
-    const user = getUserAuth();
-    if (user?.name) {
-      setUserName(user.name);
-      setUserInitial(user.name.charAt(0).toUpperCase());
-    } else if (user?.email) {
-      setUserInitial(user.email.charAt(0).toUpperCase());
-    }
+    Promise.resolve().then(() => {
+      const user = getUserAuth();
+      if (user?.name) {
+        setUserName(user.name);
+        setUserInitial(user.name.charAt(0).toUpperCase());
+      } else if (user?.email) {
+        setUserInitial(user.email.charAt(0).toUpperCase());
+      }
+    });
 
     const checkMobile = () => {
       const mobile = window.innerWidth < 992;
