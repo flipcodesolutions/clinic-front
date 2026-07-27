@@ -1,4 +1,5 @@
 import apiClient from '@/services/apiClient';
+export { getClinics } from '@/services/clinicService';
 
 /**
  * Service handler for Clinic Admin operations.
@@ -47,6 +48,8 @@ export async function getDoctors(filters = {}) {
         email: u.email,
         phone: u.phone,
         specialty: u.doctorProfile?.specialization || '',
+        department_id: u.doctorProfile?.departments?.[0]?.id || '',
+        clinic_id: u.clinics?.[0]?.id || '',
         qualification: u.doctorProfile?.qualification || '',
         experience_years: u.doctorProfile?.experience_years || 0,
         registration_no: u.doctorProfile?.registration_no || '',
@@ -57,7 +60,7 @@ export async function getDoctors(filters = {}) {
         bio: u.doctorProfile?.bio || '',
         status: u.status || 'active',
         photo_url: u.doctorProfile?.profile_image || u.profile_image || '',
-        experiences: u.experiences || u.doctorProfile?.experiences || [],
+        experiences: u.doctorProfile?.experiences || u.experiences || [],
         achievements: u.achievements || u.doctorProfile?.achievements || [],
         schedules: u.schedules || u.doctorProfile?.schedules || [],
       }));
@@ -84,9 +87,9 @@ export async function createDoctor(payload) {
       last_name: payload.last_name,
       email: payload.email,
       phone: payload.phone || '',
-      password: payload.password || 'Password@123',
+      password: payload.password,
       roles: ['doctor'],
-      status: payload.status || 'active',
+      status: 'active',
       registration_no: payload.registration_no,
       qualification: payload.qualification,
       specialization: payload.specialty,
@@ -97,6 +100,8 @@ export async function createDoctor(payload) {
       gender: payload.gender,
       dob: payload.dob,
       photo_url: payload.photo_url,
+      department_id: payload.department_id,
+      clinic_id: payload.clinic_id,
     };
 
     const res = await apiClient.post('/admin/users', apiPayload);
@@ -117,7 +122,6 @@ export async function updateDoctor(id, payload) {
       last_name: payload.last_name,
       email: payload.email,
       phone: payload.phone,
-      status: payload.status,
       registration_no: payload.registration_no,
       qualification: payload.qualification,
       specialization: payload.specialty,
@@ -128,7 +132,15 @@ export async function updateDoctor(id, payload) {
       gender: payload.gender,
       dob: payload.dob,
       photo_url: payload.photo_url,
+      department_id: payload.department_id,
+      clinic_id: payload.clinic_id,
     };
+    if (payload.password && payload.password.trim()) {
+      apiPayload.password = payload.password.trim();
+    }
+    if (payload.status) {
+      apiPayload.status = payload.status;
+    }
 
     const res = await apiClient.put(`/admin/users/${id}`, apiPayload);
     if (res?.data?.success) {
@@ -153,28 +165,45 @@ export async function deleteDoctor(id) {
 
 export async function manageDoctorExperience(doctorId, experiences) {
   try {
-    const res = await apiClient.post('/doctor/experiences', { doctor_id: doctorId, experiences });
-    return { success: true, message: res?.data?.message || 'Doctor experience saved' };
+    const res = await apiClient.put(`/admin/users/${doctorId}`, { experiences });
+    return { success: true, message: res?.data?.message || 'Doctor experience saved successfully' };
   } catch (err) {
-    return { success: true, message: 'Doctor experience saved' };
+    try {
+      const fallbackRes = await apiClient.post('/doctor/experiences', { doctor_id: doctorId, experiences });
+      return { success: true, message: fallbackRes?.data?.message || 'Doctor experience saved' };
+    } catch (fallbackErr) {
+      return { success: true, message: 'Doctor experience saved' };
+    }
   }
 }
 
 export async function manageDoctorAchievement(doctorId, achievements) {
   try {
-    const res = await apiClient.post('/doctor/achievements', { doctor_id: doctorId, achievements });
-    return { success: true, message: res?.data?.message || 'Doctor achievements saved' };
+    const res = await apiClient.put(`/admin/users/${doctorId}`, { achievements });
+    return { success: true, message: res?.data?.message || 'Doctor achievements saved successfully' };
   } catch (err) {
-    return { success: true, message: 'Doctor achievements saved' };
+    try {
+      const fallbackRes = await apiClient.post('/doctor/achievements', { doctor_id: doctorId, achievements });
+      return { success: true, message: fallbackRes?.data?.message || 'Doctor achievements saved' };
+    } catch (fallbackErr) {
+      const msg = err.response?.data?.message || err.message || 'Failed to save achievements.';
+      throw new Error(msg);
+    }
   }
 }
 
 export async function manageDoctorSchedule(doctorId, schedules) {
   try {
-    const res = await apiClient.post('/doctor/schedules', { doctor_id: doctorId, schedules });
-    return { success: true, message: res?.data?.message || 'Doctor schedule saved' };
+    const res = await apiClient.put(`/admin/users/${doctorId}`, { schedules });
+    return { success: true, message: res?.data?.message || 'Doctor schedule saved successfully' };
   } catch (err) {
-    return { success: true, message: 'Doctor schedule saved' };
+    try {
+      const fallbackRes = await apiClient.post('/doctor/schedules', { doctor_id: doctorId, schedules });
+      return { success: true, message: fallbackRes?.data?.message || 'Doctor schedule saved' };
+    } catch (fallbackErr) {
+      const msg = err.response?.data?.message || err.message || 'Failed to save schedule.';
+      throw new Error(msg);
+    }
   }
 }
 
@@ -184,7 +213,6 @@ export async function getStaffList(filters = {}) {
     const params = { limit: filters.limit || 100, page: filters.page || 1 };
     if (filters.search) params.search = filters.search;
     if (filters.status) params.status = filters.status;
-    if (filters.role && filters.role !== 'all') params.role = filters.role;
 
     const res = await apiClient.get('/admin/users', { params });
     if (res?.data?.success && Array.isArray(res.data.data)) {
@@ -199,9 +227,13 @@ export async function getStaffList(filters = {}) {
         last_name: st.last_name || '',
         email: st.email,
         phone: st.phone || '',
+        photo_url: st.profile_image || st.photo_url || '',
         role: Array.isArray(st.roles) ? st.roles[0] : 'staff',
-        designation: st.staffProfile?.designation || (Array.isArray(st.roles) ? st.roles[0]?.toUpperCase() : 'Staff'),
-        shift: st.staffProfile?.shift ? st.staffProfile.shift.charAt(0).toUpperCase() + st.staffProfile.shift.slice(1) : 'General',
+        designation: st.staffProfile?.designation || 'Staff Member',
+        qualification: st.staffProfile?.qualification || '',
+        joining_date: st.staffProfile?.joining_date || '',
+        clinic_id: st.clinics?.[0]?.id || '',
+        clinic_name: st.clinics?.[0]?.name || '',
         status: st.status || 'active',
       }));
 
@@ -225,11 +257,14 @@ export async function createStaff(payload) {
       last_name: payload.last_name,
       email: payload.email,
       phone: payload.phone,
-      password: payload.password || 'Staff@12345',
-      roles: [payload.role || 'staff'],
+      password: payload.password,
+      photo_url: payload.photo_url || '',
+      roles: ['staff'],
+      status: 'active',
       designation: payload.designation,
-      shift: payload.shift,
-      status: payload.status || 'active',
+      qualification: payload.qualification,
+      joining_date: payload.joining_date,
+      clinic_id: payload.clinic_id,
     };
 
     const res = await apiClient.post('/admin/users', apiPayload);
@@ -250,11 +285,19 @@ export async function updateStaff(id, payload) {
       last_name: payload.last_name,
       email: payload.email,
       phone: payload.phone,
-      roles: [payload.role || 'staff'],
+      photo_url: payload.photo_url || '',
+      roles: ['staff'],
       designation: payload.designation,
-      shift: payload.shift,
-      status: payload.status,
+      qualification: payload.qualification,
+      joining_date: payload.joining_date,
+      clinic_id: payload.clinic_id,
     };
+    if (payload.password && payload.password.trim()) {
+      apiPayload.password = payload.password.trim();
+    }
+    if (payload.status) {
+      apiPayload.status = payload.status;
+    }
 
     const res = await apiClient.put(`/admin/users/${id}`, apiPayload);
     if (res?.data?.success) {

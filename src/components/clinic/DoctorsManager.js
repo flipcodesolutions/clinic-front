@@ -12,7 +12,7 @@ import {
   manageDoctorSchedule,
   getClinicDepartments,
 } from '@/services/clinicAdminService';
-import { getDepartments } from '@/services/departmentService';
+import { getClinics } from '@/services/clinicService';
 import { showError, showSuccess } from '@/utils/toast';
 
 const defaultFilters = {
@@ -25,6 +25,27 @@ const defaultFilters = {
 function formatStatus(status) {
   if (!status) return 'Inactive';
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+}
+
+function formatLanguages(val) {
+  if (!val) return '';
+  if (Array.isArray(val)) {
+    const items = val.flatMap((item) => formatLanguages(item));
+    return items.filter(Boolean).join(', ');
+  }
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('{') || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return formatLanguages(parsed);
+      } catch (e) {
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+  return String(val);
 }
 
 function formatImageUrl(url) {
@@ -41,6 +62,9 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
   const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef(null);
 
+  const selectedDept = departments.find((d) => String(d.id) === String(value));
+  const displayLabel = selectedDept ? selectedDept.name : '';
+
   useEffect(() => {
     function handleClickOutside(e) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
@@ -55,25 +79,21 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
     d.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const displayValue = isOpen ? searchTerm : (value || '');
-
   return (
     <div ref={wrapperRef} className="clinic-search-select-wrap">
       <div className="clinic-search-select-box">
         <input
           type="text"
           className="admin-input"
-          placeholder="🔍 Search department..."
-          value={displayValue}
+          placeholder="Select Department..."
+          value={isOpen ? searchTerm : displayLabel}
           onFocus={() => {
             setSearchTerm('');
             setIsOpen(true);
           }}
           onChange={(e) => {
-            const text = e.target.value;
-            setSearchTerm(text);
+            setSearchTerm(e.target.value);
             setIsOpen(true);
-            onChange(text);
           }}
         />
         <span className="clinic-search-select-arrow">▼</span>
@@ -81,20 +101,30 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
 
       {isOpen && (
         <div className="clinic-search-select-menu">
+          <div
+            onClick={() => {
+              onChange('');
+              setIsOpen(false);
+            }}
+            className={`clinic-search-select-item ${!value ? 'selected' : ''}`}
+            style={{ color: '#64748b', fontWeight: 600 }}
+          >
+            <span>🏢</span>
+            <span>Select Department</span>
+          </div>
           {filtered.length === 0 ? (
             <div className="clinic-search-select-no-results">
-              No matching department found. Using "{searchTerm}"
+              No matching department found
             </div>
           ) : (
             filtered.map((dept) => (
               <div
                 key={dept.id}
                 onClick={() => {
-                  onChange(dept.name);
-                  setSearchTerm(dept.name);
+                  onChange(dept.id);
                   setIsOpen(false);
                 }}
-                className={`clinic-search-select-item ${value === dept.name ? 'selected' : ''}`}
+                className={`clinic-search-select-item ${String(value) === String(dept.id) ? 'selected' : ''}`}
               >
                 <span>🏢</span>
                 <span>{dept.name}</span>
@@ -107,9 +137,91 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
   );
 }
 
+function SearchableClinicSelect({ clinics, value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const wrapperRef = useRef(null);
+
+  const selectedClinic = clinics.find((c) => String(c.id) === String(value));
+  const displayLabel = selectedClinic ? `${selectedClinic.name} (${selectedClinic.city || 'N/A'})` : '';
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filtered = clinics.filter((c) =>
+    c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.city?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div ref={wrapperRef} className="clinic-search-select-wrap">
+      <div className="clinic-search-select-box">
+        <input
+          type="text"
+          className="admin-input"
+          placeholder="Select Clinic..."
+          value={isOpen ? searchTerm : displayLabel}
+          onFocus={() => {
+            setSearchTerm('');
+            setIsOpen(true);
+          }}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setIsOpen(true);
+          }}
+        />
+        <span className="clinic-search-select-arrow">▼</span>
+      </div>
+
+      {isOpen && (
+        <div className="clinic-search-select-menu">
+          <div
+            onClick={() => {
+              onChange('');
+              setIsOpen(false);
+            }}
+            className={`clinic-search-select-item ${!value ? 'selected' : ''}`}
+            style={{ color: '#64748b', fontWeight: 600 }}
+          >
+            <span>🏥</span>
+            <span>Select Clinic</span>
+          </div>
+          {filtered.length === 0 ? (
+            <div className="clinic-search-select-no-results">
+              No matching clinic found
+            </div>
+          ) : (
+            filtered.map((clinic) => (
+              <div
+                key={clinic.id}
+                onClick={() => {
+                  onChange(clinic.id);
+                  setIsOpen(false);
+                }}
+                className={`clinic-search-select-item ${String(value) === String(clinic.id) ? 'selected' : ''}`}
+              >
+                <span>🏥</span>
+                <span>{clinic.name} ({clinic.city || 'N/A'})</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DoctorsManager() {
   const [doctors, setDoctors] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -147,23 +259,25 @@ export default function DoctorsManager() {
   const [photoUrlInput, setPhotoUrlInput] = useState('');
   const [photoPreview, setPhotoPreview] = useState('');
 
-  // Form State
+  // Form State (Exact 17 Fields)
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
-    specialty: '',
-    qualification: '',
-    experience_years: 0,
+    password: '',
+    photo_url: '',
     registration_no: '',
+    qualification: '',
+    specialty: '',
+    experience_years: 0,
     consultation_fee: 0,
+    bio: '',
+    languages: '',
     gender: 'male',
     dob: '',
-    languages: '',
-    bio: '',
-    status: 'active',
-    photo_url: '',
+    department_id: '',
+    clinic_id: '',
   });
 
   const loadDoctorsList = async (filters = activeFilters) => {
@@ -181,25 +295,26 @@ export default function DoctorsManager() {
         limit: Number(filters.limit) || 10,
       });
 
-      // Load Assigned Clinic Departments dynamically
+      // Load Clinics dynamically
       try {
-        const assignedRes = await getClinicDepartments().catch(() => null);
-        if (Array.isArray(assignedRes) && assignedRes.length > 0) {
-          const activeAssigned = assignedRes.filter(
-            (d) => !d.status || d.status.toLowerCase() === 'active'
-          );
-          setDepartments(activeAssigned.length > 0 ? activeAssigned : assignedRes);
+        const clinicsRes = await getClinics({ limit: 100 }).catch(() => null);
+        if (clinicsRes && Array.isArray(clinicsRes.data)) {
+          setClinics(clinicsRes.data);
         } else {
-          const deptRes = await getDepartments({ limit: 100 }).catch(() => null);
-          if (deptRes && Array.isArray(deptRes.data)) {
-            const activeDepts = deptRes.data.filter(
-              (d) => !d.status || d.status.toLowerCase() === 'active'
-            );
-            setDepartments(activeDepts);
-          } else {
-            setDepartments([]);
-          }
+          setClinics([]);
         }
+      } catch (err) {
+        setClinics([]);
+      }
+
+      // Load strictly Assigned Clinic Departments dynamically
+      try {
+        const assignedRes = await getClinicDepartments({ limit: 100 }).catch(() => null);
+        const assignedList = assignedRes?.data || (Array.isArray(assignedRes) ? assignedRes : []);
+        const activeAssigned = assignedList.filter(
+          (d) => !d.status || d.status.toLowerCase() === 'active'
+        );
+        setDepartments(activeAssigned);
       } catch (err) {
         setDepartments([]);
       }
@@ -262,23 +377,26 @@ export default function DoctorsManager() {
       showError(null, 'Please select a valid image file (PNG, JPG, WEBP, etc.)');
       return;
     }
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await apiClient.post('/upload/doctors', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      if (res?.data?.success && res.data.data?.url) {
-        callback(res.data.data.url);
-        return;
-      }
-    } catch (err) {
-      console.warn('Direct upload API failed, using base64 fallback:', err);
-    }
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const dataUrl = e.target.result;
-      callback(dataUrl);
+      setPhotoPreview(dataUrl);
+      if (typeof callback === 'function') callback(dataUrl);
+
+      try {
+        const formDataObj = new FormData();
+        formDataObj.append('file', file);
+        const res = await apiClient.post('/upload/doctors', formDataObj, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        if (res?.data?.success && res.data.data?.url) {
+          const uploadedUrl = res.data.data.url;
+          setPhotoPreview(uploadedUrl);
+          if (typeof callback === 'function') callback(uploadedUrl);
+        }
+      } catch (err) {
+        console.warn('Direct upload API failed, using base64 preview fallback:', err);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -287,23 +405,25 @@ export default function DoctorsManager() {
   const openAddModal = () => {
     setEditingDoctor(null);
     setFormError('');
-    const defaultSpec = departments.length > 0 ? departments[0].name : '';
     setFormData({
       first_name: '',
       last_name: '',
       email: '',
       phone: '',
-      specialty: defaultSpec,
-      qualification: '',
-      experience_years: 0,
+      password: '',
+      photo_url: '',
       registration_no: '',
+      qualification: '',
+      specialty: '',
+      experience_years: 0,
       consultation_fee: 0,
+      bio: '',
+      languages: '',
       gender: 'male',
       dob: '',
-      languages: '',
-      bio: '',
+      department_id: '',
+      clinic_id: '',
       status: 'active',
-      photo_url: '',
     });
     setPhotoPreview('');
     setShowDoctorModal(true);
@@ -317,17 +437,20 @@ export default function DoctorsManager() {
       last_name: doc.last_name || '',
       email: doc.email || '',
       phone: doc.phone || '',
-      specialty: doc.specialty || (departments.length > 0 ? departments[0].name : ''),
-      qualification: doc.qualification || '',
-      experience_years: doc.experience_years || 0,
+      password: '',
+      photo_url: doc.photo_url || '',
       registration_no: doc.registration_no || '',
+      qualification: doc.qualification || '',
+      specialty: doc.specialty || '',
+      experience_years: doc.experience_years || 0,
       consultation_fee: doc.consultation_fee || 0,
+      bio: doc.bio || '',
+      languages: formatLanguages(doc.languages),
       gender: doc.gender || 'male',
       dob: doc.dob || '',
-      languages: doc.languages || '',
-      bio: doc.bio || '',
-      status: doc.status || 'active',
-      photo_url: doc.photo_url || '',
+      department_id: doc.department_id || (departments.length > 0 ? departments[0].id : ''),
+      clinic_id: doc.clinic_id || (clinics.length > 0 ? clinics[0].id : ''),
+      status: (doc.status || 'active').toLowerCase(),
     });
     setPhotoPreview(doc.photo_url || '');
     setShowDoctorModal(true);
@@ -342,6 +465,17 @@ export default function DoctorsManager() {
     }
     if (!formData.email.trim()) {
       setFormError('Email address is required.');
+      return;
+    }
+
+    const cleanPhone = String(formData.phone).replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      setFormError('Mobile number must be exactly 10 digits.');
+      return;
+    }
+
+    if (!editingDoctor && (!formData.password || formData.password.trim().length < 6)) {
+      setFormError('Password is required (minimum 6 characters).');
       return;
     }
 
@@ -427,12 +561,23 @@ export default function DoctorsManager() {
   // Experience Modal Handler
   const openExpModal = (doc) => {
     setExpDoctor(doc);
-    setExpList(doc.experiences ? [...doc.experiences] : []);
+    const formattedExps = (doc.experiences || []).map((e) => ({
+      id: e.id || Date.now() + Math.random(),
+      hospital_name: e.hospital_name || e.hospital || '',
+      designation: e.designation || '',
+      start_date: e.start_date || e.startDate || '',
+      end_date: e.end_date || e.endDate || '',
+      description: e.description || '',
+    }));
+    setExpList(formattedExps);
     setOpenActionRowId(null);
   };
 
   const handleAddExpRow = () => {
-    setExpList([...expList, { id: Date.now(), hospital: '', designation: '', duration: '' }]);
+    setExpList([
+      ...expList,
+      { id: Date.now(), hospital_name: '', designation: '', start_date: '', end_date: '', description: '' },
+    ]);
   };
 
   const handleSaveExp = async () => {
@@ -451,7 +596,13 @@ export default function DoctorsManager() {
   // Achievement Modal Handler
   const openAchModal = (doc) => {
     setAchDoctor(doc);
-    setAchList(doc.achievements ? [...doc.achievements] : []);
+    const formattedAch = (doc.achievements || []).map((a) => ({
+      id: a.id || Date.now() + Math.random(),
+      title: a.title || '',
+      organization: a.organization || a.description || '',
+      year: a.year || new Date().getFullYear(),
+    }));
+    setAchList(formattedAch);
     setOpenActionRowId(null);
   };
 
@@ -475,14 +626,22 @@ export default function DoctorsManager() {
   // Schedule Modal Handler
   const openSchedModal = (doc) => {
     setSchedDoctor(doc);
-    setSchedList(doc.schedules ? [...doc.schedules] : []);
+    const formattedSched = (doc.schedules || []).map((s) => ({
+      id: s.id || Date.now() + Math.random(),
+      day: s.day ? s.day : (s.day_of_week ? s.day_of_week.charAt(0).toUpperCase() + s.day_of_week.slice(1) : 'Monday'),
+      start_time: s.start_time || '09:00 AM',
+      end_time: s.end_time || '05:00 PM',
+      slot_duration: s.slot_duration || 15,
+      max_patients: s.max_patients || s.maximum_booking || 10,
+    }));
+    setSchedList(formattedSched);
     setOpenActionRowId(null);
   };
 
   const handleAddSchedRow = () => {
     setSchedList([
       ...schedList,
-      { id: Date.now(), day: 'Monday', start_time: '09:00 AM', end_time: '01:00 PM', slot_duration: 15, max_patients: 15 },
+      { id: Date.now(), day: 'Monday', start_time: '09:00 AM', end_time: '05:00 PM', slot_duration: 15, max_patients: 10 },
     ]);
   };
 
@@ -590,60 +749,32 @@ export default function DoctorsManager() {
                     <tr key={doc.id}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ position: 'relative' }}>
+                          <div className="doctor-avatar-box">
                             {doc.photo_url ? (
                               <img
                                 src={formatImageUrl(doc.photo_url)}
                                 alt={doc.first_name}
-                                style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '1px solid #cbd5e1' }}
+                                className="doctor-avatar-img"
                               />
                             ) : (
-                              <div
-                                style={{
-                                  width: 44,
-                                  height: 44,
-                                  borderRadius: '50%',
-                                  background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-                                  color: '#ffffff',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontWeight: 700,
-                                  fontSize: 16,
-                                }}
-                              >
+                              <div className="doctor-avatar-initials">
                                 {doc.first_name ? doc.first_name.charAt(0).toUpperCase() : 'D'}
                               </div>
                             )}
                             <button
                               onClick={() => openPhotoModal(doc)}
                               title="Upload / Change Photo"
-                              style={{
-                                position: 'absolute',
-                                bottom: -2,
-                                right: -2,
-                                width: 20,
-                                height: 20,
-                                borderRadius: '50%',
-                                background: '#6366f1',
-                                color: '#fff',
-                                border: '2px solid #fff',
-                                fontSize: 10,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
+                              className="doctor-photo-btn"
                             >
                               📷
                             </button>
                           </div>
-                          <div>
-                            <div style={{ fontWeight: 700, color: '#0f172a' }}>
+                          <div className="doctor-info-box">
+                            <div className="doctor-info-name">
                               Dr. {doc.first_name} {doc.last_name}
                             </div>
-                            <div style={{ fontSize: 12, color: '#64748b' }}>{doc.email}</div>
-                            <div style={{ fontSize: 12, color: '#64748b' }}>{doc.phone}</div>
+                            <div className="doctor-info-sub">{doc.email}</div>
+                            <div className="doctor-info-sub">{doc.phone}</div>
                           </div>
                         </div>
                       </td>
@@ -670,24 +801,10 @@ export default function DoctorsManager() {
                       </td>
                       <td style={{ textAlign: 'center', position: 'relative' }}>
                         {/* Three Dots Action Menu Trigger */}
-                        <div style={{ display: 'inline-block', position: 'relative' }}>
+                        <div className="admin-action-menu-wrap">
                           <button
                             onClick={() => setOpenActionRowId(isActionOpen ? null : doc.id)}
-                            style={{
-                              background: isActionOpen ? '#e0e7ff' : '#f1f5f9',
-                              color: isActionOpen ? '#4f46e5' : '#475569',
-                              border: '1px solid #cbd5e1',
-                              borderRadius: '8px',
-                              width: '36px',
-                              height: '36px',
-                              fontSize: '18px',
-                              fontWeight: 'bold',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.2s ease',
-                            }}
+                            className={`admin-action-trigger-btn ${isActionOpen ? 'active' : ''}`}
                             title="Actions Menu"
                           >
                             ⋮
@@ -695,30 +812,13 @@ export default function DoctorsManager() {
 
                           {/* Action Menu Popover showing all buttons in one horizontal line */}
                           {isActionOpen && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                right: 0,
-                                top: '44px',
-                                zIndex: 999,
-                                background: '#ffffff',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '12px',
-                                boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                                padding: '8px 12px',
-                                display: 'flex',
-                                gap: '8px',
-                                alignItems: 'center',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
+                            <div className="admin-action-popover">
                               <button
                                 onClick={() => {
                                   setViewDoctor(doc);
                                   setOpenActionRowId(null);
                                 }}
                                 className="admin-action-btn-view"
-                                style={{ margin: 0 }}
                                 title="View Details"
                               >
                                 👁️ View
@@ -726,7 +826,6 @@ export default function DoctorsManager() {
                               <button
                                 onClick={() => openEditModal(doc)}
                                 className="admin-action-btn-edit"
-                                style={{ margin: 0 }}
                                 title="Edit Profile"
                               >
                                 ✏️ Edit
@@ -734,7 +833,6 @@ export default function DoctorsManager() {
                               <button
                                 onClick={() => openExpModal(doc)}
                                 className="admin-btn-apply"
-                                style={{ padding: '6px 12px', fontSize: 13, margin: 0 }}
                                 title="Manage Experience"
                               >
                                 🏥 Exp
@@ -742,7 +840,6 @@ export default function DoctorsManager() {
                               <button
                                 onClick={() => openAchModal(doc)}
                                 className="admin-btn-apply"
-                                style={{ padding: '6px 12px', fontSize: 13, margin: 0 }}
                                 title="Manage Achievements"
                               >
                                 🏆 Ach
@@ -750,7 +847,6 @@ export default function DoctorsManager() {
                               <button
                                 onClick={() => openSchedModal(doc)}
                                 className="admin-btn-apply"
-                                style={{ padding: '6px 12px', fontSize: 13, margin: 0 }}
                                 title="Manage Schedule"
                               >
                                 🕒 Sched
@@ -758,7 +854,6 @@ export default function DoctorsManager() {
                               <button
                                 onClick={() => handleDeleteDoctor(doc)}
                                 className="admin-action-btn-delete"
-                                style={{ margin: 0 }}
                                 title="Delete Doctor"
                               >
                                 🗑️ Delete
@@ -777,17 +872,7 @@ export default function DoctorsManager() {
 
         {/* Super Admin Pagination Footer */}
         {!loading && !error && pagination.totalPages > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderTop: '1px solid #e2e8f0',
-              flexWrap: 'wrap',
-              gap: 12,
-            }}
-          >
+          <div className="admin-pagination-footer">
             <span style={{ fontSize: 14, color: '#64748b' }}>
               Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total doctors)
             </span>
@@ -811,75 +896,115 @@ export default function DoctorsManager() {
         )}
       </div>
 
-      {/* Add / Edit Doctor Modal */}
+      {/* Add / Edit Doctor Modal (Strict 17 Fields) */}
       {showDoctorModal && (
         <div className="admin-modal-backdrop" onClick={() => !saving && setShowDoctorModal(false)}>
-          <div className="admin-modal-card" style={{ maxWidth: 700 }} onClick={(e) => e.stopPropagation()}>
+          <div className="admin-modal-card admin-modal-card-lg" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">
               {editingDoctor ? 'Edit Doctor Profile' : 'Add New Doctor'}
             </h3>
 
             <form onSubmit={handleSaveDoctor}>
               <div className="admin-form-grid">
+                {/* First Name */}
                 <div>
                   <label className="admin-form-label">First Name *</label>
                   <input
                     type="text"
                     className="admin-input"
                     required
+                    placeholder="Enter first name"
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                   />
                 </div>
+
+                {/* Last Name */}
                 <div>
                   <label className="admin-form-label">Last Name *</label>
                   <input
                     type="text"
                     className="admin-input"
                     required
+                    placeholder="Enter last name"
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                   />
                 </div>
+
+                {/* Email */}
                 <div>
                   <label className="admin-form-label">Email Address *</label>
                   <input
                     type="email"
                     className="admin-input"
                     required
+                    placeholder="doctor@example.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
+
+                {/* Mobile */}
                 <div>
-                  <label className="admin-form-label">Phone Number *</label>
+                  <label className="admin-form-label">Mobile Number (10 digits) *</label>
                   <input
                     type="text"
                     className="admin-input"
                     required
+                    maxLength="10"
+                    placeholder="10 digit mobile number"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setFormData({ ...formData, phone: val });
+                    }}
                   />
                 </div>
+
+                {/* Password */}
                 <div>
-                  <label className="admin-form-label">Specialty / Department *</label>
-                  <SearchableDepartmentSelect
-                    departments={departments}
-                    value={formData.specialty}
-                    onChange={(val) => setFormData({ ...formData, specialty: val })}
-                  />
-                </div>
-                <div>
-                  <label className="admin-form-label">Qualification *</label>
+                  <label className="admin-form-label">
+                    Password {editingDoctor ? '(Leave blank to keep unchanged)' : '*'}
+                  </label>
                   <input
-                    type="text"
+                    type="password"
                     className="admin-input"
-                    required
-                    placeholder="e.g. MBBS, MD (Cardiology)"
-                    value={formData.qualification}
-                    onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                    required={!editingDoctor}
+                    placeholder={editingDoctor ? '••••••••' : 'Enter login password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
                 </div>
+
+                {/* Profile Photo */}
+                <div>
+                  <label className="admin-form-label">Profile Photo</label>
+                  <div className="doctor-file-input-wrap">
+                    {photoPreview && (
+                      <img
+                        src={formatImageUrl(photoPreview)}
+                        alt="Preview"
+                        className="doctor-avatar-img"
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="admin-input"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          handleFileUpload(file, (url) => {
+                            setFormData((prev) => ({ ...prev, photo_url: url }));
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Registration No */}
                 <div>
                   <label className="admin-form-label">Registration No (License)</label>
                   <input
@@ -890,25 +1015,70 @@ export default function DoctorsManager() {
                     onChange={(e) => setFormData({ ...formData, registration_no: e.target.value })}
                   />
                 </div>
+
+                {/* Qualification */}
                 <div>
-                  <label className="admin-form-label">Consultation Fee (₹)</label>
+                  <label className="admin-form-label">Qualification</label>
                   <input
-                    type="number"
+                    type="text"
                     className="admin-input"
-                    placeholder="e.g. 500"
-                    value={formData.consultation_fee}
-                    onChange={(e) => setFormData({ ...formData, consultation_fee: parseFloat(e.target.value) || 0 })}
+                    placeholder="e.g. MBBS, MD (Cardiology)"
+                    value={formData.qualification}
+                    onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
                   />
                 </div>
+
+                {/* Specialization */}
+                <div>
+                  <label className="admin-form-label">Specialization</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="e.g. Cardiologist, Neurologist, Pediatrician"
+                    value={formData.specialty}
+                    onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                  />
+                </div>
+
+                {/* Experience Years */}
                 <div>
                   <label className="admin-form-label">Experience (Years)</label>
                   <input
                     type="number"
                     className="admin-input"
+                    min="0"
+                    placeholder="e.g. 5"
                     value={formData.experience_years}
                     onChange={(e) => setFormData({ ...formData, experience_years: parseInt(e.target.value) || 0 })}
                   />
                 </div>
+
+                {/* Consultation Fee */}
+                <div>
+                  <label className="admin-form-label">Consultation Fee (₹)</label>
+                  <input
+                    type="number"
+                    className="admin-input"
+                    min="0"
+                    placeholder="e.g. 500"
+                    value={formData.consultation_fee}
+                    onChange={(e) => setFormData({ ...formData, consultation_fee: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+
+                {/* Languages */}
+                <div>
+                  <label className="admin-form-label">Languages Spoken</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="e.g. English, Hindi, Gujarati"
+                    value={formData.languages}
+                    onChange={(e) => setFormData({ ...formData, languages: e.target.value })}
+                  />
+                </div>
+
+                {/* Gender */}
                 <div>
                   <label className="admin-form-label">Gender</label>
                   <select
@@ -921,6 +1091,8 @@ export default function DoctorsManager() {
                     <option value="other">Other</option>
                   </select>
                 </div>
+
+                {/* Date of Birth */}
                 <div>
                   <label className="admin-form-label">Date of Birth</label>
                   <input
@@ -930,16 +1102,28 @@ export default function DoctorsManager() {
                     onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
                   />
                 </div>
+
+                {/* Department */}
                 <div>
-                  <label className="admin-form-label">Languages Spoken</label>
-                  <input
-                    type="text"
-                    className="admin-input"
-                    placeholder="e.g. English, Hindi, Gujarati"
-                    value={formData.languages}
-                    onChange={(e) => setFormData({ ...formData, languages: e.target.value })}
+                  <label className="admin-form-label">Department</label>
+                  <SearchableDepartmentSelect
+                    departments={departments}
+                    value={formData.department_id}
+                    onChange={(val) => setFormData({ ...formData, department_id: val })}
                   />
                 </div>
+
+                {/* Clinic */}
+                <div>
+                  <label className="admin-form-label">Clinic</label>
+                  <SearchableClinicSelect
+                    clinics={clinics}
+                    value={formData.clinic_id}
+                    onChange={(val) => setFormData({ ...formData, clinic_id: val })}
+                  />
+                </div>
+
+                {/* Status */}
                 <div>
                   <label className="admin-form-label">Status</label>
                   <select
@@ -952,41 +1136,13 @@ export default function DoctorsManager() {
                   </select>
                 </div>
 
-                {/* Local Photo Image Upload Input */}
-                <div>
-                  <label className="admin-form-label">Doctor Photo Upload</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {photoPreview && (
-                      <img
-                        src={photoPreview}
-                        alt="Preview"
-                        style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', border: '1px solid #cbd5e1' }}
-                      />
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="admin-input"
-                      style={{ padding: '8px' }}
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          handleFileUpload(file, (dataUrl) => {
-                            setFormData({ ...formData, photo_url: dataUrl });
-                            setPhotoPreview(dataUrl);
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-
+                {/* Bio */}
                 <div className="admin-form-full">
-                  <label className="admin-form-label">Doctor Bio / Short Overview</label>
+                  <label className="admin-form-label">Doctor Bio</label>
                   <textarea
                     className="admin-textarea"
                     rows="3"
-                    placeholder="Brief doctor description, specialties, background..."
+                    placeholder="Brief description, background summary..."
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   />
@@ -1018,59 +1174,50 @@ export default function DoctorsManager() {
       {/* View Doctor Profile Modal */}
       {viewDoctor && (
         <div className="admin-modal-backdrop" onClick={() => setViewDoctor(null)}>
-          <div className="admin-modal-card" style={{ maxWidth: 650 }} onClick={(e) => e.stopPropagation()}>
+          <div className="admin-modal-card admin-modal-card-md" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Doctor Profile Details</h3>
 
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20 }}>
+            <div className="doctor-view-header">
               {viewDoctor.photo_url ? (
                 <img
-                  src={viewDoctor.photo_url}
+                  src={formatImageUrl(viewDoctor.photo_url)}
                   alt={viewDoctor.first_name}
-                  style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1' }}
+                  className="doctor-view-avatar-img"
                 />
               ) : (
-                <div
-                  style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: 28,
-                  }}
-                >
+                <div className="doctor-view-avatar-initials">
                   {viewDoctor.first_name ? viewDoctor.first_name.charAt(0).toUpperCase() : 'D'}
                 </div>
               )}
               <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
+                <h3 className="doctor-view-title">
                   Dr. {viewDoctor.first_name} {viewDoctor.last_name}
                 </h3>
-                <p style={{ margin: '4px 0', color: '#4f46e5', fontWeight: 600 }}>{viewDoctor.specialty || 'N/A'}</p>
-                <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>{viewDoctor.qualification || 'N/A'}</p>
+                <p className="doctor-view-specialty">{viewDoctor.specialty || 'N/A'}</p>
+                <p className="doctor-view-qualification">{viewDoctor.qualification || 'N/A'}</p>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 14 }}>
+            <div className="doctor-view-profile-grid">
+              <div><strong>First Name:</strong> {viewDoctor.first_name}</div>
+              <div><strong>Last Name:</strong> {viewDoctor.last_name}</div>
               <div><strong>Email:</strong> {viewDoctor.email}</div>
-              <div><strong>Phone:</strong> {viewDoctor.phone || '—'}</div>
+              <div><strong>Mobile:</strong> {viewDoctor.phone || '—'}</div>
               <div><strong>Registration No:</strong> {viewDoctor.registration_no || 'N/A'}</div>
-              <div><strong>Consultation Fee:</strong> ₹{viewDoctor.consultation_fee || 0}</div>
+              <div><strong>Qualification:</strong> {viewDoctor.qualification || 'N/A'}</div>
+              <div><strong>Specialization:</strong> {viewDoctor.specialty || 'N/A'}</div>
               <div><strong>Experience:</strong> {viewDoctor.experience_years} Years</div>
+              <div><strong>Consultation Fee:</strong> ₹{viewDoctor.consultation_fee || 0}</div>
+              <div><strong>Languages:</strong> {formatLanguages(viewDoctor.languages) || 'N/A'}</div>
               <div><strong>Gender:</strong> {viewDoctor.gender ? viewDoctor.gender.toUpperCase() : 'N/A'}</div>
               <div><strong>Date of Birth:</strong> {viewDoctor.dob || 'N/A'}</div>
-              <div><strong>Languages:</strong> {viewDoctor.languages || 'N/A'}</div>
               <div><strong>Status:</strong> {formatStatus(viewDoctor.status)}</div>
             </div>
 
             {viewDoctor.bio && (
-              <div style={{ marginTop: 16 }}>
+              <div className="doctor-view-bio-box">
                 <strong>Bio:</strong>
-                <p style={{ margin: '4px 0 0 0', color: '#475569', fontSize: 13 }}>{viewDoctor.bio}</p>
+                <p className="doctor-view-bio-text">{viewDoctor.bio}</p>
               </div>
             )}
 
@@ -1079,8 +1226,10 @@ export default function DoctorsManager() {
             {viewDoctor.experiences?.length > 0 ? (
               <ul>
                 {viewDoctor.experiences.map((exp, i) => (
-                  <li key={i} style={{ marginBottom: 6, fontSize: 13 }}>
-                    <strong>{exp.designation}</strong> at {exp.hospital} ({exp.duration})
+                  <li key={i} className="doctor-view-exp-item">
+                    <strong>{exp.designation ? `${exp.designation} — ` : ''}{exp.hospital_name || exp.hospital || 'Hospital'}</strong>
+                    <div><small className="doctor-view-exp-period">Period: {exp.start_date || 'N/A'} to {exp.end_date || 'Present'}</small></div>
+                    {exp.description && <div className="doctor-view-exp-desc">{exp.description}</div>}
                   </li>
                 ))}
               </ul>
@@ -1114,32 +1263,18 @@ export default function DoctorsManager() {
       {/* Upload Doctor Photo Modal */}
       {photoDoctor && (
         <div className="admin-modal-backdrop" onClick={() => setPhotoDoctor(null)}>
-          <div className="admin-modal-card" style={{ maxWidth: 450 }} onClick={(e) => e.stopPropagation()}>
+          <div className="admin-modal-card admin-modal-card-sm" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Update Doctor Photo</h3>
 
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div className="photo-modal-preview-box">
               {photoPreview || photoUrlInput ? (
                 <img
                   src={formatImageUrl(photoPreview || photoUrlInput)}
                   alt="Doctor Photo Preview"
-                  style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', border: '3px solid #6366f1' }}
+                  className="photo-modal-preview-img"
                 />
               ) : (
-                <div
-                  style={{
-                    width: 100,
-                    height: 100,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-                    color: '#ffffff',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: 36,
-                    border: '3px solid #6366f1',
-                  }}
-                >
+                <div className="photo-modal-preview-initials">
                   {photoDoctor.first_name ? photoDoctor.first_name.charAt(0).toUpperCase() : 'D'}
                 </div>
               )}
@@ -1175,62 +1310,106 @@ export default function DoctorsManager() {
         </div>
       )}
 
-      {/* Manage Experience Modal */}
+      {/* Manage Experience Modal (`DoctorExperience` Table Schema) */}
       {expDoctor && (
         <div className="admin-modal-backdrop" onClick={() => setExpDoctor(null)}>
-          <div className="admin-modal-card" style={{ maxWidth: 700 }} onClick={(e) => e.stopPropagation()}>
+          <div className="admin-modal-card admin-modal-card-lg" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">
-              Manage Experiences — Dr. {expDoctor.first_name} {expDoctor.last_name}
+              Manage Doctor Experience — Dr. {expDoctor.first_name} {expDoctor.last_name}
             </h3>
 
-            {expList.map((exp, idx) => (
-              <div
-                key={exp.id || idx}
-                style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 40px', gap: 10, marginBottom: 12 }}
-              >
-                <input
-                  type="text"
-                  className="admin-input"
-                  placeholder="Hospital / Clinic Name"
-                  value={exp.hospital}
-                  onChange={(e) => {
-                    const updated = [...expList];
-                    updated[idx].hospital = e.target.value;
-                    setExpList(updated);
-                  }}
-                />
-                <input
-                  type="text"
-                  className="admin-input"
-                  placeholder="Designation / Role"
-                  value={exp.designation}
-                  onChange={(e) => {
-                    const updated = [...expList];
-                    updated[idx].designation = e.target.value;
-                    setExpList(updated);
-                  }}
-                />
-                <input
-                  type="text"
-                  className="admin-input"
-                  placeholder="e.g. 2018 - 2022"
-                  value={exp.duration}
-                  onChange={(e) => {
-                    const updated = [...expList];
-                    updated[idx].duration = e.target.value;
-                    setExpList(updated);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="admin-action-btn-delete"
-                  style={{ padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  onClick={() => setExpList(expList.filter((_, i) => i !== idx))}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
+            {expList.length === 0 ? (
+              <p style={{ color: '#64748b', fontSize: 14, marginBottom: 16 }}>No experience records added yet. Click below to add.</p>
+            ) : (
+              expList.map((exp, idx) => (
+                <div key={exp.id || idx} className="exp-row-card">
+                  <div className="exp-row-grid">
+                    <div>
+                      <label className="exp-row-label">Hospital Name *</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="Hospital Name"
+                        value={exp.hospital_name}
+                        onChange={(e) => {
+                          const updated = [...expList];
+                          updated[idx].hospital_name = e.target.value;
+                          setExpList(updated);
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="exp-row-label">Designation</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="Designation"
+                        value={exp.designation}
+                        onChange={(e) => {
+                          const updated = [...expList];
+                          updated[idx].designation = e.target.value;
+                          setExpList(updated);
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="exp-row-label">Start Date</label>
+                      <input
+                        type="date"
+                        className="admin-input"
+                        value={exp.start_date}
+                        onChange={(e) => {
+                          const updated = [...expList];
+                          updated[idx].start_date = e.target.value;
+                          setExpList(updated);
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="exp-row-label">End Date</label>
+                      <input
+                        type="date"
+                        className="admin-input"
+                        value={exp.end_date}
+                        onChange={(e) => {
+                          const updated = [...expList];
+                          updated[idx].end_date = e.target.value;
+                          setExpList(updated);
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <div style={{ flex: 1 }}>
+                      <label className="exp-row-label">Description</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="Key responsibilities, department, achievements..."
+                        value={exp.description}
+                        onChange={(e) => {
+                          const updated = [...expList];
+                          updated[idx].description = e.target.value;
+                          setExpList(updated);
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="admin-action-btn-delete exp-row-remove-btn"
+                      title="Remove experience"
+                      onClick={() => setExpList(expList.filter((_, i) => i !== idx))}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
 
             <button onClick={handleAddExpRow} className="admin-btn-apply" style={{ marginTop: 8 }}>
               + Add Experience Record
@@ -1251,16 +1430,13 @@ export default function DoctorsManager() {
       {/* Manage Achievement Modal */}
       {achDoctor && (
         <div className="admin-modal-backdrop" onClick={() => setAchDoctor(null)}>
-          <div className="admin-modal-card" style={{ maxWidth: 700 }} onClick={(e) => e.stopPropagation()}>
+          <div className="admin-modal-card admin-modal-card-md" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">
               Manage Achievements — Dr. {achDoctor.first_name} {achDoctor.last_name}
             </h3>
 
             {achList.map((ach, idx) => (
-              <div
-                key={ach.id || idx}
-                style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 40px', gap: 10, marginBottom: 12 }}
-              >
+              <div key={ach.id || idx} className="ach-row-grid">
                 <input
                   type="text"
                   className="admin-input"
@@ -1296,8 +1472,7 @@ export default function DoctorsManager() {
                 />
                 <button
                   type="button"
-                  className="admin-action-btn-delete"
-                  style={{ padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  className="admin-action-btn-delete row-delete-icon-btn"
                   onClick={() => setAchList(achList.filter((_, i) => i !== idx))}
                 >
                   ✕
@@ -1324,16 +1499,13 @@ export default function DoctorsManager() {
       {/* Manage Schedule Modal */}
       {schedDoctor && (
         <div className="admin-modal-backdrop" onClick={() => setSchedDoctor(null)}>
-          <div className="admin-modal-card" style={{ maxWidth: 750 }} onClick={(e) => e.stopPropagation()}>
+          <div className="admin-modal-card admin-modal-card-lg" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">
               Manage Weekly Schedule — Dr. {schedDoctor.first_name} {schedDoctor.last_name}
             </h3>
 
             {schedList.map((sc, idx) => (
-              <div
-                key={sc.id || idx}
-                style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1.2fr 1fr 1fr 40px', gap: 10, marginBottom: 12 }}
-              >
+              <div key={sc.id || idx} className="sched-row-grid">
                 <select
                   className="admin-select"
                   value={sc.day}
@@ -1394,8 +1566,7 @@ export default function DoctorsManager() {
                 />
                 <button
                   type="button"
-                  className="admin-action-btn-delete"
-                  style={{ padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  className="admin-action-btn-delete row-delete-icon-btn"
                   onClick={() => setSchedList(schedList.filter((_, i) => i !== idx))}
                 >
                   ✕

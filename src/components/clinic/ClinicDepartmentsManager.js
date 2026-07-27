@@ -72,6 +72,10 @@ export default function ClinicDepartmentsManager() {
     }
   };
 
+  const availableDepartments = globalDepartments.filter(
+    (gd) => !assignedDepartments.some((ad) => ad.id === gd.id || ad.name?.toLowerCase() === gd.name?.toLowerCase())
+  );
+
   return (
     <div className="clinic-departments-manager">
       {/* Header */}
@@ -80,7 +84,13 @@ export default function ClinicDepartmentsManager() {
           <h1 className="clinic-title">Clinic Departments</h1>
           <p className="clinic-subtitle">Assign medical specialties and departments available at your clinic.</p>
         </div>
-        <button onClick={() => setShowAssignModal(true)} className="clinic-btn clinic-btn-primary">
+        <button
+          onClick={() => {
+            setSelectedDeptId('');
+            setShowAssignModal(true);
+          }}
+          className="clinic-btn clinic-btn-primary"
+        >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -168,19 +178,25 @@ export default function ClinicDepartmentsManager() {
               <div className="clinic-modal-body">
                 <div className="clinic-form-group">
                   <label>Select Specialty Department *</label>
-                  <select
-                    className="clinic-form-control"
-                    required
-                    value={selectedDeptId}
-                    onChange={(e) => setSelectedDeptId(e.target.value)}
-                  >
-                    <option value="">-- Choose a Department --</option>
-                    {globalDepartments.map((dept) => (
-                      <option key={dept.id} value={dept.id}>
-                        {dept.name} {dept.description ? `- ${dept.description}` : ''}
-                      </option>
-                    ))}
-                  </select>
+                  {availableDepartments.length === 0 ? (
+                    <p style={{ color: '#64748b', fontSize: 14, margin: '8px 0 0' }}>
+                      All available system departments are already assigned to this clinic.
+                    </p>
+                  ) : (
+                    <select
+                      className="clinic-form-control"
+                      required
+                      value={selectedDeptId}
+                      onChange={(e) => setSelectedDeptId(e.target.value)}
+                    >
+                      <option value="">-- Choose a Department --</option>
+                      {availableDepartments.map((dept) => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name} {dept.description ? `- ${dept.description}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
               <div className="clinic-modal-footer">
@@ -191,9 +207,11 @@ export default function ClinicDepartmentsManager() {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="clinic-btn clinic-btn-primary">
-                  Assign Department
-                </button>
+                {availableDepartments.length > 0 && (
+                  <button type="submit" className="clinic-btn clinic-btn-primary">
+                    Assign Department
+                  </button>
+                )}
               </div>
             </form>
           </div>
