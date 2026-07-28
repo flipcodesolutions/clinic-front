@@ -1,7 +1,8 @@
-'use client';
-import { useEffect, useState, useRef } from 'react';
-import Swal from 'sweetalert2';
-import apiClient from '@/services/apiClient';
+"use client";
+import { useEffect, useState, useRef } from "react";
+import Swal from "sweetalert2";
+import apiClient from "@/services/apiClient";
+import Image from 'next/image';
 import {
   getDoctors,
   createDoctor,
@@ -10,32 +11,36 @@ import {
   manageDoctorExperience,
   manageDoctorAchievement,
   manageDoctorSchedule,
-} from '@/services/clinic/doctorService';
-import { getClinicDepartments } from '@/services/clinic/departmentService';
-import { getClinics } from '@/services/superadmin/clinicService';
-import { showError, showSuccess } from '@/utils/toast';
+} from "@/services/clinic/doctorService";
+import { getClinicDepartments } from "@/services/clinic/departmentService";
+import { getClinics } from "@/services/superadmin/clinicService";
+import { showError, showSuccess } from "@/utils/toast";
 
 const defaultFilters = {
-  search: '',
-  status: '',
+  search: "",
+  status: "",
   page: 1,
   limit: 10,
 };
 
 function formatStatus(status) {
-  if (!status) return 'Inactive';
+  if (!status) return "Inactive";
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 }
 
 function formatLanguages(val) {
-  if (!val) return '';
+  if (!val) return "";
   if (Array.isArray(val)) {
     const items = val.flatMap((item) => formatLanguages(item));
-    return items.filter(Boolean).join(', ');
+    return items.filter(Boolean).join(", ");
   }
-  if (typeof val === 'string') {
+  if (typeof val === "string") {
     const trimmed = val.trim();
-    if (trimmed.startsWith('[') || trimmed.startsWith('{') || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+    if (
+      trimmed.startsWith("[") ||
+      trimmed.startsWith("{") ||
+      (trimmed.startsWith('"') && trimmed.endsWith('"'))
+    ) {
       try {
         const parsed = JSON.parse(trimmed);
         return formatLanguages(parsed);
@@ -49,21 +54,27 @@ function formatLanguages(val) {
 }
 
 function formatImageUrl(url) {
-  if (!url) return '';
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+  if (!url) return "";
+  if (
+    url.startsWith("data:") ||
+    url.startsWith("http://") ||
+    url.startsWith("https://")
+  ) {
     return url;
   }
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '') : 'http://localhost:5000';
-  return `${backendUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL
+    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "")
+    : "http://localhost:5000";
+  return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
 function SearchableDepartmentSelect({ departments, value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const wrapperRef = useRef(null);
 
   const selectedDept = departments.find((d) => String(d.id) === String(value));
-  const displayLabel = selectedDept ? selectedDept.name : '';
+  const displayLabel = selectedDept ? selectedDept.name : "";
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -71,12 +82,12 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
         setIsOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const filtered = departments.filter((d) =>
-    d.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    d.name?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -88,7 +99,7 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
           placeholder="Select Department..."
           value={isOpen ? searchTerm : displayLabel}
           onFocus={() => {
-            setSearchTerm('');
+            setSearchTerm("");
             setIsOpen(true);
           }}
           onChange={(e) => {
@@ -103,10 +114,10 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
         <div className="clinic-search-select-menu">
           <div
             onClick={() => {
-              onChange('');
+              onChange("");
               setIsOpen(false);
             }}
-            className={`clinic-search-select-item clinic-search-select-placeholder ${!value ? 'selected' : ''}`}
+            className={`clinic-search-select-item clinic-search-select-placeholder ${!value ? "selected" : ""}`}
           >
             <span>🏢</span>
             <span>Select Department</span>
@@ -123,7 +134,7 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
                   onChange(dept.id);
                   setIsOpen(false);
                 }}
-                className={`clinic-search-select-item ${String(value) === String(dept.id) ? 'selected' : ''}`}
+                className={`clinic-search-select-item ${String(value) === String(dept.id) ? "selected" : ""}`}
               >
                 <span>🏢</span>
                 <span>{dept.name}</span>
@@ -138,11 +149,13 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
 
 function SearchableClinicSelect({ clinics, value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const wrapperRef = useRef(null);
 
   const selectedClinic = clinics.find((c) => String(c.id) === String(value));
-  const displayLabel = selectedClinic ? `${selectedClinic.name} (${selectedClinic.city || 'N/A'})` : '';
+  const displayLabel = selectedClinic
+    ? `${selectedClinic.name} (${selectedClinic.city || "N/A"})`
+    : "";
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -150,13 +163,14 @@ function SearchableClinicSelect({ clinics, value, onChange }) {
         setIsOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filtered = clinics.filter((c) =>
-    c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.city?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = clinics.filter(
+    (c) =>
+      c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.city?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -168,7 +182,7 @@ function SearchableClinicSelect({ clinics, value, onChange }) {
           placeholder="Select Clinic..."
           value={isOpen ? searchTerm : displayLabel}
           onFocus={() => {
-            setSearchTerm('');
+            setSearchTerm("");
             setIsOpen(true);
           }}
           onChange={(e) => {
@@ -183,10 +197,10 @@ function SearchableClinicSelect({ clinics, value, onChange }) {
         <div className="clinic-search-select-menu">
           <div
             onClick={() => {
-              onChange('');
+              onChange("");
               setIsOpen(false);
             }}
-            className={`clinic-search-select-item clinic-search-select-placeholder ${!value ? 'selected' : ''}`}
+            className={`clinic-search-select-item clinic-search-select-placeholder ${!value ? "selected" : ""}`}
           >
             <span>🏥</span>
             <span>Select Clinic</span>
@@ -203,10 +217,12 @@ function SearchableClinicSelect({ clinics, value, onChange }) {
                   onChange(clinic.id);
                   setIsOpen(false);
                 }}
-                className={`clinic-search-select-item ${String(value) === String(clinic.id) ? 'selected' : ''}`}
+                className={`clinic-search-select-item ${String(value) === String(clinic.id) ? "selected" : ""}`}
               >
                 <span>🏥</span>
-                <span>{clinic.name} ({clinic.city || 'N/A'})</span>
+                <span>
+                  {clinic.name} ({clinic.city || "N/A"})
+                </span>
               </div>
             ))
           )}
@@ -222,12 +238,12 @@ export default function DoctorsManager() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [formError, setFormError] = useState('');
+  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
 
   // Filters & Pagination
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [activeFilters, setActiveFilters] = useState(defaultFilters);
   const [pagination, setPagination] = useState({
     count: 0,
@@ -254,34 +270,34 @@ export default function DoctorsManager() {
   const [schedList, setSchedList] = useState([]);
 
   const [photoDoctor, setPhotoDoctor] = useState(null);
-  const [photoUrlInput, setPhotoUrlInput] = useState('');
-  const [photoPreview, setPhotoPreview] = useState('');
+  const [photoUrlInput, setPhotoUrlInput] = useState("");
+  const [photoPreview, setPhotoPreview] = useState("");
 
   // Form State (Exact 17 Fields)
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    password: '',
-    photo_url: '',
-    registration_no: '',
-    qualification: '',
-    specialty: '',
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    password: "",
+    photo_url: "",
+    registration_no: "",
+    qualification: "",
+    specialty: "",
     experience_years: 0,
     consultation_fee: 0,
-    bio: '',
-    languages: '',
-    gender: 'male',
-    dob: '',
-    department_id: '',
-    clinic_id: '',
+    bio: "",
+    languages: "",
+    gender: "male",
+    dob: "",
+    department_id: "",
+    clinic_id: "",
   });
 
   const loadDoctorsList = async (filters = activeFilters) => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
       const res = await getDoctors(filters);
       const doctorsList = res?.data || (Array.isArray(res) ? res : []);
 
@@ -307,17 +323,21 @@ export default function DoctorsManager() {
 
       // Load strictly Assigned Clinic Departments dynamically
       try {
-        const assignedRes = await getClinicDepartments({ limit: 100 }).catch(() => null);
-        const assignedList = assignedRes?.data || (Array.isArray(assignedRes) ? assignedRes : []);
+        const assignedRes = await getClinicDepartments({ limit: 100 }).catch(
+          () => null,
+        );
+        const assignedList =
+          assignedRes?.data || (Array.isArray(assignedRes) ? assignedRes : []);
         const activeAssigned = assignedList.filter(
-          (d) => !d.status || d.status.toLowerCase() === 'active'
+          (d) => !d.status || d.status.toLowerCase() === "active",
         );
         setDepartments(activeAssigned);
       } catch (err) {
         setDepartments([]);
       }
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Failed to load doctors.';
+      const msg =
+        err.response?.data?.message || err.message || "Failed to load doctors.";
       setError(msg);
       showError(err, msg);
     } finally {
@@ -344,8 +364,8 @@ export default function DoctorsManager() {
   };
 
   const handleResetFilter = () => {
-    setSearch('');
-    setStatusFilter('');
+    setSearch("");
+    setStatusFilter("");
     setActiveFilters(defaultFilters);
     loadDoctorsList(defaultFilters);
   };
@@ -373,29 +393,35 @@ export default function DoctorsManager() {
   // Image Upload Reader & Backend API Uploader
   const handleFileUpload = async (file, callback) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      showError(null, 'Please select a valid image file (PNG, JPG, WEBP, etc.)');
+    if (!file.type.startsWith("image/")) {
+      showError(
+        null,
+        "Please select a valid image file (PNG, JPG, WEBP, etc.)",
+      );
       return;
     }
     const reader = new FileReader();
     reader.onload = async (e) => {
       const dataUrl = e.target.result;
       setPhotoPreview(dataUrl);
-      if (typeof callback === 'function') callback(dataUrl);
+      if (typeof callback === "function") callback(dataUrl);
 
       try {
         const formDataObj = new FormData();
-        formDataObj.append('file', file);
-        const res = await apiClient.post('/upload/doctors', formDataObj, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+        formDataObj.append("file", file);
+        const res = await apiClient.post("/upload/doctors", formDataObj, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
         if (res?.data?.success && res.data.data?.url) {
           const uploadedUrl = res.data.data.url;
           setPhotoPreview(uploadedUrl);
-          if (typeof callback === 'function') callback(uploadedUrl);
+          if (typeof callback === "function") callback(uploadedUrl);
         }
       } catch (err) {
-        console.warn('Direct upload API failed, using base64 preview fallback:', err);
+        console.warn(
+          "Direct upload API failed, using base64 preview fallback:",
+          err,
+        );
       }
     };
     reader.readAsDataURL(file);
@@ -404,55 +430,56 @@ export default function DoctorsManager() {
   // Modal Handlers
   const openAddModal = () => {
     setEditingDoctor(null);
-    setFormError('');
+    setFormError("");
     setFormData({
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      password: '',
-      photo_url: '',
-      registration_no: '',
-      qualification: '',
-      specialty: '',
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
+      password: "",
+      photo_url: "",
+      registration_no: "",
+      qualification: "",
+      specialty: "",
       experience_years: 0,
       consultation_fee: 0,
-      bio: '',
-      languages: '',
-      gender: 'male',
-      dob: '',
-      department_id: departments.length > 0 ? departments[0].id : '',
-      clinic_id: clinics.length > 0 ? clinics[0].id : '',
-      status: 'active',
+      bio: "",
+      languages: "",
+      gender: "male",
+      dob: "",
+      department_id: departments.length > 0 ? departments[0].id : "",
+      clinic_id: clinics.length > 0 ? clinics[0].id : "",
+      status: "active",
     });
-    setPhotoPreview('');
+    setPhotoPreview("");
     setShowDoctorModal(true);
   };
 
   const openEditModal = (doc) => {
     setEditingDoctor(doc);
-    setFormError('');
+    setFormError("");
     setFormData({
-      first_name: doc.first_name || '',
-      last_name: doc.last_name || '',
-      email: doc.email || '',
-      phone: doc.phone || '',
-      password: '',
-      photo_url: doc.photo_url || '',
-      registration_no: doc.registration_no || '',
-      qualification: doc.qualification || '',
-      specialty: doc.specialty || '',
+      first_name: doc.first_name || "",
+      last_name: doc.last_name || "",
+      email: doc.email || "",
+      phone: doc.phone || "",
+      password: "",
+      photo_url: doc.photo_url || "",
+      registration_no: doc.registration_no || "",
+      qualification: doc.qualification || "",
+      specialty: doc.specialty || "",
       experience_years: doc.experience_years || 0,
       consultation_fee: doc.consultation_fee || 0,
-      bio: doc.bio || '',
+      bio: doc.bio || "",
       languages: formatLanguages(doc.languages),
-      gender: doc.gender || 'male',
-      dob: doc.dob || '',
-      department_id: doc.department_id || (departments.length > 0 ? departments[0].id : ''),
-      clinic_id: doc.clinic_id || (clinics.length > 0 ? clinics[0].id : ''),
-      status: (doc.status || 'active').toLowerCase(),
+      gender: doc.gender || "male",
+      dob: doc.dob || "",
+      department_id:
+        doc.department_id || (departments.length > 0 ? departments[0].id : ""),
+      clinic_id: doc.clinic_id || (clinics.length > 0 ? clinics[0].id : ""),
+      status: (doc.status || "active").toLowerCase(),
     });
-    setPhotoPreview(doc.photo_url || '');
+    setPhotoPreview(doc.photo_url || "");
     setShowDoctorModal(true);
     setOpenActionRowId(null);
   };
@@ -460,40 +487,46 @@ export default function DoctorsManager() {
   const handleSaveDoctor = async (e) => {
     e.preventDefault();
     if (!formData.first_name.trim() || !formData.last_name.trim()) {
-      setFormError('First and Last name are required.');
+      setFormError("First and Last name are required.");
       return;
     }
     if (!formData.email.trim()) {
-      setFormError('Email address is required.');
+      setFormError("Email address is required.");
       return;
     }
 
-    const cleanPhone = String(formData.phone).replace(/\D/g, '');
+    const cleanPhone = String(formData.phone).replace(/\D/g, "");
     if (cleanPhone.length !== 10) {
-      setFormError('Mobile number must be exactly 10 digits.');
+      setFormError("Mobile number must be exactly 10 digits.");
       return;
     }
 
-    if (!editingDoctor && (!formData.password || formData.password.trim().length < 6)) {
-      setFormError('Password is required (minimum 6 characters).');
+    if (
+      !editingDoctor &&
+      (!formData.password || formData.password.trim().length < 6)
+    ) {
+      setFormError("Password is required (minimum 6 characters).");
       return;
     }
 
     setSaving(true);
-    setFormError('');
+    setFormError("");
 
     try {
       if (editingDoctor) {
         const result = await updateDoctor(editingDoctor.id, formData);
-        showSuccess(result?.message || 'Doctor updated successfully');
+        showSuccess(result?.message || "Doctor updated successfully");
       } else {
         const result = await createDoctor(formData);
-        showSuccess(result?.message || 'Doctor created successfully');
+        showSuccess(result?.message || "Doctor created successfully");
       }
       setShowDoctorModal(false);
       await loadDoctorsList(activeFilters);
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Failed to save doctor details.';
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to save doctor details.";
       setFormError(msg);
       showError(err, msg);
     } finally {
@@ -504,56 +537,59 @@ export default function DoctorsManager() {
   const handleDeleteDoctor = async (doc) => {
     setOpenActionRowId(null);
     const result = await Swal.fire({
-      title: 'Delete doctor?',
+      title: "Delete doctor?",
       text: `"Dr. ${doc.first_name} ${doc.last_name}" will be permanently removed.`,
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Yes, delete doctor',
-      cancelButtonText: 'Cancel',
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Yes, delete doctor",
+      cancelButtonText: "Cancel",
     });
 
     if (!result.isConfirmed) return;
 
     try {
       const deleteResult = await deleteDoctor(doc.id);
-      showSuccess(deleteResult?.message || 'Doctor deleted successfully.');
+      showSuccess(deleteResult?.message || "Doctor deleted successfully.");
       await loadDoctorsList(activeFilters);
     } catch (err) {
-      showError(err, 'Failed to delete doctor.');
+      showError(err, "Failed to delete doctor.");
     }
   };
 
   const toggleStatus = async (doc) => {
-    const newStatus = formatStatus(doc.status) === 'Active' ? 'inactive' : 'active';
+    const newStatus =
+      formatStatus(doc.status) === "Active" ? "inactive" : "active";
 
     try {
       const result = await updateDoctor(doc.id, { ...doc, status: newStatus });
-      showSuccess(result?.message || 'Doctor status updated.');
+      showSuccess(result?.message || "Doctor status updated.");
       await loadDoctorsList(activeFilters);
     } catch (err) {
-      showError(err, 'Failed to update status.');
+      showError(err, "Failed to update status.");
     }
   };
 
   // Photo Upload Handler
   const openPhotoModal = (doc) => {
     setPhotoDoctor(doc);
-    setPhotoUrlInput(doc.photo_url || '');
-    setPhotoPreview(doc.photo_url || '');
+    setPhotoUrlInput(doc.photo_url || "");
+    setPhotoPreview(doc.photo_url || "");
     setOpenActionRowId(null);
   };
 
   const handleSavePhoto = async () => {
     if (photoDoctor) {
       try {
-        const result = await updateDoctor(photoDoctor.id, { photo_url: photoUrlInput });
-        showSuccess(result?.message || 'Doctor photo updated successfully.');
+        const result = await updateDoctor(photoDoctor.id, {
+          photo_url: photoUrlInput,
+        });
+        showSuccess(result?.message || "Doctor photo updated successfully.");
         setPhotoDoctor(null);
         await loadDoctorsList(activeFilters);
       } catch (err) {
-        showError(err, 'Failed to update photo.');
+        showError(err, "Failed to update photo.");
       }
     }
   };
@@ -563,11 +599,11 @@ export default function DoctorsManager() {
     setExpDoctor(doc);
     const formattedExps = (doc.experiences || []).map((e) => ({
       id: e.id || Date.now() + Math.random(),
-      hospital_name: e.hospital_name || e.hospital || '',
-      designation: e.designation || '',
-      start_date: e.start_date || e.startDate || '',
-      end_date: e.end_date || e.endDate || '',
-      description: e.description || '',
+      hospital_name: e.hospital_name || e.hospital || "",
+      designation: e.designation || "",
+      start_date: e.start_date || e.startDate || "",
+      end_date: e.end_date || e.endDate || "",
+      description: e.description || "",
     }));
     setExpList(formattedExps);
     setOpenActionRowId(null);
@@ -576,7 +612,14 @@ export default function DoctorsManager() {
   const handleAddExpRow = () => {
     setExpList([
       ...expList,
-      { id: Date.now(), hospital_name: '', designation: '', start_date: '', end_date: '', description: '' },
+      {
+        id: Date.now(),
+        hospital_name: "",
+        designation: "",
+        start_date: "",
+        end_date: "",
+        description: "",
+      },
     ]);
   };
 
@@ -584,11 +627,11 @@ export default function DoctorsManager() {
     if (expDoctor) {
       try {
         const result = await manageDoctorExperience(expDoctor.id, expList);
-        showSuccess(result?.message || 'Experiences saved successfully.');
+        showSuccess(result?.message || "Experiences saved successfully.");
         setExpDoctor(null);
         await loadDoctorsList(activeFilters);
       } catch (err) {
-        showError(err, 'Failed to save experience records.');
+        showError(err, "Failed to save experience records.");
       }
     }
   };
@@ -598,8 +641,8 @@ export default function DoctorsManager() {
     setAchDoctor(doc);
     const formattedAch = (doc.achievements || []).map((a) => ({
       id: a.id || Date.now() + Math.random(),
-      title: a.title || '',
-      organization: a.organization || a.description || '',
+      title: a.title || "",
+      organization: a.organization || a.description || "",
       year: a.year || new Date().getFullYear(),
     }));
     setAchList(formattedAch);
@@ -607,18 +650,26 @@ export default function DoctorsManager() {
   };
 
   const handleAddAchRow = () => {
-    setAchList([...achList, { id: Date.now(), title: '', organization: '', year: new Date().getFullYear() }]);
+    setAchList([
+      ...achList,
+      {
+        id: Date.now(),
+        title: "",
+        organization: "",
+        year: new Date().getFullYear(),
+      },
+    ]);
   };
 
   const handleSaveAch = async () => {
     if (achDoctor) {
       try {
         const result = await manageDoctorAchievement(achDoctor.id, achList);
-        showSuccess(result?.message || 'Achievements saved successfully.');
+        showSuccess(result?.message || "Achievements saved successfully.");
         setAchDoctor(null);
         await loadDoctorsList(activeFilters);
       } catch (err) {
-        showError(err, 'Failed to save achievements.');
+        showError(err, "Failed to save achievements.");
       }
     }
   };
@@ -628,9 +679,13 @@ export default function DoctorsManager() {
     setSchedDoctor(doc);
     const formattedSched = (doc.schedules || []).map((s) => ({
       id: s.id || Date.now() + Math.random(),
-      day: s.day ? s.day : (s.day_of_week ? s.day_of_week.charAt(0).toUpperCase() + s.day_of_week.slice(1) : 'Monday'),
-      start_time: s.start_time || '09:00 AM',
-      end_time: s.end_time || '05:00 PM',
+      day: s.day
+        ? s.day
+        : s.day_of_week
+          ? s.day_of_week.charAt(0).toUpperCase() + s.day_of_week.slice(1)
+          : "Monday",
+      start_time: s.start_time || "09:00 AM",
+      end_time: s.end_time || "05:00 PM",
       slot_duration: s.slot_duration || 15,
       max_patients: s.max_patients || s.maximum_booking || 10,
     }));
@@ -641,7 +696,14 @@ export default function DoctorsManager() {
   const handleAddSchedRow = () => {
     setSchedList([
       ...schedList,
-      { id: Date.now(), day: 'Monday', start_time: '09:00 AM', end_time: '05:00 PM', slot_duration: 15, max_patients: 10 },
+      {
+        id: Date.now(),
+        day: "Monday",
+        start_time: "09:00 AM",
+        end_time: "05:00 PM",
+        slot_duration: 15,
+        max_patients: 10,
+      },
     ]);
   };
 
@@ -649,11 +711,11 @@ export default function DoctorsManager() {
     if (schedDoctor) {
       try {
         const result = await manageDoctorSchedule(schedDoctor.id, schedList);
-        showSuccess(result?.message || 'Schedule saved successfully.');
+        showSuccess(result?.message || "Schedule saved successfully.");
         setSchedDoctor(null);
         await loadDoctorsList(activeFilters);
       } catch (err) {
-        showError(err, 'Failed to save schedule.');
+        showError(err, "Failed to save schedule.");
       }
     }
   };
@@ -664,7 +726,10 @@ export default function DoctorsManager() {
       <div className="admin-header">
         <div>
           <h1 className="admin-title">Doctor Management</h1>
-          <p className="admin-subtitle">Add doctors, edit profiles, manage fees, schedules, achievements & experiences.</p>
+          <p className="admin-subtitle">
+            Add doctors, edit profiles, manage fees, schedules, achievements &
+            experiences.
+          </p>
         </div>
         <button className="admin-add-btn" onClick={openAddModal}>
           <span>+</span> Add New Doctor
@@ -678,7 +743,7 @@ export default function DoctorsManager() {
           placeholder="Search by doctor name or specialty..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
+          onKeyDown={(e) => e.key === "Enter" && handleApplyFilter()}
         />
         <select
           className="admin-filter-select"
@@ -751,14 +816,16 @@ export default function DoctorsManager() {
                         <div className="clinic-staff-name-wrap">
                           <div className="doctor-avatar-box">
                             {doc.photo_url ? (
-                              <img
+                               <img
                                 src={formatImageUrl(doc.photo_url)}
                                 alt={doc.first_name}
                                 className="doctor-avatar-img"
                               />
                             ) : (
                               <div className="doctor-avatar-initials">
-                                {doc.first_name ? doc.first_name.charAt(0).toUpperCase() : 'D'}
+                                {doc.first_name
+                                  ? doc.first_name.charAt(0).toUpperCase()
+                                  : "D"}
                               </div>
                             )}
                             <button
@@ -779,14 +846,22 @@ export default function DoctorsManager() {
                         </div>
                       </td>
                       <td>
-                        <div className="clinic-staff-desig-text">{doc.specialty || 'N/A'}</div>
-                        <div className="clinic-staff-qual-text">{doc.qualification || 'N/A'}</div>
+                        <div className="clinic-staff-desig-text">
+                          {doc.specialty || "N/A"}
+                        </div>
+                        <div className="clinic-staff-qual-text">
+                          {doc.qualification || "N/A"}
+                        </div>
                       </td>
                       <td>
-                        <div className="clinic-doc-fee-cell">₹{doc.consultation_fee || 0}</div>
+                        <div className="clinic-doc-fee-cell">
+                          ₹{doc.consultation_fee || 0}
+                        </div>
                       </td>
                       <td>
-                        <span className="clinic-doc-exp-cell">{doc.experience_years} Years</span>
+                        <span className="clinic-doc-exp-cell">
+                          {doc.experience_years} Years
+                        </span>
                       </td>
                       <td>
                         <button
@@ -794,7 +869,9 @@ export default function DoctorsManager() {
                           onClick={() => toggleStatus(doc)}
                           title="Click to toggle status"
                         >
-                          <span className={`admin-badge ${status === 'Active' ? 'active' : 'inactive'}`}>
+                          <span
+                            className={`admin-badge ${status === "Active" ? "active" : "inactive"}`}
+                          >
                             {status}
                           </span>
                         </button>
@@ -803,8 +880,10 @@ export default function DoctorsManager() {
                         {/* Three Dots Action Menu Trigger */}
                         <div className="admin-action-menu-wrap">
                           <button
-                            onClick={() => setOpenActionRowId(isActionOpen ? null : doc.id)}
-                            className={`admin-action-trigger-btn ${isActionOpen ? 'active' : ''}`}
+                            onClick={() =>
+                              setOpenActionRowId(isActionOpen ? null : doc.id)
+                            }
+                            className={`admin-action-trigger-btn ${isActionOpen ? "active" : ""}`}
                             title="Actions Menu"
                           >
                             ⋮
@@ -874,7 +953,8 @@ export default function DoctorsManager() {
         {!loading && !error && pagination.totalPages > 0 && (
           <div className="admin-pagination-footer">
             <span className="clinic-gallery-page-info">
-              Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total doctors)
+              Showing page {pagination.currentPage} of {pagination.totalPages} (
+              {pagination.count} total doctors)
             </span>
             <div className="clinic-gallery-page-btns">
               <button
@@ -898,10 +978,16 @@ export default function DoctorsManager() {
 
       {/* Add / Edit Doctor Modal (Strict 17 Fields) */}
       {showDoctorModal && (
-        <div className="admin-modal-backdrop" onClick={() => !saving && setShowDoctorModal(false)}>
-          <div className="admin-modal-card admin-modal-card-lg" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="admin-modal-backdrop"
+          onClick={() => !saving && setShowDoctorModal(false)}
+        >
+          <div
+            className="admin-modal-card admin-modal-card-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="admin-modal-title">
-              {editingDoctor ? 'Edit Doctor Profile' : 'Add New Doctor'}
+              {editingDoctor ? "Edit Doctor Profile" : "Add New Doctor"}
             </h3>
 
             <form onSubmit={handleSaveDoctor}>
@@ -915,7 +1001,9 @@ export default function DoctorsManager() {
                     required
                     placeholder="Enter first name"
                     value={formData.first_name}
-                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, first_name: e.target.value })
+                    }
                   />
                 </div>
 
@@ -928,7 +1016,9 @@ export default function DoctorsManager() {
                     required
                     placeholder="Enter last name"
                     value={formData.last_name}
-                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, last_name: e.target.value })
+                    }
                   />
                 </div>
 
@@ -941,13 +1031,17 @@ export default function DoctorsManager() {
                     required
                     placeholder="doctor@example.com"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                   />
                 </div>
 
                 {/* Mobile */}
                 <div>
-                  <label className="admin-form-label">Mobile Number (10 digits) *</label>
+                  <label className="admin-form-label">
+                    Mobile Number (10 digits) *
+                  </label>
                   <input
                     type="text"
                     className="admin-input"
@@ -956,7 +1050,9 @@ export default function DoctorsManager() {
                     placeholder="10 digit mobile number"
                     value={formData.phone}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      const val = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
                       setFormData({ ...formData, phone: val });
                     }}
                   />
@@ -965,15 +1061,20 @@ export default function DoctorsManager() {
                 {/* Password */}
                 <div>
                   <label className="admin-form-label">
-                    Password {editingDoctor ? '(Leave blank to keep unchanged)' : '*'}
+                    Password{" "}
+                    {editingDoctor ? "(Leave blank to keep unchanged)" : "*"}
                   </label>
                   <input
                     type="password"
                     className="admin-input"
                     required={!editingDoctor}
-                    placeholder={editingDoctor ? '••••••••' : 'Enter login password'}
+                    placeholder={
+                      editingDoctor ? "••••••••" : "Enter login password"
+                    }
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                   />
                 </div>
 
@@ -982,9 +1083,11 @@ export default function DoctorsManager() {
                   <label className="admin-form-label">Profile Photo</label>
                   <div className="doctor-file-input-wrap">
                     {photoPreview && (
-                      <img
+                      <Image
                         src={formatImageUrl(photoPreview)}
                         alt="Preview"
+                        width={100}
+                        height={100}
                         className="doctor-avatar-img"
                       />
                     )}
@@ -996,7 +1099,10 @@ export default function DoctorsManager() {
                         const file = e.target.files[0];
                         if (file) {
                           handleFileUpload(file, (url) => {
-                            setFormData((prev) => ({ ...prev, photo_url: url }));
+                            setFormData((prev) => ({
+                              ...prev,
+                              photo_url: url,
+                            }));
                           });
                         }
                       }}
@@ -1006,13 +1112,20 @@ export default function DoctorsManager() {
 
                 {/* Registration No */}
                 <div>
-                  <label className="admin-form-label">Registration No (License)</label>
+                  <label className="admin-form-label">
+                    Registration No (License)
+                  </label>
                   <input
                     type="text"
                     className="admin-input"
                     placeholder="e.g. GMC-12345"
                     value={formData.registration_no}
-                    onChange={(e) => setFormData({ ...formData, registration_no: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        registration_no: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
@@ -1024,7 +1137,12 @@ export default function DoctorsManager() {
                     className="admin-input"
                     placeholder="e.g. MBBS, MD (Cardiology)"
                     value={formData.qualification}
-                    onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        qualification: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
@@ -1036,7 +1154,9 @@ export default function DoctorsManager() {
                     className="admin-input"
                     placeholder="e.g. Cardiologist, Neurologist, Pediatrician"
                     value={formData.specialty}
-                    onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, specialty: e.target.value })
+                    }
                   />
                 </div>
 
@@ -1049,20 +1169,32 @@ export default function DoctorsManager() {
                     min="0"
                     placeholder="e.g. 5"
                     value={formData.experience_years}
-                    onChange={(e) => setFormData({ ...formData, experience_years: parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        experience_years: parseInt(e.target.value) || 0,
+                      })
+                    }
                   />
                 </div>
 
                 {/* Consultation Fee */}
                 <div>
-                  <label className="admin-form-label">Consultation Fee (₹)</label>
+                  <label className="admin-form-label">
+                    Consultation Fee (₹)
+                  </label>
                   <input
                     type="number"
                     className="admin-input"
                     min="0"
                     placeholder="e.g. 500"
                     value={formData.consultation_fee}
-                    onChange={(e) => setFormData({ ...formData, consultation_fee: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        consultation_fee: parseFloat(e.target.value) || 0,
+                      })
+                    }
                   />
                 </div>
 
@@ -1074,7 +1206,9 @@ export default function DoctorsManager() {
                     className="admin-input"
                     placeholder="e.g. English, Hindi, Gujarati"
                     value={formData.languages}
-                    onChange={(e) => setFormData({ ...formData, languages: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, languages: e.target.value })
+                    }
                   />
                 </div>
 
@@ -1084,7 +1218,9 @@ export default function DoctorsManager() {
                   <select
                     className="admin-select"
                     value={formData.gender}
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, gender: e.target.value })
+                    }
                   >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
@@ -1099,7 +1235,9 @@ export default function DoctorsManager() {
                     type="date"
                     className="admin-input"
                     value={formData.dob}
-                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dob: e.target.value })
+                    }
                   />
                 </div>
 
@@ -1109,7 +1247,9 @@ export default function DoctorsManager() {
                   <SearchableDepartmentSelect
                     departments={departments}
                     value={formData.department_id}
-                    onChange={(val) => setFormData({ ...formData, department_id: val })}
+                    onChange={(val) =>
+                      setFormData({ ...formData, department_id: val })
+                    }
                   />
                 </div>
 
@@ -1120,14 +1260,20 @@ export default function DoctorsManager() {
                     <input
                       type="text"
                       className="admin-input clinic-input-disabled"
-                      value={clinics[0]?.name ? `${clinics[0].name} (${clinics[0].city || 'Assigned Clinic'}) 🔒` : 'My Clinic 🔒'}
+                      value={
+                        clinics[0]?.name
+                          ? `${clinics[0].name} (${clinics[0].city || "Assigned Clinic"}) `
+                          : "My Clinic "
+                      }
                       disabled
                     />
                   ) : (
                     <SearchableClinicSelect
                       clinics={clinics}
                       value={formData.clinic_id}
-                      onChange={(val) => setFormData({ ...formData, clinic_id: val })}
+                      onChange={(val) =>
+                        setFormData({ ...formData, clinic_id: val })
+                      }
                     />
                   )}
                 </div>
@@ -1138,7 +1284,9 @@ export default function DoctorsManager() {
                   <select
                     className="admin-select"
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, status: e.target.value })
+                    }
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -1153,7 +1301,9 @@ export default function DoctorsManager() {
                     rows="3"
                     placeholder="Brief description, background summary..."
                     value={formData.bio}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, bio: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -1163,8 +1313,16 @@ export default function DoctorsManager() {
               )}
 
               <div className="admin-form-actions">
-                <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Saving...' : editingDoctor ? 'Update Doctor' : 'Save Doctor'}
+                <button
+                  type="submit"
+                  className="admin-save-btn"
+                  disabled={saving}
+                >
+                  {saving
+                    ? "Saving..."
+                    : editingDoctor
+                      ? "Update Doctor"
+                      : "Save Doctor"}
                 </button>
                 <button
                   type="button"
@@ -1182,8 +1340,14 @@ export default function DoctorsManager() {
 
       {/* View Doctor Profile Modal */}
       {viewDoctor && (
-        <div className="admin-modal-backdrop" onClick={() => setViewDoctor(null)}>
-          <div className="admin-modal-card admin-modal-card-md" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="admin-modal-backdrop"
+          onClick={() => setViewDoctor(null)}
+        >
+          <div
+            className="admin-modal-card admin-modal-card-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="admin-modal-title">Doctor Profile Details</h3>
 
             <div className="doctor-view-header">
@@ -1195,32 +1359,69 @@ export default function DoctorsManager() {
                 />
               ) : (
                 <div className="doctor-view-avatar-initials">
-                  {viewDoctor.first_name ? viewDoctor.first_name.charAt(0).toUpperCase() : 'D'}
+                  {viewDoctor.first_name
+                    ? viewDoctor.first_name.charAt(0).toUpperCase()
+                    : "D"}
                 </div>
               )}
               <div>
                 <h3 className="doctor-view-title">
                   Dr. {viewDoctor.first_name} {viewDoctor.last_name}
                 </h3>
-                <p className="doctor-view-specialty">{viewDoctor.specialty || 'N/A'}</p>
-                <p className="doctor-view-qualification">{viewDoctor.qualification || 'N/A'}</p>
+                <p className="doctor-view-specialty">
+                  {viewDoctor.specialty || "N/A"}
+                </p>
+                <p className="doctor-view-qualification">
+                  {viewDoctor.qualification || "N/A"}
+                </p>
               </div>
             </div>
 
             <div className="doctor-view-profile-grid">
-              <div><strong>First Name:</strong> {viewDoctor.first_name}</div>
-              <div><strong>Last Name:</strong> {viewDoctor.last_name}</div>
-              <div><strong>Email:</strong> {viewDoctor.email}</div>
-              <div><strong>Mobile:</strong> {viewDoctor.phone || '—'}</div>
-              <div><strong>Registration No:</strong> {viewDoctor.registration_no || 'N/A'}</div>
-              <div><strong>Qualification:</strong> {viewDoctor.qualification || 'N/A'}</div>
-              <div><strong>Specialization:</strong> {viewDoctor.specialty || 'N/A'}</div>
-              <div><strong>Experience:</strong> {viewDoctor.experience_years} Years</div>
-              <div><strong>Consultation Fee:</strong> ₹{viewDoctor.consultation_fee || 0}</div>
-              <div><strong>Languages:</strong> {formatLanguages(viewDoctor.languages) || 'N/A'}</div>
-              <div><strong>Gender:</strong> {viewDoctor.gender ? viewDoctor.gender.toUpperCase() : 'N/A'}</div>
-              <div><strong>Date of Birth:</strong> {viewDoctor.dob || 'N/A'}</div>
-              <div><strong>Status:</strong> {formatStatus(viewDoctor.status)}</div>
+              <div>
+                <strong>First Name:</strong> {viewDoctor.first_name}
+              </div>
+              <div>
+                <strong>Last Name:</strong> {viewDoctor.last_name}
+              </div>
+              <div>
+                <strong>Email:</strong> {viewDoctor.email}
+              </div>
+              <div>
+                <strong>Mobile:</strong> {viewDoctor.phone || "—"}
+              </div>
+              <div>
+                <strong>Registration No:</strong>{" "}
+                {viewDoctor.registration_no || "N/A"}
+              </div>
+              <div>
+                <strong>Qualification:</strong>{" "}
+                {viewDoctor.qualification || "N/A"}
+              </div>
+              <div>
+                <strong>Specialization:</strong> {viewDoctor.specialty || "N/A"}
+              </div>
+              <div>
+                <strong>Experience:</strong> {viewDoctor.experience_years} Years
+              </div>
+              <div>
+                <strong>Consultation Fee:</strong> ₹
+                {viewDoctor.consultation_fee || 0}
+              </div>
+              <div>
+                <strong>Languages:</strong>{" "}
+                {formatLanguages(viewDoctor.languages) || "N/A"}
+              </div>
+              <div>
+                <strong>Gender:</strong>{" "}
+                {viewDoctor.gender ? viewDoctor.gender.toUpperCase() : "N/A"}
+              </div>
+              <div>
+                <strong>Date of Birth:</strong> {viewDoctor.dob || "N/A"}
+              </div>
+              <div>
+                <strong>Status:</strong> {formatStatus(viewDoctor.status)}
+              </div>
             </div>
 
             {viewDoctor.bio && (
@@ -1236,14 +1437,28 @@ export default function DoctorsManager() {
               <ul>
                 {viewDoctor.experiences.map((exp, i) => (
                   <li key={i} className="doctor-view-exp-item">
-                    <strong>{exp.designation ? `${exp.designation} — ` : ''}{exp.hospital_name || exp.hospital || 'Hospital'}</strong>
-                    <div><small className="doctor-view-exp-period">Period: {exp.start_date || 'N/A'} to {exp.end_date || 'Present'}</small></div>
-                    {exp.description && <div className="doctor-view-exp-desc">{exp.description}</div>}
+                    <strong>
+                      {exp.designation ? `${exp.designation} — ` : ""}
+                      {exp.hospital_name || exp.hospital || "Hospital"}
+                    </strong>
+                    <div>
+                      <small className="doctor-view-exp-period">
+                        Period: {exp.start_date || "N/A"} to{" "}
+                        {exp.end_date || "Present"}
+                      </small>
+                    </div>
+                    {exp.description && (
+                      <div className="doctor-view-exp-desc">
+                        {exp.description}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="clinic-doc-empty-text">No experience records added.</p>
+              <p className="clinic-doc-empty-text">
+                No experience records added.
+              </p>
             )}
 
             <hr className="clinic-doc-divider" />
@@ -1252,7 +1467,8 @@ export default function DoctorsManager() {
               <ul>
                 {viewDoctor.achievements.map((ach, i) => (
                   <li key={i} className="clinic-doc-achievement-item">
-                    🏆 <strong>{ach.title}</strong> — {ach.organization} ({ach.year})
+                    🏆 <strong>{ach.title}</strong> — {ach.organization} (
+                    {ach.year})
                   </li>
                 ))}
               </ul>
@@ -1261,7 +1477,10 @@ export default function DoctorsManager() {
             )}
 
             <div className="admin-form-actions">
-              <button className="admin-cancel-btn" onClick={() => setViewDoctor(null)}>
+              <button
+                className="admin-cancel-btn"
+                onClick={() => setViewDoctor(null)}
+              >
                 Close
               </button>
             </div>
@@ -1271,8 +1490,14 @@ export default function DoctorsManager() {
 
       {/* Upload Doctor Photo Modal */}
       {photoDoctor && (
-        <div className="admin-modal-backdrop" onClick={() => setPhotoDoctor(null)}>
-          <div className="admin-modal-card admin-modal-card-sm" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="admin-modal-backdrop"
+          onClick={() => setPhotoDoctor(null)}
+        >
+          <div
+            className="admin-modal-card admin-modal-card-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="admin-modal-title">Update Doctor Photo</h3>
 
             <div className="photo-modal-preview-box">
@@ -1284,7 +1509,9 @@ export default function DoctorsManager() {
                 />
               ) : (
                 <div className="photo-modal-preview-initials">
-                  {photoDoctor.first_name ? photoDoctor.first_name.charAt(0).toUpperCase() : 'D'}
+                  {photoDoctor.first_name
+                    ? photoDoctor.first_name.charAt(0).toUpperCase()
+                    : "D"}
                 </div>
               )}
             </div>
@@ -1311,7 +1538,10 @@ export default function DoctorsManager() {
               <button className="admin-save-btn" onClick={handleSavePhoto}>
                 Save Photo
               </button>
-              <button className="admin-cancel-btn" onClick={() => setPhotoDoctor(null)}>
+              <button
+                className="admin-cancel-btn"
+                onClick={() => setPhotoDoctor(null)}
+              >
                 Cancel
               </button>
             </div>
@@ -1321,14 +1551,23 @@ export default function DoctorsManager() {
 
       {/* Manage Experience Modal (`DoctorExperience` Table Schema) */}
       {expDoctor && (
-        <div className="admin-modal-backdrop" onClick={() => setExpDoctor(null)}>
-          <div className="admin-modal-card admin-modal-card-lg" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="admin-modal-backdrop"
+          onClick={() => setExpDoctor(null)}
+        >
+          <div
+            className="admin-modal-card admin-modal-card-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="admin-modal-title">
-              Manage Doctor Experience — Dr. {expDoctor.first_name} {expDoctor.last_name}
+              Manage Doctor Experience — Dr. {expDoctor.first_name}{" "}
+              {expDoctor.last_name}
             </h3>
 
             {expList.length === 0 ? (
-              <p className="clinic-gallery-page-info clinic-doc-mb-16">No experience records added yet. Click below to add.</p>
+              <p className="clinic-gallery-page-info clinic-doc-mb-16">
+                No experience records added yet. Click below to add.
+              </p>
             ) : (
               expList.map((exp, idx) => (
                 <div key={exp.id || idx} className="exp-row-card">
@@ -1411,7 +1650,9 @@ export default function DoctorsManager() {
                       type="button"
                       className="admin-action-btn-delete exp-row-remove-btn"
                       title="Remove experience"
-                      onClick={() => setExpList(expList.filter((_, i) => i !== idx))}
+                      onClick={() =>
+                        setExpList(expList.filter((_, i) => i !== idx))
+                      }
                     >
                       ✕
                     </button>
@@ -1420,7 +1661,10 @@ export default function DoctorsManager() {
               ))
             )}
 
-            <button onClick={handleAddExpRow} className="admin-btn-apply clinic-doc-mt-8">
+            <button
+              onClick={handleAddExpRow}
+              className="admin-btn-apply clinic-doc-mt-8"
+            >
               + Add Experience Record
             </button>
 
@@ -1428,7 +1672,10 @@ export default function DoctorsManager() {
               <button className="admin-save-btn" onClick={handleSaveExp}>
                 Save Experiences
               </button>
-              <button className="admin-cancel-btn" onClick={() => setExpDoctor(null)}>
+              <button
+                className="admin-cancel-btn"
+                onClick={() => setExpDoctor(null)}
+              >
                 Cancel
               </button>
             </div>
@@ -1438,10 +1685,17 @@ export default function DoctorsManager() {
 
       {/* Manage Achievement Modal */}
       {achDoctor && (
-        <div className="admin-modal-backdrop" onClick={() => setAchDoctor(null)}>
-          <div className="admin-modal-card admin-modal-card-md" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="admin-modal-backdrop"
+          onClick={() => setAchDoctor(null)}
+        >
+          <div
+            className="admin-modal-card admin-modal-card-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="admin-modal-title">
-              Manage Achievements — Dr. {achDoctor.first_name} {achDoctor.last_name}
+              Manage Achievements — Dr. {achDoctor.first_name}{" "}
+              {achDoctor.last_name}
             </h3>
 
             {achList.map((ach, idx) => (
@@ -1482,14 +1736,19 @@ export default function DoctorsManager() {
                 <button
                   type="button"
                   className="admin-action-btn-delete row-delete-icon-btn"
-                  onClick={() => setAchList(achList.filter((_, i) => i !== idx))}
+                  onClick={() =>
+                    setAchList(achList.filter((_, i) => i !== idx))
+                  }
                 >
                   ✕
                 </button>
               </div>
             ))}
 
-            <button onClick={handleAddAchRow} className="admin-btn-apply clinic-doc-mt-8">
+            <button
+              onClick={handleAddAchRow}
+              className="admin-btn-apply clinic-doc-mt-8"
+            >
               + Add Achievement Record
             </button>
 
@@ -1497,7 +1756,10 @@ export default function DoctorsManager() {
               <button className="admin-save-btn" onClick={handleSaveAch}>
                 Save Achievements
               </button>
-              <button className="admin-cancel-btn" onClick={() => setAchDoctor(null)}>
+              <button
+                className="admin-cancel-btn"
+                onClick={() => setAchDoctor(null)}
+              >
                 Cancel
               </button>
             </div>
@@ -1507,10 +1769,17 @@ export default function DoctorsManager() {
 
       {/* Manage Schedule Modal */}
       {schedDoctor && (
-        <div className="admin-modal-backdrop" onClick={() => setSchedDoctor(null)}>
-          <div className="admin-modal-card admin-modal-card-lg" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="admin-modal-backdrop"
+          onClick={() => setSchedDoctor(null)}
+        >
+          <div
+            className="admin-modal-card admin-modal-card-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="admin-modal-title">
-              Manage Weekly Schedule — Dr. {schedDoctor.first_name} {schedDoctor.last_name}
+              Manage Weekly Schedule — Dr. {schedDoctor.first_name}{" "}
+              {schedDoctor.last_name}
             </h3>
 
             {schedList.map((sc, idx) => (
@@ -1524,8 +1793,18 @@ export default function DoctorsManager() {
                     setSchedList(updated);
                   }}
                 >
-                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                    <option key={day} value={day}>{day}</option>
+                  {[
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                  ].map((day) => (
+                    <option key={day} value={day}>
+                      {day}
+                    </option>
                   ))}
                 </select>
                 <input
@@ -1576,14 +1855,19 @@ export default function DoctorsManager() {
                 <button
                   type="button"
                   className="admin-action-btn-delete row-delete-icon-btn"
-                  onClick={() => setSchedList(schedList.filter((_, i) => i !== idx))}
+                  onClick={() =>
+                    setSchedList(schedList.filter((_, i) => i !== idx))
+                  }
                 >
                   ✕
                 </button>
               </div>
             ))}
 
-            <button onClick={handleAddSchedRow} className="admin-btn-apply clinic-doc-mt-8">
+            <button
+              onClick={handleAddSchedRow}
+              className="admin-btn-apply clinic-doc-mt-8"
+            >
               + Add Schedule Slot
             </button>
 
@@ -1591,7 +1875,10 @@ export default function DoctorsManager() {
               <button className="admin-save-btn" onClick={handleSaveSched}>
                 Save Schedule
               </button>
-              <button className="admin-cancel-btn" onClick={() => setSchedDoctor(null)}>
+              <button
+                className="admin-cancel-btn"
+                onClick={() => setSchedDoctor(null)}
+              >
                 Cancel
               </button>
             </div>
