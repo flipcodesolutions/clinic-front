@@ -1083,12 +1083,13 @@ export default function DoctorsManager() {
                   <label className="admin-form-label">Profile Photo</label>
                   <div className="doctor-file-input-wrap">
                     {photoPreview && (
-                      <Image
+                      <img
                         src={formatImageUrl(photoPreview)}
                         alt="Preview"
-                        width={100}
-                        height={100}
                         className="doctor-avatar-img"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://placehold.co/100x100?text=Preview';
+                        }}
                       />
                     )}
                     <input
