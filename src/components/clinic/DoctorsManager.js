@@ -816,7 +816,7 @@ export default function DoctorsManager() {
                         <div className="clinic-staff-name-wrap">
                           <div className="doctor-avatar-box">
                             {doc.photo_url ? (
-                               <img
+                              <img
                                 src={formatImageUrl(doc.photo_url)}
                                 alt={doc.first_name}
                                 className="doctor-avatar-img"

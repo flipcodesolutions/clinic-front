@@ -186,8 +186,8 @@ export default function ClinicServicesManager() {
               'Saving...'
             ) : (
               <>
-              
-              Save Changes
+
+                Save Changes
               </>
             )}
           </button>
@@ -238,7 +238,7 @@ export default function ClinicServicesManager() {
           />
         )}
 
-      
+
       </div>
     </div>
   );

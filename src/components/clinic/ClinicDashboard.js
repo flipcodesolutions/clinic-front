@@ -243,7 +243,7 @@ export default function ClinicDashboard() {
               <thead>
                 <tr>
                   <th>Staff Name</th>
-                  <th>Role / Shift</th>
+                  <th>Designation</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -262,9 +262,11 @@ export default function ClinicDashboard() {
                       <div className="clinic-dashboard-staff-desig">
                         {s.designation}
                       </div>
-                      <div className="clinic-dashboard-staff-shift">
-                        {s.shift} Shift
-                      </div>
+                      {s.shift && (
+                        <div className="clinic-dashboard-staff-shift">
+                          {s.shift} Shift
+                        </div>
+                      )}
                     </td>
                     <td>
                       <span className={`clinic-badge ${s.status}`}>
