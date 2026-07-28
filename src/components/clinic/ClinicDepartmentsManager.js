@@ -1,461 +1,294 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  getClinicDepartments,
-  assignDepartmentToClinic,
-  removeDepartmentFromClinic,
-  toggleClinicDepartmentStatus,
-} from '@/services/clinicAdminService';
-import { getDepartments } from '@/services/departmentService';
+import { getClinicDepartments, syncClinicDepartments } from '@/services/clinicAdminService';
 import apiClient from '@/services/apiClient';
 
-
-
-const defaultFilters = {
-  search: '',
-  status: '',
-  page: 1,
-  limit: 10,
-};
-
 export default function ClinicDepartmentsManager() {
-  const [assignedDepartments, setAssignedDepartments] = useState([]);
-  const [globalDepartments, setGlobalDepartments] = useState([]);
+  const [allDepartments, setAllDepartments] = useState([]);
+  const [selectedDeptIds, setSelectedDeptIds] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notification, setNotification] = useState({ type: '', message: '' });
 
-  // Modal Checkbox State
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedAssignIds, setSelectedAssignIds] = useState([]);
-  const [modalSearch, setModalSearch] = useState('');
-
-
-
-  // Filters & Pagination State
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [activeFilters, setActiveFilters] = useState(defaultFilters);
-  const [pagination, setPagination] = useState({
-    count: 0,
-    currentPage: 1,
-    totalPages: 1,
-    limit: 10,
-  });
-
-  const loadDeptData = useCallback(async (filters = activeFilters) => {
+  // Load master departments and currently assigned clinic departments
+  const loadData = useCallback(async () => {
     setLoading(true);
-    const assigned = await getClinicDepartments(filters);
-    const assignedList = Array.isArray(assigned) ? assigned : (assigned?.data || []);
-    setAssignedDepartments(assignedList);
-    if (assigned && !Array.isArray(assigned)) {
-      setPagination({
-        count: assigned.count ?? assignedList.length,
-        currentPage: assigned.currentPage ?? 1,
-        totalPages: assigned.totalPages ?? 1,
-        limit: assigned.limit ?? filters.limit ?? 10,
-      });
-    }
-
-    // Fetch master departments via clinic-authorized endpoint
+    setNotification({ type: '', message: '' });
     try {
-      const globalRes = await apiClient.get('/clinic/master-departments', { params: { limit: 100 } }).catch(() => null);
-      if (globalRes?.data?.success && Array.isArray(globalRes.data.data)) {
-        setGlobalDepartments(globalRes.data.data);
-      } else {
-        setGlobalDepartments([]);
-      }
-    } catch (err) {
-      console.error('Failed to load master departments', err);
-      setGlobalDepartments([]);
-    }
-    setLoading(false);
-  }, [activeFilters]);
+      // 1. Fetch assigned clinic departments
+      const assignedRes = await getClinicDepartments({ limit: 1000 });
+      const assignedList = Array.isArray(assignedRes)
+        ? assignedRes
+        : assignedRes?.data || [];
+      const assignedIds = assignedList.map((d) => d.id).filter(Boolean);
 
-  useEffect(() => {
-    loadDeptData(defaultFilters);
+      // 2. Fetch master departments
+      let masterList = [];
+      try {
+        const masterRes = await apiClient.get('/clinic/master-departments', { params: { limit: 1000 } });
+        if (masterRes?.data?.success && Array.isArray(masterRes.data.data)) {
+          masterList = masterRes.data.data;
+        }
+      } catch (err) {
+        console.error('Failed to load master departments from API', err);
+      }
+
+      // Fallback if master list empty
+      if (masterList.length === 0 && assignedList.length > 0) {
+        masterList = assignedList.map((ad) => ({
+          id: ad.id,
+          name: ad.name,
+          description: ad.description,
+          status: ad.status || 'active',
+        }));
+      }
+
+      setAllDepartments(masterList);
+      setSelectedDeptIds(assignedIds);
+    } catch (err) {
+      console.error('Error loading departments:', err);
+      setNotification({ type: 'error', message: 'Failed to load department list.' });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleApplyFilter = () => {
-    const filters = {
-      search: search.trim(),
-      status: statusFilter,
-      page: 1,
-      limit: activeFilters.limit,
-    };
-    setActiveFilters(filters);
-    loadDeptData(filters);
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const handleResetFilter = () => {
-    setSearch('');
-    setStatusFilter('');
-    setActiveFilters(defaultFilters);
-    loadDeptData(defaultFilters);
-  };
-
-  const handleLimitChange = (limit) => {
-    const filters = {
-      ...activeFilters,
-      page: 1,
-      limit: Number(limit),
-    };
-    setActiveFilters(filters);
-    loadDeptData(filters);
-  };
-
-  const handlePageChange = (page) => {
-    if (page < 1 || page > pagination.totalPages) return;
-    const filters = {
-      ...activeFilters,
-      page,
-    };
-    setActiveFilters(filters);
-    loadDeptData(filters);
-  };
-
-  // --- Assign Modal Handlers ---
-  const handleOpenAssignModal = () => {
-    setSelectedAssignIds([]);
-    setModalSearch('');
-    setShowAssignModal(true);
-  };
-
-  const availableDepartments = globalDepartments.filter(
-    (gd) => !assignedDepartments.some((ad) => ad.id === gd.id || ad.name?.toLowerCase() === gd.name?.toLowerCase())
-  );
-
-  const filteredAvailable = availableDepartments.filter((d) => {
-    const q = modalSearch.toLowerCase();
-    return d.name.toLowerCase().includes(q) || (d.description && d.description.toLowerCase().includes(q));
-  });
-
-  const toggleSelectAllAssignModal = () => {
-    if (selectedAssignIds.length === filteredAvailable.length && filteredAvailable.length > 0) {
-      setSelectedAssignIds([]);
-    } else {
-      setSelectedAssignIds(filteredAvailable.map((d) => d.id));
-    }
-  };
-
-  const toggleAssignSelection = (id) => {
-    setSelectedAssignIds((prev) =>
+  // Toggle single department selection
+  const toggleSelectDept = (id) => {
+    setSelectedDeptIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  const handleAssignDepartment = async (e) => {
-    e.preventDefault();
-    if (selectedAssignIds.length === 0) return;
-    const res = await assignDepartmentToClinic({ department_ids: selectedAssignIds });
-    if (!res.success) {
-      alert(res.message);
-    } else {
-      setShowAssignModal(false);
-      setSelectedAssignIds([]);
-      loadDeptData();
-    }
-  };
+  // Save selected departments
+  const handleSave = async () => {
+    setSaving(true);
+    setNotification({ type: '', message: '' });
 
-  const handleRemoveDepartment = async (id) => {
-    if (window.confirm('Are you sure you want to delete this department from your clinic?')) {
-      await removeDepartmentFromClinic(id);
-      loadDeptData();
-    }
-  };
+    const res = await syncClinicDepartments(selectedDeptIds);
+    setSaving(false);
 
-  const toggleStatus = async (dept) => {
-    const currentStatus = (dept.status || 'active').toLowerCase();
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    const res = await toggleClinicDepartmentStatus(dept.id, newStatus);
-    if (!res.success) {
-      alert(res.message);
+    if (res.success) {
+      setNotification({
+        type: 'success',
+        message: '✅ Departments saved successfully!',
+      });
+
+      setTimeout(() => {
+        setNotification({ type: '', message: '' });
+      }, 3000);
     } else {
-      loadDeptData();
+      setNotification({
+        type: 'error',
+        message: `❌ ${res.message || 'Failed to save departments.'}`,
+      });
     }
   };
 
   return (
-    <div className="clinic-departments-manager">
-      {/* Header */}
-      <div className="clinic-header">
-        <div>
-          <h1 className="clinic-title">Clinic Departments</h1>
-          <p className="clinic-subtitle">Assign medical specialties and departments available at your clinic.</p>
-        </div>
-        <button onClick={handleOpenAssignModal} className="clinic-btn clinic-btn-primary">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Assign Departments
-        </button>
+    <div style={{ padding: '24px 32px', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }}>
+      {/* Outer Page Header */}
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.01em' }}>
+          Departments
+        </h1>
+        <p style={{ margin: '4px 0 0', fontSize: 14, color: '#64748b' }}>
+          Select and assign departments to your clinic.
+        </p>
       </div>
 
-      {/* Filter & Bulk Actions Bar */}
-      <div className="admin-filter-bar" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <input
-          className="admin-search-input"
-          placeholder="Search assigned specialties by name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
-        />
-        <select
-          className="admin-filter-select"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+      {/* Main White Card Container */}
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: 16,
+          border: '1px solid #e2e8f0',
+          padding: 32,
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Card Header with Save Button */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 16,
+            marginBottom: 24,
+          }}
         >
-          <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-        <select
-          className="admin-filter-select"
-          value={activeFilters.limit}
-          onChange={(e) => handleLimitChange(e.target.value)}
-        >
-          <option value="10">10 per page</option>
-          <option value="25">25 per page</option>
-          <option value="50">50 per page</option>
-          <option value="100">100 per page</option>
-        </select>
-        <button className="admin-btn-apply" onClick={handleApplyFilter}>
-          Apply Filter
-        </button>
-        <button className="admin-btn-reset" onClick={handleResetFilter}>
-          Reset
-        </button>
-      </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a' }}>
+              Assign Departments
+            </h2>
+            <p style={{ margin: '4px 0 0', fontSize: 14, color: '#64748b' }}>
+              Select the departments you want to assign to your clinic.
+            </p>
+          </div>
 
-      {/* Departments Table Card */}
-      <div className="clinic-table-card">
-        <div className="clinic-table-header">
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>
-            🏢 Assigned Specialties ({assignedDepartments.length})
-          </h3>
+          <button
+            onClick={handleSave}
+            disabled={saving || loading}
+            style={{
+              background: '#0d9488',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '10px 20px',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: saving || loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'all 0.15s ease',
+              opacity: saving || loading ? 0.7 : 1,
+            }}
+          >
+            {saving ? (
+              'Saving...'
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Save Changes
+              </>
+            )}
+          </button>
         </div>
 
-        <div className="clinic-table-wrap">
-          <table className="clinic-table">
-            <thead>
-              <tr>
-                <th>Department Name</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
-                    Loading assigned departments...
-                  </td>
-                </tr>
-              ) : assignedDepartments.length === 0 ? (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
-                    No departments assigned to this clinic yet. Click Assign Departments to add.
-                  </td>
-                </tr>
-              ) : (
-                assignedDepartments.map((dept) => (
-                  <tr key={dept.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 24 }}>🏢</span>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{dept.name}</div>
-                      </div>
-                    </td>
-                    <td style={{ color: '#475569', fontSize: 13 }}>{dept.description}</td>
-                    <td>
-                      <button
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
-                        onClick={() => toggleStatus(dept)}
-                        title="Click to toggle status"
-                      >
-                        <span className={`admin-badge ${(dept.status === 'active' || dept.status === 'Active') ? 'active' : 'inactive'}`}>
-                          {(dept.status === 'active' || dept.status === 'Active') ? 'Active' : 'Inactive'}
-                        </span>
-                      </button>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button
-                        className="admin-action-btn-delete"
-                        onClick={() => handleRemoveDepartment(dept.id)}
-                        title="Delete Department"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {!loading && pagination.totalPages > 0 && (
+        {/* Toast Banner Alert */}
+        {notification.message && (
           <div
             style={{
+              padding: '10px 16px',
+              borderRadius: 8,
+              marginBottom: 20,
+              fontSize: 13,
+              fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderTop: '1px solid #e2e8f0',
-              flexWrap: 'wrap',
-              gap: 12,
+              background: notification.type === 'success' ? '#f0fdf4' : '#fef2f2',
+              color: notification.type === 'success' ? '#166534' : '#991b1b',
+              border: `1px solid ${notification.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
             }}
           >
-            <span style={{ fontSize: 14, color: '#64748b' }}>
-              Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total departments)
-            </span>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                className="admin-btn-reset"
-                onClick={() => handlePageChange(pagination.currentPage - 1)}
-                disabled={pagination.currentPage <= 1}
-              >
-                Previous
-              </button>
-              <button
-                className="admin-btn-apply"
-                onClick={() => handlePageChange(pagination.currentPage + 1)}
-                disabled={pagination.currentPage >= pagination.totalPages}
-              >
-                Next
-              </button>
+            <span>{notification.message}</span>
+            <button
+              onClick={() => setNotification({ type: '', message: '' })}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'inherit' }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* 2-Column Grid of Departments */}
+        {loading ? (
+          <div style={{ padding: '36px 0', textAlign: 'center', color: '#64748b', fontSize: 14 }}>
+            Loading departments...
+          </div>
+        ) : allDepartments.length === 0 ? (
+          <div style={{ padding: '36px 0', textAlign: 'center', color: '#64748b', fontSize: 14 }}>
+            No departments found.
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 16,
+              marginBottom: 24,
+            }}
+          >
+            {allDepartments.map((dept) => {
+              const isChecked = selectedDeptIds.includes(dept.id);
+              return (
+                <div
+                  key={dept.id}
+                  onClick={() => toggleSelectDept(dept.id)}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 12,
+                    padding: '16px 20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 16,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    userSelect: 'none',
+                  }}
+                >
+                  {/* Styled Teal Checkbox */}
+                  <div
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      border: isChecked ? 'none' : '2px solid #cbd5e1',
+                      background: isChecked ? '#0d9488' : '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {isChecked && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Building Emoji Icon */}
+                  <div style={{ fontSize: 24, flexShrink: 0 }}>
+                    🏢
+                  </div>
+
+                  {/* Department Name */}
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>
+                    {dept.name}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Bottom Selected Counter */}
+        {!loading && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#0d9488', fontSize: 14, fontWeight: 600 }}>
+            <div
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: '50%',
+                border: '1.5px solid #0d9488',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
             </div>
+            <span>{selectedDeptIds.length} departments selected</span>
           </div>
         )}
       </div>
-
-      {/* Bulk Assign Departments Modal */}
-      {showAssignModal && (
-        <div className="clinic-modal-overlay">
-          <div className="clinic-modal" style={{ maxWidth: 580, width: '90%' }}>
-            <div className="clinic-modal-header">
-              <div>
-                <h3 className="clinic-modal-title">Assign Departments to Clinic</h3>
-                <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-                  Select multiple medical specialties to add to your clinic at once.
-                </p>
-              </div>
-              <button className="clinic-modal-close" onClick={() => setShowAssignModal(false)}>
-                ✕
-              </button>
-            </div>
-            <form onSubmit={handleAssignDepartment}>
-              <div className="clinic-modal-body">
-                {availableDepartments.length === 0 ? (
-                  <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', margin: '20px 0' }}>
-                    All available system departments are already assigned to this clinic.
-                  </p>
-                ) : (
-                  <>
-                    <div style={{ marginBottom: 12 }}>
-                      <input
-                        className="admin-search-input"
-                        style={{ width: '100%' }}
-                        placeholder="Search available departments by name or description..."
-                        value={modalSearch}
-                        onChange={(e) => setModalSearch(e.target.value)}
-                      />
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 10,
-                        padding: '8px 12px',
-                        background: '#f8fafc',
-                        borderRadius: 6,
-                        border: '1px solid #e2e8f0',
-                      }}
-                    >
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600, fontSize: 13, color: '#334155' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedAssignIds.length === filteredAvailable.length && filteredAvailable.length > 0}
-                          onChange={toggleSelectAllAssignModal}
-                          style={{ cursor: 'pointer', width: 16, height: 16 }}
-                        />
-                        Select All ({filteredAvailable.length})
-                      </label>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#2563eb' }}>
-                        {selectedAssignIds.length} Selected
-                      </span>
-                    </div>
-
-                    <div style={{ maxHeight: 280, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 8, padding: 8 }}>
-                      {filteredAvailable.length === 0 ? (
-                        <div style={{ padding: 16, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
-                          No matching departments found.
-                        </div>
-                      ) : (
-                        filteredAvailable.map((dept) => {
-                          const isChecked = selectedAssignIds.includes(dept.id);
-                          return (
-                            <div
-                              key={dept.id}
-                              onClick={() => toggleAssignSelection(dept.id)}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 12,
-                                padding: '10px 12px',
-                                borderRadius: 6,
-                                cursor: 'pointer',
-                                background: isChecked ? '#eff6ff' : 'transparent',
-                                border: isChecked ? '1px solid #bfdbfe' : '1px solid transparent',
-                                marginBottom: 4,
-                                transition: 'all 0.15s ease',
-                              }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => {}}
-                                style={{ width: 18, height: 18, cursor: 'pointer' }}
-                              />
-                              <span style={{ fontSize: 20 }}>🏢</span>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{dept.name}</div>
-                                {dept.description && (
-                                  <div style={{ fontSize: 12, color: '#64748b' }}>{dept.description}</div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="clinic-modal-footer">
-                <button
-                  type="button"
-                  className="clinic-btn clinic-btn-secondary"
-                  onClick={() => setShowAssignModal(false)}
-                >
-                  Cancel
-                </button>
-                {availableDepartments.length > 0 && (
-                  <button
-                    type="submit"
-                    className="clinic-btn clinic-btn-primary"
-                    disabled={selectedAssignIds.length === 0}
-                  >
-                    Assign Selected ({selectedAssignIds.length})
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

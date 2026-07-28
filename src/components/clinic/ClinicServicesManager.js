@@ -1,462 +1,305 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  getClinicServices,
-  assignServiceToClinic,
-  removeServiceFromClinic,
-  toggleClinicServiceStatus,
-} from '@/services/clinicAdminService';
+import { getClinicServices, syncClinicServices } from '@/services/clinicAdminService';
 import apiClient from '@/services/apiClient';
 
-const defaultFilters = {
-  search: '',
-  status: '',
-  page: 1,
-  limit: 10,
-};
-
 export default function ClinicServicesManager() {
-  const [assignedServices, setAssignedServices] = useState([]);
-  const [globalServices, setGlobalServices] = useState([]);
+  const [allServices, setAllServices] = useState([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notification, setNotification] = useState({ type: '', message: '' });
 
-  // Modal Checkbox State
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedAssignIds, setSelectedAssignIds] = useState([]);
-  const [modalSearch, setModalSearch] = useState('');
-
-  // Filters & Pagination State
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [activeFilters, setActiveFilters] = useState(defaultFilters);
-  const [pagination, setPagination] = useState({
-    count: 0,
-    currentPage: 1,
-    totalPages: 1,
-    limit: 10,
-  });
-
-  const loadServicesData = useCallback(async (filters = activeFilters) => {
+  // Load master services and currently assigned clinic services
+  const loadData = useCallback(async () => {
     setLoading(true);
-    const assigned = await getClinicServices(filters);
-    const assignedList = Array.isArray(assigned) ? assigned : (assigned?.data || []);
-    setAssignedServices(assignedList);
-    if (assigned && !Array.isArray(assigned)) {
-      setPagination({
-        count: assigned.count ?? assignedList.length,
-        currentPage: assigned.currentPage ?? 1,
-        totalPages: assigned.totalPages ?? 1,
-        limit: assigned.limit ?? filters.limit ?? 10,
-      });
-    }
-
-    // Fetch master services via clinic-authorized endpoint
+    setNotification({ type: '', message: '' });
     try {
-      const globalRes = await apiClient.get('/clinic/master-services', { params: { limit: 100 } }).catch(() => null);
-      if (globalRes?.data?.success && Array.isArray(globalRes.data.data)) {
-        setGlobalServices(globalRes.data.data);
-      } else {
-        setGlobalServices([]);
-      }
-    } catch (err) {
-      console.error('Failed to load master services', err);
-      setGlobalServices([]);
-    }
-    setLoading(false);
-  }, [activeFilters]);
+      // 1. Fetch assigned clinic services
+      const assignedRes = await getClinicServices({ limit: 1000 });
+      const assignedList = Array.isArray(assignedRes)
+        ? assignedRes
+        : assignedRes?.data || [];
+      const assignedIds = assignedList.map((s) => s.service_id || s.id).filter(Boolean);
 
-  useEffect(() => {
-    loadServicesData(defaultFilters);
+      // 2. Fetch master services
+      let masterList = [];
+      try {
+        const masterRes = await apiClient.get('/clinic/master-services', { params: { limit: 1000 } });
+        if (masterRes?.data?.success && Array.isArray(masterRes.data.data)) {
+          masterList = masterRes.data.data;
+        }
+      } catch (err) {
+        console.error('Failed to load master services from API', err);
+      }
+
+      // Fallback if master list is empty
+      if (masterList.length === 0 && assignedList.length > 0) {
+        masterList = assignedList.map((as) => ({
+          id: as.service_id || as.id,
+          name: as.name,
+          price: as.price || 0,
+          description: as.description || '',
+          status: as.status || 'active',
+        }));
+      }
+
+      setAllServices(masterList);
+      setSelectedServiceIds(assignedIds);
+    } catch (err) {
+      console.error('Error loading services:', err);
+      setNotification({ type: 'error', message: 'Failed to load services list.' });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleApplyFilter = () => {
-    const filters = {
-      search: search.trim(),
-      status: statusFilter,
-      page: 1,
-      limit: activeFilters.limit,
-    };
-    setActiveFilters(filters);
-    loadServicesData(filters);
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const handleResetFilter = () => {
-    setSearch('');
-    setStatusFilter('');
-    setActiveFilters(defaultFilters);
-    loadServicesData(defaultFilters);
-  };
-
-  const handleLimitChange = (limit) => {
-    const filters = {
-      ...activeFilters,
-      page: 1,
-      limit: Number(limit),
-    };
-    setActiveFilters(filters);
-    loadServicesData(filters);
-  };
-
-  const handlePageChange = (page) => {
-    if (page < 1 || page > pagination.totalPages) return;
-    const filters = {
-      ...activeFilters,
-      page,
-    };
-    setActiveFilters(filters);
-    loadServicesData(filters);
-  };
-
-  // --- Assign Modal Handlers ---
-  const handleOpenAssignModal = () => {
-    setSelectedAssignIds([]);
-    setModalSearch('');
-    setShowAssignModal(true);
-  };
-
-  const availableServices = globalServices.filter(
-    (gs) => !assignedServices.some(
-      (as) => parseInt(as.service_id) === parseInt(gs.id) || as.name?.toLowerCase() === gs.name?.toLowerCase()
-    )
-  );
-
-  const filteredAvailable = availableServices.filter((s) => {
-    const q = modalSearch.toLowerCase();
-    return s.name.toLowerCase().includes(q) || (s.description && s.description.toLowerCase().includes(q));
-  });
-
-  const toggleSelectAllAssignModal = () => {
-    if (selectedAssignIds.length === filteredAvailable.length && filteredAvailable.length > 0) {
-      setSelectedAssignIds([]);
-    } else {
-      setSelectedAssignIds(filteredAvailable.map((s) => s.id));
-    }
-  };
-
-  const toggleAssignSelection = (id) => {
-    setSelectedAssignIds((prev) =>
+  // Toggle single service selection
+  const toggleSelectService = (id) => {
+    setSelectedServiceIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  const handleAssignServices = async (e) => {
-    e.preventDefault();
-    if (selectedAssignIds.length === 0) return;
-    const res = await assignServiceToClinic({ service_ids: selectedAssignIds });
-    if (!res.success) {
-      alert(res.message);
-    } else {
-      setShowAssignModal(false);
-      setSelectedAssignIds([]);
-      loadServicesData();
-    }
-  };
+  // Save selected services
+  const handleSave = async () => {
+    setSaving(true);
+    setNotification({ type: '', message: '' });
 
-  const handleRemoveService = async (id) => {
-    if (window.confirm('Are you sure you want to delete this service from your clinic?')) {
-      await removeServiceFromClinic(id);
-      loadServicesData();
-    }
-  };
+    const res = await syncClinicServices(selectedServiceIds);
+    setSaving(false);
 
-  const toggleStatus = async (svc) => {
-    const currentStatus = (svc.status || 'active').toLowerCase();
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    const res = await toggleClinicServiceStatus(svc.id, newStatus);
-    if (!res.success) {
-      alert(res.message);
+    if (res.success) {
+      setNotification({
+        type: 'success',
+        message: '✅ Services saved successfully!',
+      });
+
+      setTimeout(() => {
+        setNotification({ type: '', message: '' });
+      }, 3000);
     } else {
-      loadServicesData();
+      setNotification({
+        type: 'error',
+        message: `❌ ${res.message || 'Failed to save services.'}`,
+      });
     }
   };
 
   return (
-    <div className="clinic-services-manager">
-      {/* Header */}
-      <div className="clinic-header">
-        <div>
-          <h1 className="clinic-title">Clinic Services & Pricing</h1>
-          <p className="clinic-subtitle">Assign medical procedures, consultations & diagnostic services available at your clinic.</p>
-        </div>
-        <button onClick={handleOpenAssignModal} className="clinic-btn clinic-btn-primary">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Assign Services
-        </button>
+    <div style={{ padding: '24px 32px', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }}>
+      {/* Outer Page Header */}
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.01em' }}>
+          Clinic Services & Pricing
+        </h1>
+        <p style={{ margin: '4px 0 0', fontSize: 14, color: '#64748b' }}>
+          Select and assign medical procedures, consultations & diagnostic services available at your clinic.
+        </p>
       </div>
 
-      {/* Filter Bar */}
-      <div className="admin-filter-bar" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <input
-          className="admin-search-input"
-          placeholder="Search assigned services by name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
-        />
-        <select
-          className="admin-filter-select"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+      {/* Main White Card Container */}
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: 16,
+          border: '1px solid #e2e8f0',
+          padding: 32,
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Card Header with Save Button */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 16,
+            marginBottom: 24,
+          }}
         >
-          <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-        <select
-          className="admin-filter-select"
-          value={activeFilters.limit}
-          onChange={(e) => handleLimitChange(e.target.value)}
-        >
-          <option value="10">10 per page</option>
-          <option value="25">25 per page</option>
-          <option value="50">50 per page</option>
-          <option value="100">100 per page</option>
-        </select>
-        <button className="admin-btn-apply" onClick={handleApplyFilter}>
-          Apply Filter
-        </button>
-        <button className="admin-btn-reset" onClick={handleResetFilter}>
-          Reset
-        </button>
-      </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a' }}>
+              Assign Services
+            </h2>
+            <p style={{ margin: '4px 0 0', fontSize: 14, color: '#64748b' }}>
+              Select the services you want to assign to your clinic.
+            </p>
+          </div>
 
-      {/* Services Table Card */}
-      <div className="clinic-table-card">
-        <div className="clinic-table-header">
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>
-            ⚙️ Active Clinic Services ({assignedServices.length})
-          </h3>
+          <button
+            onClick={handleSave}
+            disabled={saving || loading}
+            style={{
+              background: '#0d9488',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '10px 20px',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: saving || loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'all 0.15s ease',
+              opacity: saving || loading ? 0.7 : 1,
+            }}
+          >
+            {saving ? (
+              'Saving...'
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Save Changes
+              </>
+            )}
+          </button>
         </div>
 
-        <div className="clinic-table-wrap">
-          <table className="clinic-table">
-            <thead>
-              <tr>
-                <th>Service Name</th>
-                <th>Service Fee</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
-                    Loading clinic services...
-                  </td>
-                </tr>
-              ) : assignedServices.length === 0 ? (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
-                    No services configured for this clinic yet. Click &apos;Assign Services&apos; to add.
-                  </td>
-                </tr>
-              ) : (
-                assignedServices.map((svc) => (
-                  <tr key={svc.id}>
-                    <td>
-                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{svc.name}</div>
-                      {svc.description && <div style={{ fontSize: 12, color: '#64748b' }}>{svc.description}</div>}
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: 700, color: '#0d9488', fontSize: 15 }}>
-                        ₹{svc.price}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
-                        onClick={() => toggleStatus(svc)}
-                        title="Click to toggle status"
-                      >
-                        <span className={`admin-badge ${(svc.status === 'active' || svc.status === 'Active') ? 'active' : 'inactive'}`}>
-                          {(svc.status === 'active' || svc.status === 'Active') ? 'Active' : 'Inactive'}
-                        </span>
-                      </button>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button
-                        className="admin-action-btn-delete"
-                        onClick={() => handleRemoveService(svc.id)}
-                        title="Delete Service"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {!loading && pagination.totalPages > 0 && (
+        {/* Toast Banner Alert */}
+        {notification.message && (
           <div
             style={{
+              padding: '10px 16px',
+              borderRadius: 8,
+              marginBottom: 20,
+              fontSize: 13,
+              fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderTop: '1px solid #e2e8f0',
-              flexWrap: 'wrap',
-              gap: 12,
+              background: notification.type === 'success' ? '#f0fdf4' : '#fef2f2',
+              color: notification.type === 'success' ? '#166534' : '#991b1b',
+              border: `1px solid ${notification.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
             }}
           >
-            <span style={{ fontSize: 14, color: '#64748b' }}>
-              Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total services)
-            </span>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                className="admin-btn-reset"
-                onClick={() => handlePageChange(pagination.currentPage - 1)}
-                disabled={pagination.currentPage <= 1}
-              >
-                Previous
-              </button>
-              <button
-                className="admin-btn-apply"
-                onClick={() => handlePageChange(pagination.currentPage + 1)}
-                disabled={pagination.currentPage >= pagination.totalPages}
-              >
-                Next
-              </button>
+            <span>{notification.message}</span>
+            <button
+              onClick={() => setNotification({ type: '', message: '' })}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'inherit' }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* 2-Column Grid of Services */}
+        {loading ? (
+          <div style={{ padding: '36px 0', textAlign: 'center', color: '#64748b', fontSize: 14 }}>
+            Loading services...
+          </div>
+        ) : allServices.length === 0 ? (
+          <div style={{ padding: '36px 0', textAlign: 'center', color: '#64748b', fontSize: 14 }}>
+            No services found.
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 16,
+              marginBottom: 24,
+            }}
+          >
+            {allServices.map((svc) => {
+              const isChecked = selectedServiceIds.includes(svc.id);
+              return (
+                <div
+                  key={svc.id}
+                  onClick={() => toggleSelectService(svc.id)}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 12,
+                    padding: '16px 20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 16,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    userSelect: 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    {/* Styled Teal Checkbox */}
+                    <div
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 6,
+                        border: isChecked ? 'none' : '2px solid #cbd5e1',
+                        background: isChecked ? '#0d9488' : '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {isChecked && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </div>
+
+                    {/* Service Icon */}
+                    <div style={{ fontSize: 24, flexShrink: 0 }}>
+                      🩺
+                    </div>
+
+                    {/* Service Name */}
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>
+                      {svc.name}
+                    </div>
+                  </div>
+
+                  {/* Price Tag if available */}
+                  {svc.price !== undefined && (
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0d9488' }}>
+                      ₹{svc.price}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Bottom Selected Counter */}
+        {!loading && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#0d9488', fontSize: 14, fontWeight: 600 }}>
+            <div
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: '50%',
+                border: '1.5px solid #0d9488',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
             </div>
+            <span>{selectedServiceIds.length} services selected</span>
           </div>
         )}
       </div>
-
-      {/* Bulk Assign Services Modal */}
-      {showAssignModal && (
-        <div className="clinic-modal-overlay">
-          <div className="clinic-modal" style={{ maxWidth: 580, width: '90%' }}>
-            <div className="clinic-modal-header">
-              <div>
-                <h3 className="clinic-modal-title">Assign Services to Clinic</h3>
-                <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-                  Select multiple master services created by Super Admin to add to your clinic.
-                </p>
-              </div>
-              <button className="clinic-modal-close" onClick={() => setShowAssignModal(false)}>
-                ✕
-              </button>
-            </div>
-            <form onSubmit={handleAssignServices}>
-              <div className="clinic-modal-body">
-                {availableServices.length === 0 ? (
-                  <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', margin: '20px 0' }}>
-                    All available master services are already assigned to this clinic.
-                  </p>
-                ) : (
-                  <>
-                    <div style={{ marginBottom: 12 }}>
-                      <input
-                        className="admin-search-input"
-                        style={{ width: '100%' }}
-                        placeholder="Search available services by name or description..."
-                        value={modalSearch}
-                        onChange={(e) => setModalSearch(e.target.value)}
-                      />
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 10,
-                        padding: '8px 12px',
-                        background: '#f8fafc',
-                        borderRadius: 6,
-                        border: '1px solid #e2e8f0',
-                      }}
-                    >
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600, fontSize: 13, color: '#334155' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedAssignIds.length === filteredAvailable.length && filteredAvailable.length > 0}
-                          onChange={toggleSelectAllAssignModal}
-                          style={{ cursor: 'pointer', width: 16, height: 16 }}
-                        />
-                        Select All ({filteredAvailable.length})
-                      </label>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#2563eb' }}>
-                        {selectedAssignIds.length} Selected
-                      </span>
-                    </div>
-
-                    <div style={{ maxHeight: 280, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 8, padding: 8 }}>
-                      {filteredAvailable.length === 0 ? (
-                        <div style={{ padding: 16, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
-                          No matching services found.
-                        </div>
-                      ) : (
-                        filteredAvailable.map((svc) => {
-                          const isChecked = selectedAssignIds.includes(svc.id);
-                          return (
-                            <div
-                              key={svc.id}
-                              onClick={() => toggleAssignSelection(svc.id)}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 12,
-                                padding: '10px 12px',
-                                borderRadius: 6,
-                                cursor: 'pointer',
-                                background: isChecked ? '#eff6ff' : 'transparent',
-                                border: isChecked ? '1px solid #bfdbfe' : '1px solid transparent',
-                                marginBottom: 4,
-                                transition: 'all 0.15s ease',
-                              }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => {}}
-                                style={{ width: 18, height: 18, cursor: 'pointer' }}
-                              />
-                              <span style={{ fontSize: 20 }}>⚙️</span>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{svc.name}</div>
-                                {svc.price && (
-                                  <div style={{ fontSize: 12, color: '#64748b' }}>
-                                    Fee: ₹{svc.price}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="clinic-modal-footer">
-                <button
-                  type="button"
-                  className="clinic-btn clinic-btn-secondary"
-                  onClick={() => setShowAssignModal(false)}
-                >
-                  Cancel
-                </button>
-                {availableServices.length > 0 && (
-                  <button
-                    type="submit"
-                    className="clinic-btn clinic-btn-primary"
-                    disabled={selectedAssignIds.length === 0}
-                  >
-                    Assign Selected ({selectedAssignIds.length})
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

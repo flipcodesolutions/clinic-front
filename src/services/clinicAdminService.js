@@ -406,10 +406,10 @@ export async function assignDepartmentToClinic(departmentData) {
     const payload = Array.isArray(departmentData?.department_ids)
       ? { department_ids: departmentData.department_ids }
       : {
-          department_id: departmentData.id || departmentData.department_id,
-          name: departmentData.name,
-          description: departmentData.description,
-        };
+        department_id: departmentData.id || departmentData.department_id,
+        name: departmentData.name,
+        description: departmentData.description,
+      };
 
     const res = await apiClient.post('/clinic/departments', payload);
     if (res?.data?.success) {
@@ -446,6 +446,28 @@ export async function toggleClinicDepartmentStatus(id, status) {
   }
 }
 
+export async function syncClinicDepartments(departmentIds) {
+  try {
+    let res;
+    try {
+      res = await apiClient.post('/clinic/departments/sync', { department_ids: departmentIds });
+    } catch (e) {
+      if (e.response?.status === 404) {
+        res = await apiClient.post('/clinic/departments', { department_ids: departmentIds });
+      } else {
+        throw e;
+      }
+    }
+    if (res?.data?.success) {
+      return { success: true, message: res.data.message || 'Departments saved successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to save departments');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to save departments';
+    return { success: false, message };
+  }
+}
+
 // ---- Clinic Services Assignment ----
 export async function getClinicServices(filters = {}) {
   try {
@@ -474,11 +496,11 @@ export async function assignServiceToClinic(serviceData) {
     const payload = Array.isArray(serviceData?.service_ids)
       ? { service_ids: serviceData.service_ids }
       : {
-          service_id: serviceData.id || serviceData.service_id,
-          name: serviceData.name,
-          price: serviceData.price,
-          category: serviceData.category,
-        };
+        service_id: serviceData.id || serviceData.service_id,
+        name: serviceData.name,
+        price: serviceData.price,
+        category: serviceData.category,
+      };
 
     const res = await apiClient.post('/clinic/services', payload);
     if (res?.data?.success) {
@@ -507,6 +529,28 @@ export async function toggleClinicServiceStatus(id, status) {
     return { success: true, message: res?.data?.message || 'Service status updated successfully' };
   } catch (err) {
     const message = err.response?.data?.message || err.message || 'Failed to update service status';
+    return { success: false, message };
+  }
+}
+
+export async function syncClinicServices(serviceIds) {
+  try {
+    let res;
+    try {
+      res = await apiClient.post('/clinic/services/sync', { service_ids: serviceIds });
+    } catch (e) {
+      if (e.response?.status === 404) {
+        res = await apiClient.post('/clinic/services', { service_ids: serviceIds });
+      } else {
+        throw e;
+      }
+    }
+    if (res?.data?.success) {
+      return { success: true, message: res.data.message || 'Services saved successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to save services');
+  } catch (err) {
+    const message = err.response?.data?.message || err.message || 'Failed to save services';
     return { success: false, message };
   }
 }
