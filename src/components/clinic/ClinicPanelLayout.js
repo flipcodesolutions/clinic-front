@@ -104,12 +104,6 @@ export default function ClinicPanelLayout({ children }) {
           </div>
 
           <div className="clinic-top-navbar-right">
-            {/* User Profile Badge */}
-            <div className="clinic-user-profile-badge">
-              <span className="clinic-avatar-circle">{userInitial}</span>
-              <span className="clinic-user-name">{userName}</span>
-            </div>
-
             {/* Change Password Link */}
             <Link
               href="/clinic-panel/change-password"
@@ -129,7 +123,7 @@ export default function ClinicPanelLayout({ children }) {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
-              <span>Password</span>
+              <span>Change Password</span>
             </Link>
 
             {/* Logout Button */}

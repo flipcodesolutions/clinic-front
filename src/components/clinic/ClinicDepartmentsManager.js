@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getClinicDepartments, syncClinicDepartments } from '@/services/clinic/departmentService';
 import apiClient from '@/services/apiClient';
+import AlphaGroupList from '@/components/common/AlphaGroupList';
 
 export default function ClinicDepartmentsManager() {
   const [allDepartments, setAllDepartments] = useState([]);
@@ -10,8 +11,12 @@ export default function ClinicDepartmentsManager() {
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState({ type: '', message: '' });
 
-  // Load master departments and currently assigned clinic departments
-  const loadData = useCallback(async () => {
+  // Filter bar
+  const [search, setSearch] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+
+  // Load master departments from backend with search parameter
+  const loadData = useCallback(async (searchTerm = '') => {
     setLoading(true);
     setNotification({ type: '', message: '' });
     try {
@@ -22,10 +27,12 @@ export default function ClinicDepartmentsManager() {
         : assignedRes?.data || [];
       const assignedIds = assignedList.map((d) => d.id).filter(Boolean);
 
-      // 2. Fetch master departments
+      // 2. Fetch master departments from backend API with search query
       let masterList = [];
       try {
-        const masterRes = await apiClient.get('/clinic/master-departments', { params: { limit: 1000 } });
+        const masterRes = await apiClient.get('/clinic/master-departments', {
+          params: { limit: 1000, search: searchTerm.trim() },
+        });
         if (masterRes?.data?.success && Array.isArray(masterRes.data.data)) {
           masterList = masterRes.data.data;
         }
@@ -33,8 +40,8 @@ export default function ClinicDepartmentsManager() {
         console.error('Failed to load master departments from API', err);
       }
 
-      // Fallback if master list empty
-      if (masterList.length === 0 && assignedList.length > 0) {
+      // Fallback if master list is empty on initial load
+      if (masterList.length === 0 && assignedList.length > 0 && !searchTerm.trim()) {
         masterList = assignedList.map((ad) => ({
           id: ad.id,
           name: ad.name,
@@ -54,8 +61,29 @@ export default function ClinicDepartmentsManager() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    loadData('');
   }, [loadData]);
+
+  // Apply Filter button handler
+  const handleApplyFilter = () => {
+    const term = search.trim();
+    setActiveSearch(term);
+    loadData(term);
+  };
+
+  // Reset Filter button handler
+  const handleResetFilter = () => {
+    setSearch('');
+    setActiveSearch('');
+    loadData('');
+  };
+
+  // Handle Enter key on search input
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleApplyFilter();
+    }
+  };
 
   // Toggle single department selection
   const toggleSelectDept = (id) => {
@@ -77,7 +105,6 @@ export default function ClinicDepartmentsManager() {
         type: 'success',
         message: '✅ Departments saved successfully!',
       });
-
       setTimeout(() => {
         setNotification({ type: '', message: '' });
       }, 3000);
@@ -89,13 +116,35 @@ export default function ClinicDepartmentsManager() {
     }
   };
 
+  // Custom department card render
+  const renderDeptItem = (dept, isChecked, onToggle) => (
+    <div
+      key={dept.id}
+      className={`alpha-item-card ${isChecked ? 'selected' : ''}`}
+      onClick={() => onToggle(dept.id)}
+    >
+      <div className={`alpha-item-checkbox ${isChecked ? 'checked' : ''}`}>
+        {isChecked && (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff"
+            strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        )}
+      </div>
+      <div className="alpha-item-info">
+        <span className="alpha-item-name">{dept.name}</span>
+        {dept.description && (
+          <span className="alpha-item-desc">{dept.description}</span>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="clinic-departments-page">
       {/* Outer Page Header */}
       <div className="clinic-departments-header">
-        <h1 className="clinic-departments-title">
-          Departments
-        </h1>
+        <h1 className="clinic-departments-title">Departments</h1>
         <p className="clinic-departments-subtitle">
           Select and assign departments to your clinic.
         </p>
@@ -106,9 +155,7 @@ export default function ClinicDepartmentsManager() {
         {/* Card Header with Save Button */}
         <div className="clinic-departments-card-header">
           <div>
-            <h2 className="clinic-departments-card-title">
-              Assign Departments
-            </h2>
+            <h2 className="clinic-departments-card-title">Assign Departments</h2>
             <p className="clinic-departments-card-desc">
               Select the departments you want to assign to your clinic.
             </p>
@@ -122,15 +169,26 @@ export default function ClinicDepartmentsManager() {
             {saving ? (
               'Saving...'
             ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-                Save Changes
-              </>
+              <>Save Changes</>
             )}
+          </button>
+        </div>
+
+        {/*Filter Bar */}
+        <div className="admin-filter-bar">
+          <input
+            type="text"
+            className="admin-search-input"
+            placeholder="Search departments by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <button type="button" className="admin-btn-apply" onClick={handleApplyFilter}>
+            Filter
+          </button>
+          <button type="button" className="admin-btn-reset" onClick={handleResetFilter}>
+            Reset
           </button>
         </div>
 
@@ -147,50 +205,18 @@ export default function ClinicDepartmentsManager() {
           </div>
         )}
 
-        {/* 2-Column Grid of Departments */}
+        {/* A–Z Accordion List */}
         {loading ? (
-          <div className="clinic-dashboard-loading-cell">
-            Loading departments...
-          </div>
-        ) : allDepartments.length === 0 ? (
-          <div className="clinic-dashboard-empty-cell">
-            No departments found.
-          </div>
+          <div className="clinic-dashboard-loading-cell">Loading departments...</div>
         ) : (
-          <div className="clinic-departments-grid">
-            {allDepartments.map((dept) => {
-              const isChecked = selectedDeptIds.includes(dept.id);
-              return (
-                <div
-                  key={dept.id}
-                  onClick={() => toggleSelectDept(dept.id)}
-                  className="clinic-departments-item"
-                >
-                  {/* Styled Teal Checkbox */}
-                  <div className={`clinic-departments-checkbox ${isChecked ? 'checked' : ''}`}>
-                    {isChecked && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    )}
-                  </div>
- 
-                  {/* Department Name */}
-                  <div className="clinic-departments-name">
-                    {dept.name}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Bottom Selected Counter */}
-        {!loading && (
-          <div className="clinic-departments-counter">
-           
-            {/* <span>{selectedDeptIds.length} departments selected</span> */}
-          </div>
+          <AlphaGroupList
+            items={allDepartments}
+            selectedIds={selectedDeptIds}
+            onToggle={toggleSelectDept}
+            renderItem={renderDeptItem}
+            emptyMessage={activeSearch ? `No departments match "${activeSearch}"` : "No departments found."}
+            isFiltered={!!activeSearch}
+          />
         )}
       </div>
     </div>

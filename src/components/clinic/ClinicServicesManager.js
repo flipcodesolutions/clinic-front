@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getClinicServices, syncClinicServices } from '@/services/clinic/serviceService';
 import apiClient from '@/services/apiClient';
+import AlphaGroupList from '@/components/common/AlphaGroupList';
 
 export default function ClinicServicesManager() {
   const [allServices, setAllServices] = useState([]);
@@ -10,8 +11,12 @@ export default function ClinicServicesManager() {
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState({ type: '', message: '' });
 
-  // Load master services and currently assigned clinic services
-  const loadData = useCallback(async () => {
+  // Filter bar
+  const [search, setSearch] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+
+  // Load master services from backend with search parameter
+  const loadData = useCallback(async (searchTerm = '') => {
     setLoading(true);
     setNotification({ type: '', message: '' });
     try {
@@ -22,10 +27,12 @@ export default function ClinicServicesManager() {
         : assignedRes?.data || [];
       const assignedIds = assignedList.map((s) => s.service_id || s.id).filter(Boolean);
 
-      // 2. Fetch master services
+      // 2. Fetch master services from backend API with search query
       let masterList = [];
       try {
-        const masterRes = await apiClient.get('/clinic/master-services', { params: { limit: 1000 } });
+        const masterRes = await apiClient.get('/clinic/master-services', {
+          params: { limit: 1000, search: searchTerm.trim() },
+        });
         if (masterRes?.data?.success && Array.isArray(masterRes.data.data)) {
           masterList = masterRes.data.data;
         }
@@ -33,8 +40,8 @@ export default function ClinicServicesManager() {
         console.error('Failed to load master services from API', err);
       }
 
-      // Fallback if master list is empty
-      if (masterList.length === 0 && assignedList.length > 0) {
+      // Fallback if master list is empty on initial load
+      if (masterList.length === 0 && assignedList.length > 0 && !searchTerm.trim()) {
         masterList = assignedList.map((as) => ({
           id: as.service_id || as.id,
           name: as.name,
@@ -55,8 +62,29 @@ export default function ClinicServicesManager() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    loadData('');
   }, [loadData]);
+
+  // Apply Filter button handler
+  const handleApplyFilter = () => {
+    const term = search.trim();
+    setActiveSearch(term);
+    loadData(term);
+  };
+
+  // Reset Filter button handler
+  const handleResetFilter = () => {
+    setSearch('');
+    setActiveSearch('');
+    loadData('');
+  };
+
+  // Handle Enter key on search input
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleApplyFilter();
+    }
+  };
 
   // Toggle single service selection
   const toggleSelectService = (id) => {
@@ -90,13 +118,49 @@ export default function ClinicServicesManager() {
     }
   };
 
+  // Custom service card render matching UI screenshot style
+  const renderServiceItem = (svc, isChecked, onToggle) => (
+    <div
+      key={svc.id}
+      className={`alpha-item-card ${isChecked ? 'selected' : ''}`}
+      onClick={() => onToggle(svc.id)}
+    >
+      <div className={`alpha-item-checkbox ${isChecked ? 'checked' : ''}`}>
+        {isChecked && (
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        )}
+      </div>
+
+      <div className="alpha-item-info">
+        <div className="alpha-item-name-row">
+          <span className="alpha-item-name">{svc.name}</span>
+          {svc.price !== undefined && svc.price !== null && (
+            <span className="alpha-item-price">₹{svc.price}</span>
+          )}
+        </div>
+        {svc.description && (
+          <span className="alpha-item-desc">{svc.description}</span>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="clinic-services-page">
       {/* Outer Page Header */}
       <div className="clinic-services-header">
-        <h1 className="clinic-services-title">
-          Clinic Services & Pricing
-        </h1>
+        <h1 className="clinic-services-title">Clinic Services & Pricing</h1>
         <p className="clinic-services-subtitle">
           Select and assign medical procedures, consultations & diagnostic services available at your clinic.
         </p>
@@ -107,9 +171,7 @@ export default function ClinicServicesManager() {
         {/* Card Header with Save Button */}
         <div className="clinic-services-card-header">
           <div>
-            <h2 className="clinic-services-card-title">
-              Assign Services
-            </h2>
+            <h2 className="clinic-services-card-title">Assign Services</h2>
             <p className="clinic-services-card-desc">
               Select the services you want to assign to your clinic.
             </p>
@@ -124,14 +186,28 @@ export default function ClinicServicesManager() {
               'Saving...'
             ) : (
               <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-                Save Changes
+              
+              Save Changes
               </>
             )}
+          </button>
+        </div>
+
+        {/* City Page Style Filter Bar */}
+        <div className="admin-filter-bar">
+          <input
+            type="text"
+            className="admin-search-input"
+            placeholder="Search services by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <button type="button" className="admin-btn-apply" onClick={handleApplyFilter}>
+            Filter
+          </button>
+          <button type="button" className="admin-btn-reset" onClick={handleResetFilter}>
+            Reset
           </button>
         </div>
 
@@ -148,69 +224,21 @@ export default function ClinicServicesManager() {
           </div>
         )}
 
-        {/* 2-Column Grid of Services */}
+        {/* A-Z Accordion List */}
         {loading ? (
-          <div className="clinic-dashboard-loading-cell">
-            Loading services...
-          </div>
-        ) : allServices.length === 0 ? (
-          <div className="clinic-dashboard-empty-cell">
-            No services found.
-          </div>
+          <div className="clinic-dashboard-loading-cell">Loading services...</div>
         ) : (
-          <div className="clinic-services-grid">
-            {allServices.map((svc) => {
-              const isChecked = selectedServiceIds.includes(svc.id);
-              return (
-                <div
-                  key={svc.id}
-                  onClick={() => toggleSelectService(svc.id)}
-                  className="clinic-services-item"
-                >
-                  <div className="clinic-services-item-left">
-                    {/* Styled Teal Checkbox */}
-                    <div className={`clinic-services-checkbox ${isChecked ? 'checked' : ''}`}>
-                      {isChecked && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      )}
-                    </div>
-
-                    {/* Service Icon */}
-                    <div className="clinic-services-icon">
-                      🩺
-                    </div>
-
-                    {/* Service Name */}
-                    <div className="clinic-services-name">
-                      {svc.name}
-                    </div>
-                  </div>
-
-                  {/* Price Tag if available */}
-                  {svc.price !== undefined && (
-                    <div className="clinic-services-price">
-                      ₹{svc.price}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <AlphaGroupList
+            items={allServices}
+            selectedIds={selectedServiceIds}
+            onToggle={toggleSelectService}
+            renderItem={renderServiceItem}
+            emptyMessage={activeSearch ? `No services match "${activeSearch}"` : "No services found."}
+            isFiltered={!!activeSearch}
+          />
         )}
 
-        {/* Bottom Selected Counter */}
-        {!loading && (
-          <div className="clinic-services-counter">
-            <div className="clinic-services-counter-badge">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-            <span>{selectedServiceIds.length} services selected</span>
-          </div>
-        )}
+      
       </div>
     </div>
   );
