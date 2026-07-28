@@ -63,7 +63,7 @@ export async function createUser(payload) {
 }
 
 /**
- * Update an existing user by ID.
+ * Update a user.
  */
 export async function updateUser(id, payload) {
   const response = await apiClient.put(`/admin/users/${id}`, payload);
@@ -89,7 +89,7 @@ export async function updateUserStatus(id, status) {
 }
 
 /**
- * Delete a user by ID.
+ * Delete a user.
  */
 export async function deleteUser(id) {
   const response = await apiClient.delete(`/admin/users/${id}`);

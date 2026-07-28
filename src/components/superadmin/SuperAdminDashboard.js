@@ -1,11 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { getCities } from '@/services/cityService';
-import { getClinics } from '@/services/clinicService';
-import { getDepartments } from '@/services/departmentService';
-import { getServices } from '@/services/serviceService';
-import { getUsers } from '@/services/userService';
+import { getCities } from '@/services/superadmin/cityService';
+import { getClinics } from '@/services/superadmin/clinicService';
+import { getDepartments } from '@/services/superadmin/departmentService';
+import { getServices } from '@/services/superadmin/serviceService';
+import { getUsers } from '@/services/superadmin/userService';
 
 export default function SuperAdminDashboard() {
   const [stats, setStats] = useState({

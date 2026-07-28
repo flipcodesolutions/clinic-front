@@ -7,8 +7,8 @@ import {
   getClinics,
   getClinicById,
   updateClinic,
-} from '@/services/clinicService';
-import { getCities } from '@/services/cityService';
+} from '@/services/superadmin/clinicService';
+import { getCities } from '@/services/superadmin/cityService';
 import {
   createUser,
   deleteUser,
@@ -16,7 +16,7 @@ import {
   getUsers,
   updateUser,
   updateUserStatus,
-} from '@/services/userService';
+} from '@/services/superadmin/userService';
 import { showError, showSuccess } from '@/utils/toast';
 
 function formatStatus(status) {

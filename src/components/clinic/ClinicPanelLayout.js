@@ -72,12 +72,6 @@ export default function ClinicPanelLayout({ children }) {
           className="clinic-sidebar-overlay"
           onClick={closeSidebar}
           aria-hidden="true"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.5)',
-            zIndex: 1000,
-          }}
         />
       )}
 

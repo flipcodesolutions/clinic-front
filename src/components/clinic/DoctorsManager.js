@@ -10,9 +10,9 @@ import {
   manageDoctorExperience,
   manageDoctorAchievement,
   manageDoctorSchedule,
-  getClinicDepartments,
-} from '@/services/clinicAdminService';
-import { getClinics } from '@/services/clinicService';
+} from '@/services/clinic/doctorService';
+import { getClinicDepartments } from '@/services/clinic/departmentService';
+import { getClinics } from '@/services/superadmin/clinicService';
 import { showError, showSuccess } from '@/utils/toast';
 
 const defaultFilters = {
@@ -106,8 +106,7 @@ function SearchableDepartmentSelect({ departments, value, onChange }) {
               onChange('');
               setIsOpen(false);
             }}
-            className={`clinic-search-select-item ${!value ? 'selected' : ''}`}
-            style={{ color: '#64748b', fontWeight: 600 }}
+            className={`clinic-search-select-item clinic-search-select-placeholder ${!value ? 'selected' : ''}`}
           >
             <span>🏢</span>
             <span>Select Department</span>
@@ -187,8 +186,7 @@ function SearchableClinicSelect({ clinics, value, onChange }) {
               onChange('');
               setIsOpen(false);
             }}
-            className={`clinic-search-select-item ${!value ? 'selected' : ''}`}
-            style={{ color: '#64748b', fontWeight: 600 }}
+            className={`clinic-search-select-item clinic-search-select-placeholder ${!value ? 'selected' : ''}`}
           >
             <span>🏥</span>
             <span>Select Clinic</span>
@@ -720,25 +718,25 @@ export default function DoctorsManager() {
                 <th>Fee</th>
                 <th>Experience</th>
                 <th>Status</th>
-                <th style={{ textAlign: 'center', width: 140 }}>Actions</th>
+                <th className="clinic-staff-th-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="6" className="clinic-dashboard-loading-cell">
                     Loading doctors...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#dc2626' }}>
+                  <td colSpan="6" className="clinic-staff-error-cell">
                     {error}
                   </td>
                 </tr>
               ) : doctors.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="6" className="clinic-dashboard-empty-cell">
                     No doctors found matching your criteria.
                   </td>
                 </tr>
@@ -750,7 +748,7 @@ export default function DoctorsManager() {
                   return (
                     <tr key={doc.id}>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div className="clinic-staff-name-wrap">
                           <div className="doctor-avatar-box">
                             {doc.photo_url ? (
                               <img
@@ -781,18 +779,18 @@ export default function DoctorsManager() {
                         </div>
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600, color: '#4f46e5' }}>{doc.specialty || 'N/A'}</div>
-                        <div style={{ fontSize: 12, color: '#64748b' }}>{doc.qualification || 'N/A'}</div>
+                        <div className="clinic-staff-desig-text">{doc.specialty || 'N/A'}</div>
+                        <div className="clinic-staff-qual-text">{doc.qualification || 'N/A'}</div>
                       </td>
                       <td>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>₹{doc.consultation_fee || 0}</div>
+                        <div className="clinic-doc-fee-cell">₹{doc.consultation_fee || 0}</div>
                       </td>
                       <td>
-                        <span style={{ fontWeight: 600 }}>{doc.experience_years} Years</span>
+                        <span className="clinic-doc-exp-cell">{doc.experience_years} Years</span>
                       </td>
                       <td>
                         <button
-                          style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                          className="clinic-staff-status-btn"
                           onClick={() => toggleStatus(doc)}
                           title="Click to toggle status"
                         >
@@ -801,7 +799,7 @@ export default function DoctorsManager() {
                           </span>
                         </button>
                       </td>
-                      <td style={{ textAlign: 'center', position: 'relative' }}>
+                      <td className="clinic-staff-actions-cell">
                         {/* Three Dots Action Menu Trigger */}
                         <div className="admin-action-menu-wrap">
                           <button
@@ -872,13 +870,13 @@ export default function DoctorsManager() {
           </table>
         </div>
 
-        {/* Super Admin Pagination Footer */}
+        {/* Pagination Footer */}
         {!loading && !error && pagination.totalPages > 0 && (
           <div className="admin-pagination-footer">
-            <span style={{ fontSize: 14, color: '#64748b' }}>
+            <span className="clinic-gallery-page-info">
               Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total doctors)
             </span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="clinic-gallery-page-btns">
               <button
                 className="admin-btn-reset"
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
@@ -1121,10 +1119,9 @@ export default function DoctorsManager() {
                   {clinics.length <= 1 ? (
                     <input
                       type="text"
-                      className="admin-input"
+                      className="admin-input clinic-input-disabled"
                       value={clinics[0]?.name ? `${clinics[0].name} (${clinics[0].city || 'Assigned Clinic'}) 🔒` : 'My Clinic 🔒'}
                       disabled
-                      style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed', color: '#475569', fontWeight: 600 }}
                     />
                   ) : (
                     <SearchableClinicSelect
@@ -1162,7 +1159,7 @@ export default function DoctorsManager() {
               </div>
 
               {formError && (
-                <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
+                <p className="clinic-staff-form-error">{formError}</p>
               )}
 
               <div className="admin-form-actions">
@@ -1233,8 +1230,8 @@ export default function DoctorsManager() {
               </div>
             )}
 
-            <hr style={{ margin: '20px 0', borderColor: '#e2e8f0' }} />
-            <h4 style={{ margin: '0 0 10px 0', fontSize: 15 }}>Past Experiences</h4>
+            <hr className="clinic-doc-divider" />
+            <h4 className="clinic-doc-section-title">Past Experiences</h4>
             {viewDoctor.experiences?.length > 0 ? (
               <ul>
                 {viewDoctor.experiences.map((exp, i) => (
@@ -1246,21 +1243,21 @@ export default function DoctorsManager() {
                 ))}
               </ul>
             ) : (
-              <p style={{ color: '#94a3b8', fontSize: 13 }}>No experience records added.</p>
+              <p className="clinic-doc-empty-text">No experience records added.</p>
             )}
 
-            <hr style={{ margin: '20px 0', borderColor: '#e2e8f0' }} />
-            <h4 style={{ margin: '0 0 10px 0', fontSize: 15 }}>Achievements & Awards</h4>
+            <hr className="clinic-doc-divider" />
+            <h4 className="clinic-doc-section-title">Achievements & Awards</h4>
             {viewDoctor.achievements?.length > 0 ? (
               <ul>
                 {viewDoctor.achievements.map((ach, i) => (
-                  <li key={i} style={{ marginBottom: 6, fontSize: 13 }}>
+                  <li key={i} className="clinic-doc-achievement-item">
                     🏆 <strong>{ach.title}</strong> — {ach.organization} ({ach.year})
                   </li>
                 ))}
               </ul>
             ) : (
-              <p style={{ color: '#94a3b8', fontSize: 13 }}>No achievements added.</p>
+              <p className="clinic-doc-empty-text">No achievements added.</p>
             )}
 
             <div className="admin-form-actions">
@@ -1292,7 +1289,7 @@ export default function DoctorsManager() {
               )}
             </div>
 
-            <div style={{ marginBottom: 16 }}>
+            <div className="clinic-doc-mb-16">
               <label className="admin-form-label">Upload Image File</label>
               <input
                 type="file"
@@ -1331,7 +1328,7 @@ export default function DoctorsManager() {
             </h3>
 
             {expList.length === 0 ? (
-              <p style={{ color: '#64748b', fontSize: 14, marginBottom: 16 }}>No experience records added yet. Click below to add.</p>
+              <p className="clinic-gallery-page-info clinic-doc-mb-16">No experience records added yet. Click below to add.</p>
             ) : (
               expList.map((exp, idx) => (
                 <div key={exp.id || idx} className="exp-row-card">
@@ -1395,8 +1392,8 @@ export default function DoctorsManager() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    <div style={{ flex: 1 }}>
+                  <div className="clinic-doc-row-flex">
+                    <div className="clinic-doc-flex-1">
                       <label className="exp-row-label">Description</label>
                       <input
                         type="text"
@@ -1423,7 +1420,7 @@ export default function DoctorsManager() {
               ))
             )}
 
-            <button onClick={handleAddExpRow} className="admin-btn-apply" style={{ marginTop: 8 }}>
+            <button onClick={handleAddExpRow} className="admin-btn-apply clinic-doc-mt-8">
               + Add Experience Record
             </button>
 
@@ -1492,7 +1489,7 @@ export default function DoctorsManager() {
               </div>
             ))}
 
-            <button onClick={handleAddAchRow} className="admin-btn-apply" style={{ marginTop: 8 }}>
+            <button onClick={handleAddAchRow} className="admin-btn-apply clinic-doc-mt-8">
               + Add Achievement Record
             </button>
 
@@ -1586,7 +1583,7 @@ export default function DoctorsManager() {
               </div>
             ))}
 
-            <button onClick={handleAddSchedRow} className="admin-btn-apply" style={{ marginTop: 8 }}>
+            <button onClick={handleAddSchedRow} className="admin-btn-apply clinic-doc-mt-8">
               + Add Schedule Slot
             </button>
 

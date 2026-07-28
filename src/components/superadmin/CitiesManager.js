@@ -7,7 +7,7 @@ import {
   getCities,
   getCityById,
   updateCity,
-} from '@/services/cityService';
+} from '@/services/superadmin/cityService';
 import { showError, showSuccess } from '@/utils/toast';
 
 function formatStatus(status) {

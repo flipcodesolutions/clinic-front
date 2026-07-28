@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { changeClinicPassword } from '@/services/clinicAdminService';
+import { changeClinicPassword } from '@/services/clinic/profileService';
 
 export default function ChangePasswordManager() {
   const [formData, setFormData] = useState({
@@ -42,7 +42,7 @@ export default function ChangePasswordManager() {
   };
 
   return (
-    <div className="clinic-change-password-manager" style={{ maxWidth: 600 }}>
+    <div className="clinic-change-password-manager clinic-change-password-wrapper">
       {/* Header */}
       <div className="clinic-header">
         <div>
@@ -52,20 +52,9 @@ export default function ChangePasswordManager() {
       </div>
 
       {/* Form Card */}
-      <div className="clinic-table-card" style={{ padding: 28 }}>
+      <div className="clinic-table-card clinic-change-password-card">
         {feedback.message && (
-          <div
-            style={{
-              padding: '12px 16px',
-              borderRadius: 10,
-              marginBottom: 20,
-              fontSize: 14,
-              fontWeight: 500,
-              background: feedback.type === 'success' ? '#d1fae5' : '#fee2e2',
-              color: feedback.type === 'success' ? '#047857' : '#b91c1c',
-              border: `1px solid ${feedback.type === 'success' ? '#a7f3d0' : '#fca5a5'}`,
-            }}
-          >
+          <div className={`clinic-change-password-alert ${feedback.type}`}>
             {feedback.type === 'success' ? '✅ ' : '⚠️ '}
             {feedback.message}
           </div>
@@ -108,12 +97,11 @@ export default function ChangePasswordManager() {
             />
           </div>
 
-          <div style={{ marginTop: 24 }}>
+          <div className="clinic-change-password-btn-wrap">
             <button
               type="submit"
               disabled={loading}
-              className="clinic-btn clinic-btn-primary"
-              style={{ width: '100%', justifyContent: 'center' }}
+              className="clinic-btn clinic-btn-primary clinic-change-password-submit-btn"
             >
               {loading ? 'Updating Password...' : 'Update Password'}
             </button>

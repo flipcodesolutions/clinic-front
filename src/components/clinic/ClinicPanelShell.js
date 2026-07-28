@@ -37,10 +37,10 @@ export default function ClinicPanelShell({ children }) {
 
   if (loading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 42, marginBottom: 12 }}>🏥</div>
-          <p style={{ color: '#0d9488', fontWeight: 600 }}>Loading Clinic Panel...</p>
+      <div className="clinic-panel-loading-screen">
+        <div className="clinic-panel-loading-box">
+          <div className="clinic-panel-loading-icon">🏥</div>
+          <p className="clinic-panel-loading-text">Loading Clinic Panel...</p>
         </div>
       </div>
     );

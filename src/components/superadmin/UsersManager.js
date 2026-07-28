@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
-import { getClinics } from '@/services/clinicService';
+import { getClinics } from '@/services/superadmin/clinicService';
 import {
   createUser,
   deleteUser,
@@ -9,7 +9,7 @@ import {
   getUsers,
   updateUser,
   updateUserStatus,
-} from '@/services/userService';
+} from '@/services/superadmin/userService';
 import { showError, showSuccess } from '@/utils/toast';
 
 function formatStatus(status) {

@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Swal from 'sweetalert2';
-import { getStaffList, createStaff, updateStaff, deleteStaff, getClinics, uploadFile } from '@/services/clinicAdminService';
+import { getStaffList, createStaff, updateStaff, deleteStaff } from '@/services/clinic/staffService';
+import { getClinics } from '@/services/superadmin/clinicService';
+import { uploadFile } from '@/services/clinic/galleryService';
 import apiClient from '@/services/apiClient';
 import Image from 'next/image';
 
@@ -96,8 +98,7 @@ function SearchableClinicSelect({ clinics, value, onChange }) {
               onChange('');
               setIsOpen(false);
             }}
-            className={`clinic-search-select-item ${!value ? 'selected' : ''}`}
-            style={{ color: '#64748b', fontWeight: 600 }}
+            className={`clinic-search-select-item clinic-search-select-placeholder ${!value ? 'selected' : ''}`}
           >
             <span>🏥</span>
             <span>Select Clinic</span>
@@ -189,8 +190,7 @@ function SearchableDesignationSelect({ value, onChange }) {
               onChange('');
               setIsOpen(false);
             }}
-            className={`clinic-search-select-item ${!value ? 'selected' : ''}`}
-            style={{ color: '#64748b', fontWeight: 600 }}
+            className={`clinic-search-select-item clinic-search-select-placeholder ${!value ? 'selected' : ''}`}
           >
             <span>👔</span>
             <span>Select Designation</span>
@@ -218,8 +218,7 @@ function SearchableDesignationSelect({ value, onChange }) {
                 setIsOpen(false);
                 setSearchTerm('');
               }}
-              className="clinic-search-select-item"
-              style={{ color: '#4f46e5', fontWeight: 600, borderTop: '1px dashed #e2e8f0' }}
+              className="clinic-search-select-item clinic-search-select-custom"
             >
               <span>✏️</span>
               <span>Use Custom: &quot;{searchTerm}&quot;</span>
@@ -536,25 +535,25 @@ export default function StaffManager() {
                 <th>Designation & Qualification</th>
                 <th>Joining Date</th>
                 <th>Status</th>
-                <th style={{ textAlign: 'center', width: 140 }}>Actions</th>
+                <th className="clinic-staff-th-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="5" className="clinic-dashboard-loading-cell">
                     Loading staff records...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#dc2626' }}>
+                  <td colSpan="5" className="clinic-staff-error-cell">
                     {error}
                   </td>
                 </tr>
               ) : staff.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="5" className="clinic-dashboard-empty-cell">
                     No staff members found matching your criteria.
                   </td>
                 </tr>
@@ -566,7 +565,7 @@ export default function StaffManager() {
                   return (
                     <tr key={st.id}>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div className="clinic-staff-name-wrap">
                           <div className="doctor-avatar-box">
                             {st.photo_url ? (
                               <img
@@ -590,15 +589,15 @@ export default function StaffManager() {
                         </div>
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600, color: '#4f46e5' }}>{st.designation || 'Staff Member'}</div>
-                        <div style={{ fontSize: 12, color: '#64748b' }}>{st.qualification || 'N/A'}</div>
+                        <div className="clinic-staff-desig-text">{st.designation || 'Staff Member'}</div>
+                        <div className="clinic-staff-qual-text">{st.qualification || 'N/A'}</div>
                       </td>
                       <td>
-                        <span style={{ fontWeight: 600, color: '#0f172a' }}>{st.joining_date || 'N/A'}</span>
+                        <span className="clinic-staff-joining-text">{st.joining_date || 'N/A'}</span>
                       </td>
                       <td>
                         <button
-                          style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                          className="clinic-staff-status-btn"
                           onClick={() => toggleStatus(st)}
                           title="Click to toggle status"
                         >
@@ -607,7 +606,7 @@ export default function StaffManager() {
                           </span>
                         </button>
                       </td>
-                      <td style={{ textAlign: 'center', position: 'relative' }}>
+                      <td className="clinic-staff-actions-cell">
                         <div className="admin-action-menu-wrap">
                           <button
                             onClick={() => setOpenActionRowId(isActionOpen ? null : st.id)}
@@ -657,10 +656,10 @@ export default function StaffManager() {
 
         {!loading && !error && pagination.totalPages > 0 && (
           <div className="admin-pagination-footer">
-            <span style={{ fontSize: 14, color: '#64748b' }}>
+            <span className="clinic-gallery-page-info">
               Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total staff)
             </span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="clinic-gallery-page-btns">
               <button
                 className="admin-btn-reset"
                 onClick={() => loadStaffData(pagination.currentPage - 1)}
@@ -807,8 +806,7 @@ export default function StaffManager() {
                   {(formData.designation === 'Other' || (formData.designation && !DESIGNATION_OPTIONS.includes(formData.designation))) && (
                     <input
                       type="text"
-                      className="admin-input"
-                      style={{ marginTop: 8 }}
+                      className="admin-input clinic-doc-mt-8"
                       placeholder="Enter custom designation (e.g. Senior OT Specialist)..."
                       value={customDesignation === 'Other' ? '' : customDesignation}
                       onChange={(e) => {
@@ -849,10 +847,9 @@ export default function StaffManager() {
                   {clinics.length <= 1 ? (
                     <input
                       type="text"
-                      className="admin-input"
+                      className="admin-input clinic-input-disabled"
                       value={clinics[0]?.name ? `${clinics[0].name} (${clinics[0].city || 'Assigned Clinic'}) 🔒` : 'My Clinic 🔒'}
                       disabled
-                      style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed', color: '#475569', fontWeight: 600 }}
                     />
                   ) : (
                     <SearchableClinicSelect
@@ -878,7 +875,7 @@ export default function StaffManager() {
               </div>
 
               {formError && (
-                <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
+                <p className="clinic-staff-form-error">{formError}</p>
               )}
 
               <div className="admin-form-actions">
@@ -938,7 +935,7 @@ export default function StaffManager() {
               <div><strong>Status:</strong> {formatStatus(viewStaff.status)}</div>
             </div>
 
-            <div className="admin-form-actions" style={{ marginTop: 20 }}>
+            <div className="admin-form-actions clinic-gallery-form-actions">
               <button className="admin-cancel-btn" onClick={() => setViewStaff(null)}>
                 Close
               </button>

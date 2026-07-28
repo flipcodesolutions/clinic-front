@@ -7,7 +7,7 @@ import {
   getServices,
   getServiceById,
   updateService,
-} from '@/services/serviceService';
+} from '@/services/superadmin/serviceService';
 import { showError, showSuccess } from '@/utils/toast';
 
 function formatStatus(status) {

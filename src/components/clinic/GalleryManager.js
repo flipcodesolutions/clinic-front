@@ -7,7 +7,7 @@ import {
   updateGalleryImage,
   deleteGalleryImage,
   uploadFile,
-} from '@/services/clinicAdminService';
+} from '@/services/clinic/galleryService';
 import { showError, showSuccess } from '@/utils/toast';
 
 const formatImageUrl = (path) => {
@@ -258,13 +258,13 @@ export default function GalleryManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="3" className="clinic-dashboard-loading-cell">
                     Loading gallery photos...
                   </td>
                 </tr>
               ) : gallery.length === 0 ? (
                 <tr>
-                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="3" className="clinic-dashboard-empty-cell">
                     No gallery photos found.
                   </td>
                 </tr>
@@ -277,25 +277,14 @@ export default function GalleryManager() {
                       <td>
                         <div
                           onClick={() => setPreviewImage(img)}
-                          style={{
-                            width: 70,
-                            height: 50,
-                            borderRadius: 8,
-                            overflow: 'hidden',
-                            cursor: 'pointer',
-                            background: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
+                          className="clinic-gallery-thumb-container"
                           title="Click to preview"
                         >
                           {displayUrl ? (
                             <img
                               src={displayUrl}
                               alt={img.title || 'Photo'}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              className="clinic-gallery-thumb-img"
                               onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = 'https://placehold.co/120x80?text=Photo';
@@ -307,10 +296,10 @@ export default function GalleryManager() {
                         </div>
                       </td>
                       <td>
-                        <span style={{ fontWeight: 600 }}>{img.title}</span>
+                        <span className="clinic-gallery-title-text">{img.title}</span>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <div className="clinic-gallery-actions-wrap">
                           <button className="admin-action-btn-edit" onClick={() => openEditModal(img)}>
                             Edit
                           </button>
@@ -327,23 +316,13 @@ export default function GalleryManager() {
           </table>
         </div>
 
-        {/* Pagination Footer - 1:1 match with CitiesManager */}
+        {/* Pagination Footer */}
         {!loading && pagination.totalPages > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderTop: '1px solid #e2e8f0',
-              flexWrap: 'wrap',
-              gap: 12,
-            }}
-          >
-            <span style={{ fontSize: 14, color: '#64748b' }}>
+          <div className="clinic-gallery-pagination">
+            <span className="clinic-gallery-page-info">
               Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total photos)
             </span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="clinic-gallery-page-btns">
               <button
                 className="admin-btn-reset"
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
@@ -363,7 +342,7 @@ export default function GalleryManager() {
         )}
       </div>
 
-      {/* Upload / Edit Modal - 1:1 match with CitiesManager modal */}
+      {/* Upload / Edit Modal */}
       {showUploadModal && (
         <div className="admin-modal-backdrop" onClick={() => !saving && setShowUploadModal(false)}>
           <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -372,7 +351,7 @@ export default function GalleryManager() {
             </h3>
 
             <form onSubmit={handleSaveGallery}>
-              <div className="admin-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+              <div className="admin-form-grid clinic-gallery-form-grid">
                 <div>
                   <label className="admin-form-label">Image Title *</label>
                   <input
@@ -388,11 +367,11 @@ export default function GalleryManager() {
                 <div>
                   <label className="admin-form-label">Upload Image *</label>
                   {photoPreview && (
-                    <div style={{ marginBottom: 12, textAlign: 'center' }}>
+                    <div className="clinic-gallery-preview-wrap">
                       <img
                         src={formatImageUrl(photoPreview)}
                         alt="Preview"
-                        style={{ height: 140, maxWidth: '100%', objectFit: 'cover', borderRadius: 8, border: '1px solid #cbd5e1' }}
+                        className="clinic-gallery-preview-img"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = 'https://placehold.co/300x180?text=Preview';
@@ -412,7 +391,7 @@ export default function GalleryManager() {
                 </div>
               </div>
 
-              <div className="admin-form-actions" style={{ marginTop: 20 }}>
+              <div className="admin-form-actions clinic-gallery-form-actions">
                 <button
                   type="button"
                   className="admin-btn-reset"
@@ -433,18 +412,18 @@ export default function GalleryManager() {
       {/* Lightbox Preview Modal */}
       {previewImage && (
         <div className="admin-modal-backdrop" onClick={() => setPreviewImage(null)}>
-          <div className="admin-modal-card" style={{ maxWidth: 800, padding: 0, overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+          <div className="admin-modal-card clinic-gallery-lightbox-modal" onClick={(e) => e.stopPropagation()}>
             <img
               src={formatImageUrl(previewImage.photo || previewImage.image_url)}
               alt={previewImage.title}
-              style={{ width: '100%', height: 'auto', maxHeight: '75vh', objectFit: 'contain', display: 'block', background: '#0f172a' }}
+              className="clinic-gallery-lightbox-img"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = 'https://placehold.co/800x500?text=Photo+Preview';
               }}
             />
-            <div style={{ padding: 16, background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: '#0f172a', fontSize: 16 }}>{previewImage.title}</h3>
+            <div className="clinic-gallery-lightbox-footer">
+              <h3 className="clinic-gallery-lightbox-title">{previewImage.title}</h3>
               <button className="admin-btn-reset" onClick={() => setPreviewImage(null)}>
                 Close
               </button>

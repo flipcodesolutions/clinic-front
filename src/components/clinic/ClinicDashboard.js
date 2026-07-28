@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getClinicDashboardData } from '@/services/clinicAdminService';
+import { getClinicDashboardData } from '@/services/clinic/dashboardService';
 
 export default function ClinicDashboard() {
   const [data, setData] = useState({
@@ -69,10 +69,10 @@ export default function ClinicDashboard() {
       {/* Today's Appointments Section */}
       <div className="clinic-table-card">
         <div className="clinic-table-header">
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>
+          <h3 className="clinic-dashboard-section-header">
             📅 Today's Appointments
           </h3>
-          <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+          <span className="clinic-dashboard-section-sub">
             {data.appointments.length} Total Bookings Today
           </span>
         </div>
@@ -91,13 +91,13 @@ export default function ClinicDashboard() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="6" className="clinic-dashboard-loading-cell">
                     Loading appointments...
                   </td>
                 </tr>
               ) : data.appointments.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="6" className="clinic-dashboard-empty-cell">
                     No appointments scheduled for today.
                   </td>
                 </tr>
@@ -105,13 +105,13 @@ export default function ClinicDashboard() {
                 data.appointments.map((app) => (
                   <tr key={app.id}>
                     <td>
-                      <span style={{ fontWeight: 600, color: '#0f172a' }}>{app.patient_name}</span>
+                      <span className="clinic-dashboard-patient-name">{app.patient_name}</span>
                     </td>
                     <td>{app.doctor_name}</td>
                     <td>
                       <span className="clinic-gallery-tag">{app.specialty}</span>
                     </td>
-                    <td style={{ fontWeight: 600, color: '#0d9488' }}>{app.time}</td>
+                    <td className="clinic-dashboard-time-cell">{app.time}</td>
                     <td>{app.type}</td>
                     <td>
                       <span className={`clinic-badge ${app.status}`}>
@@ -127,11 +127,11 @@ export default function ClinicDashboard() {
       </div>
 
       {/* Side-by-side Doctor List & Staff List previews */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 }}>
+      <div className="clinic-dashboard-overview-grid">
         {/* Doctor List */}
-        <div className="clinic-table-card" style={{ marginBottom: 0 }}>
+        <div className="clinic-table-card clinic-dashboard-overview-card">
           <div className="clinic-table-header">
-            <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>🩺 Doctors Overview</h4>
+            <h4 className="clinic-dashboard-overview-title">🩺 Doctors Overview</h4>
             <Link href="/clinic-panel/doctors" className="clinic-btn clinic-btn-primary clinic-btn-sm">
               Manage Doctors
             </Link>
@@ -149,19 +149,19 @@ export default function ClinicDashboard() {
                 {data.doctors.slice(0, 4).map((doc) => (
                   <tr key={doc.id}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div className="clinic-dashboard-avatar-cell">
                         <img
                           src={doc.photo_url}
                           alt={doc.first_name}
-                          style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
+                          className="clinic-dashboard-avatar-img"
                         />
                         <div>
-                          <div style={{ fontWeight: 600, fontSize: 13 }}>{doc.first_name} {doc.last_name}</div>
-                          <div style={{ fontSize: 11, color: '#64748b' }}>{doc.qualification}</div>
+                          <div className="clinic-dashboard-doc-name">{doc.first_name} {doc.last_name}</div>
+                          <div className="clinic-dashboard-doc-qual">{doc.qualification}</div>
                         </div>
                       </div>
                     </td>
-                    <td style={{ fontSize: 13 }}>{doc.specialty}</td>
+                    <td className="clinic-dashboard-specialty-cell">{doc.specialty}</td>
                     <td>
                       <span className={`clinic-badge ${doc.status}`}>{doc.status}</span>
                     </td>
@@ -173,9 +173,9 @@ export default function ClinicDashboard() {
         </div>
 
         {/* Staff List */}
-        <div className="clinic-table-card" style={{ marginBottom: 0 }}>
+        <div className="clinic-table-card clinic-dashboard-overview-card">
           <div className="clinic-table-header">
-            <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>👥 Clinic Staff Overview</h4>
+            <h4 className="clinic-dashboard-overview-title">👥 Clinic Staff Overview</h4>
             <Link href="/clinic-panel/staff" className="clinic-btn clinic-btn-primary clinic-btn-sm">
               Manage Staff
             </Link>
@@ -193,12 +193,12 @@ export default function ClinicDashboard() {
                 {data.staff.slice(0, 4).map((s) => (
                   <tr key={s.id}>
                     <td>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{s.first_name} {s.last_name}</div>
-                      <div style={{ fontSize: 11, color: '#64748b' }}>{s.email}</div>
+                      <div className="clinic-dashboard-staff-name">{s.first_name} {s.last_name}</div>
+                      <div className="clinic-dashboard-staff-email">{s.email}</div>
                     </td>
                     <td>
-                      <div style={{ fontSize: 13 }}>{s.designation}</div>
-                      <div style={{ fontSize: 11, color: '#0d9488' }}>{s.shift} Shift</div>
+                      <div className="clinic-dashboard-staff-desig">{s.designation}</div>
+                      <div className="clinic-dashboard-staff-shift">{s.shift} Shift</div>
                     </td>
                     <td>
                       <span className={`clinic-badge ${s.status}`}>{s.status}</span>

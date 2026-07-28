@@ -7,7 +7,7 @@ import {
   getDepartments,
   getDepartmentById,
   updateDepartment,
-} from '@/services/departmentService';
+} from '@/services/superadmin/departmentService';
 import { showError, showSuccess } from '@/utils/toast';
 
 function formatStatus(status) {
