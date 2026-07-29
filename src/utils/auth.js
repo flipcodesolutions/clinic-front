@@ -4,6 +4,7 @@ export const ROLE_REDIRECT = {
   clinic: '/clinic-panel',
   clinic_admin: '/clinic-panel',
   doctor: '/doctor-panel',
+  patient: '/patient-panel/dashboard',
 };
 
 /**
@@ -19,7 +20,7 @@ export function getAuthToken() {
  * Pick the main role when user has multiple roles.
  */
 export function getPrimaryRole(roles = []) {
-  const priority = ['super_admin', 'clinic_admin', 'clinic', 'doctor'];
+  const priority = ['super_admin', 'clinic_admin', 'clinic', 'doctor', 'patient'];
 
   for (const role of priority) {
     if (roles.includes(role)) return role;
