@@ -9,7 +9,6 @@ const HIDDEN_PATHS = [
   '/doctor-panel',
   '/login',
   '/super-admin-panel',
-  '/patient-panel',
 ];
 
 export default function ConditionalNav({ children }) {

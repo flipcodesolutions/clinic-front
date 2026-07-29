@@ -1511,6 +1511,22 @@
   margin-bottom: 12px;
 }
 
+.sched-header-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1.2fr 1fr 1fr 40px;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.sched-header-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
 .row-delete-icon-btn {
   padding: 0 !important;
   display: flex !important;

@@ -1783,6 +1783,16 @@ export default function DoctorsManager() {
               {schedDoctor.last_name}
             </h3>
 
+            {/* Column Header Titles */}
+            <div className="sched-header-grid">
+              <div className="sched-header-label">Day of Week</div>
+              <div className="sched-header-label">Start Time</div>
+              <div className="sched-header-label">End Time</div>
+              <div className="sched-header-label">Slot Duration (Mins)</div>
+              <div className="sched-header-label">Max Patients</div>
+              <div className="sched-header-label text-center">Action</div>
+            </div>
+
             {schedList.map((sc, idx) => (
               <div key={sc.id || idx} className="sched-row-grid">
                 <select
@@ -1808,28 +1818,53 @@ export default function DoctorsManager() {
                     </option>
                   ))}
                 </select>
-                <input
-                  type="text"
-                  className="admin-input"
-                  placeholder="Start Time (09:00 AM)"
-                  value={sc.start_time}
+
+                {/* Start Time Select Dropdown */}
+                <select
+                  className="admin-select"
+                  value={sc.start_time || "09:00 AM"}
                   onChange={(e) => {
                     const updated = [...schedList];
                     updated[idx].start_time = e.target.value;
                     setSchedList(updated);
                   }}
-                />
-                <input
-                  type="text"
-                  className="admin-input"
-                  placeholder="End Time (01:00 PM)"
-                  value={sc.end_time}
+                >
+                  {[
+                    "07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM",
+                    "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM",
+                    "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM",
+                    "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM",
+                    "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM",
+                  ].map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+
+                {/* End Time Select Dropdown */}
+                <select
+                  className="admin-select"
+                  value={sc.end_time || "05:00 PM"}
                   onChange={(e) => {
                     const updated = [...schedList];
                     updated[idx].end_time = e.target.value;
                     setSchedList(updated);
                   }}
-                />
+                >
+                  {[
+                    "07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM",
+                    "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM",
+                    "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM",
+                    "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM",
+                    "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM",
+                  ].map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+
                 <input
                   type="number"
                   className="admin-input"

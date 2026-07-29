@@ -4,7 +4,6 @@ export const ROLE_REDIRECT = {
   clinic: '/clinic-panel',
   clinic_admin: '/clinic-panel',
   doctor: '/doctor-panel',
-  patient: '/patient-panel/dashboard',
 };
 
 /**
@@ -20,7 +19,7 @@ export function getAuthToken() {
  * Pick the main role when user has multiple roles.
  */
 export function getPrimaryRole(roles = []) {
-  const priority = ['super_admin', 'clinic_admin', 'clinic', 'doctor', 'patient'];
+  const priority = ['super_admin', 'clinic_admin', 'clinic', 'doctor'];
 
   for (const role of priority) {
     if (roles.includes(role)) return role;
@@ -86,3 +85,4 @@ export function clearUserSession() {
 // Keep old names used in other files
 export const saveAuthToken = (token) => localStorage.setItem('auth_token', token);
 export const removeAuthToken = clearUserSession;
+export const clearUserAuth = clearUserSession;
