@@ -1,6 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { getDoctorAppointments, updateAppointmentStatus, getDoctorProfile } from '@/services/doctor/doctorService';
+import { useEffect, useState, useCallback } from 'react';
+import { getDoctorProfile } from '@/services/doctor/profileService';
+import { getDoctorAppointments } from '@/services/doctor/appointmentService';
 
 export default function DoctorDashboard() {
   const [loading, setLoading] = useState(true);
@@ -13,11 +14,7 @@ export default function DoctorDashboard() {
     completedAppointments: 0,
   });
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const [profRes, appRes] = await Promise.allSettled([
@@ -50,18 +47,11 @@ export default function DoctorDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleStatusChange = async (appointmentId, newStatus) => {
-    try {
-      const res = await updateAppointmentStatus(appointmentId, newStatus);
-      if (res?.success) {
-        fetchDashboardData();
-      }
-    } catch (err) {
-      console.error('Failed to update status', err);
-    }
-  };
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const doctorName = profile?.user
     ? `Dr. ${profile.user.first_name || ''} ${profile.user.last_name || ''}`.trim()
@@ -99,14 +89,14 @@ export default function DoctorDashboard() {
       {/* Header */}
       <div className="admin-header">
         <div>
-          <h1 className="admin-title">Welcome back, {doctorName} 👋</h1>
+          <h1 className="admin-title">Welcome back, {doctorName} </h1>
           <p className="admin-subtitle">
             {profile?.specialization || 'General Practice'} • Qualification: {profile?.qualification || 'MBBS'} • Experience: {profile?.experience_years || '0'} Yrs
           </p>
         </div>
       </div>
 
-      {/* Stats Cards Grid */}
+      {/*  Cards Grid */}
       <div className="admin-stats-grid">
         {statsCards.map((s, idx) => (
           <div key={idx} className="admin-stat-card">
@@ -119,8 +109,8 @@ export default function DoctorDashboard() {
         ))}
       </div>
 
-      {/* Recent Appointments Table */}
-      <h3 style={{ margin: '30px 0 16px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+      {/* Recent Appointments Table*/}
+      <h3 className="admin-section-heading">
         Recent Appointments
       </h3>
 
@@ -134,19 +124,18 @@ export default function DoctorDashboard() {
                 <th>Date & Time</th>
                 <th>Visit Type</th>
                 <th>Status</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="5" className="admin-empty-state">
                     Loading appointments...
                   </td>
                 </tr>
               ) : appointments.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="5" className="admin-empty-state">
                     No appointments found yet.
                   </td>
                 </tr>
@@ -160,55 +149,26 @@ export default function DoctorDashboard() {
 
                   return (
                     <tr key={apt.id}>
-                      <td style={{ fontWeight: 600, color: '#0d9488' }}>
+                      <td className="admin-appt-no">
                         #{apt.appointment_number || apt.id}
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600 }}>{patientName}</div>
-                        <div style={{ fontSize: 12, color: '#64748b' }}>
+                        <div className="admin-font-bold">{patientName}</div>
+                        <div className="admin-sub-text">
                           {apt.patient?.gender ? `Gender: ${apt.patient.gender}` : ''}
                         </div>
                       </td>
                       <td>
-                        <div style={{ fontSize: 13.5, color: '#0f172a', fontWeight: 500 }}>
+                        <div className="admin-date-text">
                           {apt.appointment_date}
                         </div>
-                        <div style={{ fontSize: 12, color: '#64748b' }}>{apt.start_time}</div>
+                        <div className="admin-sub-text">{apt.start_time}</div>
                       </td>
-                      <td style={{ textTransform: 'capitalize' }}>
+                      <td className="admin-visit-type">
                         {apt.visit_type || 'Consultation'}
                       </td>
                       <td>
                         <span className={`admin-badge ${statusClass}`}>{apt.status}</span>
-                      </td>
-                      <td>
-                        {apt.status === 'booked' || apt.status === 'pending' ? (
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button
-                              onClick={() => handleStatusChange(apt.id, 'confirmed')}
-                              className="admin-action-btn-edit"
-                              style={{ color: '#059669', borderColor: '#a7f3d0' }}
-                            >
-                              Accept
-                            </button>
-                            <button
-                              onClick={() => handleStatusChange(apt.id, 'cancelled')}
-                              className="admin-action-btn-delete"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        ) : apt.status === 'confirmed' ? (
-                          <button
-                            onClick={() => handleStatusChange(apt.id, 'completed')}
-                            className="admin-action-btn-view"
-                            style={{ color: '#0d9488', borderColor: '#99f6e4' }}
-                          >
-                            Mark Complete
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: 13, color: '#94a3b8' }}>No action required</span>
-                        )}
                       </td>
                     </tr>
                   );

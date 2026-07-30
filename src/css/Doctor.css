@@ -781,8 +781,422 @@
   .admin-form-grid {
     grid-template-columns: 1fr;
   }
-
   .admin-form-full {
     grid-column: span 1;
   }
+}
+
+/* ============================================================
+   CITY MASTER STYLE FILTER BAR & MODALS (Root Scope)
+   ============================================================ */
+.admin-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--doc-white);
+  padding: 16px 20px;
+  border-radius: var(--doc-radius);
+  box-shadow: var(--doc-shadow);
+  border: 1px solid var(--doc-border);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.admin-search-input {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid var(--doc-border);
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  color: var(--doc-text);
+  box-sizing: border-box;
+}
+
+.admin-search-input:focus {
+  border-color: var(--doc-primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.admin-filter-select {
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid var(--doc-border);
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  min-width: 150px;
+  color: var(--doc-text);
+}
+
+.admin-filter-select:focus {
+  border-color: var(--doc-primary);
+}
+
+.admin-btn-apply {
+  background: #ccfbf1;
+  color: #0f766e;
+  border: 1px solid rgba(13, 148, 136, 0.3);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-apply:hover {
+  background: var(--doc-primary);
+  color: #ffffff;
+}
+
+.admin-btn-reset {
+  background: transparent;
+  color: var(--doc-muted);
+  border: 1px solid var(--doc-border);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-reset:hover {
+  background: #f1f5f9;
+  color: var(--doc-text);
+}
+
+/* Modal Backdrops & Cards */
+.admin-modal-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1100 !important;
+  padding: 20px !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+.admin-modal-card {
+  background: var(--doc-white);
+  border-radius: var(--doc-radius);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.22);
+  width: 100%;
+  max-width: 650px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 24px 28px;
+  border: 1px solid var(--doc-border);
+  box-sizing: border-box;
+  position: relative;
+}
+
+.admin-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--doc-text);
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--doc-border);
+}
+
+.admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--doc-border);
+}
+
+.admin-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--doc-muted);
+}
+
+.admin-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.admin-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--doc-border);
+  color: var(--doc-muted);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.admin-text-right {
+  text-align: right !important;
+}
+
+.admin-text-center {
+  text-align: center !important;
+}
+
+.admin-empty-state {
+  text-align: center;
+  padding: 36px 20px;
+  color: var(--doc-muted);
+}
+
+.admin-font-bold {
+  font-weight: 700 !important;
+  color: var(--doc-text) !important;
+}
+
+.admin-input-disabled {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+}
+
+.admin-badge-sm {
+  font-size: 12px !important;
+}
+
+.admin-sub-text {
+  font-size: 12px;
+  color: var(--doc-muted);
+}
+
+.admin-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.admin-checkbox-input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--doc-primary);
+}
+
+.admin-section-heading {
+  margin: 30px 0 16px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--doc-text);
+}
+
+.admin-appt-no {
+  font-weight: 600;
+  color: var(--doc-primary);
+}
+
+.admin-date-text {
+  font-size: 13.5px;
+  color: var(--doc-text);
+  font-weight: 500;
+}
+
+.admin-visit-type {
+  text-transform: capitalize;
+}
+
+.admin-btn-group {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-action-btn-accept {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-action-btn-accept:hover {
+  background: #d1fae5;
+}
+
+.admin-action-btn-complete {
+  background: #f0fdfa;
+  color: #0d9488;
+  border: 1px solid #99f6e4;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-action-btn-complete:hover {
+  background: #ccfbf1;
+}
+
+.admin-no-action {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* ============================================================
+   TABLE ACTION CELL & THREE-DOTS MENU
+   ============================================================ */
+.admin-table-actions-cell {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.admin-dots-dropdown-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.admin-dots-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-dots-btn:hover {
+  background: var(--doc-primary-light);
+  color: var(--doc-primary-dark);
+  border-color: rgba(13, 148, 136, 0.4);
+}
+
+.admin-dots-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--doc-border);
+  min-width: 175px;
+  z-index: 1000;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-dots-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-dots-item:hover {
+  background: #f8fafc;
+  color: var(--doc-primary-dark);
+}
+
+/* ============================================================
+   CITY MASTER STYLE PAGINATION
+   ============================================================ */
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-top: 1px solid var(--doc-border);
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--doc-white);
+  border-bottom-left-radius: var(--doc-radius);
+  border-bottom-right-radius: var(--doc-radius);
+}
+
+.admin-pagination-info {
+  font-size: 14px;
+  color: var(--doc-muted);
+}
+
+.admin-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================================
+   DOCTOR SHELL & LOGIN HELPER CLASSES
+   ============================================================ */
+.doc-panel-loading-box {
+  text-align: center;
+}
+
+.doc-panel-loading-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.doctor-login-pass-wrap {
+  position: relative;
+}
+
+.doctor-login-pass-input {
+  padding-right: 48px !important;
+}
+
+.doctor-login-eye-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.doctor-login-btn-demo {
+  background: none;
+  border: 1.5px dashed #BFDBFE;
+  border-radius: 10px;
+  padding: 10px;
+  color: #0284C7;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }

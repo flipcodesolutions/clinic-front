@@ -34,8 +34,8 @@ export default function DoctorPanelShell({ children }) {
   if (loading || !authed) {
     return (
       <div className="doc-panel-loading">
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 10 }}>👨‍⚕️</div>
+        <div className="doc-panel-loading-box">
+          <div className="doc-panel-loading-icon">👨‍⚕️</div>
           <p>Verifying authentication...</p>
         </div>
       </div>
