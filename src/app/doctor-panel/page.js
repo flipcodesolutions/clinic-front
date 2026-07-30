@@ -1,12 +1,12 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import DoctorSidebar from '@/components/doctor/DoctorSidebar';
+import { useState, useEffect } from 'react';
+import DoctorPanelLayout from '@/components/doctor/DoctorPanelLayout';
 import DoctorDashboard from '@/components/doctor/DoctorDashboard';
 import DoctorProfile from '@/components/doctor/DoctorProfile';
 import DoctorSchedule from '@/components/doctor/DoctorSchedule';
 import DoctorAppointments from '@/components/doctor/DoctorAppointments';
 import DoctorAchievements from '@/components/doctor/DoctorAchievements';
+import { getDoctorProfile } from '@/services/doctor/doctorService';
 
 const TAB_COMPONENTS = {
   dashboard: DoctorDashboard,
@@ -17,26 +17,28 @@ const TAB_COMPONENTS = {
 };
 
 export default function DoctorPanelPage() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [doctorProfile, setDoctorProfile] = useState(null);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user_auth');
-    router.replace('/login');
-  };
+  useEffect(() => {
+    getDoctorProfile()
+      .then((res) => {
+        if (res?.success) {
+          setDoctorProfile(res.data);
+        }
+      })
+      .catch((err) => console.error('Error loading doctor profile:', err));
+  }, []);
 
   const ActiveComponent = TAB_COMPONENTS[activeTab] || DoctorDashboard;
 
   return (
-    <div className="doctor-panel-layout">
-      <DoctorSidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onLogout={handleLogout}
-      />
-      <main className="doctor-panel-main">
-        <ActiveComponent />
-      </main>
-    </div>
+    <DoctorPanelLayout
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      doctorProfile={doctorProfile}
+    >
+      <ActiveComponent />
+    </DoctorPanelLayout>
   );
 }
