@@ -171,7 +171,7 @@ export default function DoctorAchievements() {
     }
   };
 
-  // Data returned from backend is already filtered & paginated
+  // Data returned
   const displayedAchievements = achievements;
 
   return (
@@ -225,7 +225,7 @@ export default function DoctorAchievements() {
         </button>
       </div>
 
-      {/* City Master Style Add / Edit Modal */}
+      {/*Add / Edit Modal */}
       {showForm && (
         <div className="admin-modal-backdrop" onClick={resetForm}>
           <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -360,7 +360,7 @@ export default function DoctorAchievements() {
               </table>
             </div>
 
-            {/* City Master Style Pagination */}
+            {/* Pagination */}
             {totalPages > 0 && (
               <div className="admin-pagination">
                 <span className="admin-pagination-info">
