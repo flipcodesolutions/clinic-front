@@ -1,9 +1,12 @@
 'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const menuItems = [
   {
     id: 'dashboard',
     label: 'Dashboard',
+    href: '/doctor-panel/dashboard',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -14,6 +17,7 @@ const menuItems = [
   {
     id: 'profile',
     label: 'My Profile',
+    href: '/doctor-panel/profile',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -24,6 +28,7 @@ const menuItems = [
   {
     id: 'experiences',
     label: 'Experiences',
+    href: '/doctor-panel/experiences',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
@@ -34,6 +39,7 @@ const menuItems = [
   {
     id: 'achievements',
     label: 'Achievements',
+    href: '/doctor-panel/achievements',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
@@ -45,56 +51,13 @@ const menuItems = [
       </svg>
     ),
   },
-  // {
-  //   id: 'schedule',
-  //   label: 'Schedule & Slots',
-  //   icon: (
-  //     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-  //       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-  //       <line x1="16" y1="2" x2="16" y2="6"></line>
-  //       <line x1="8" y1="2" x2="8" y2="6"></line>
-  //       <line x1="3" y1="10" x2="21" y2="10"></line>
-  //     </svg>
-  //   ),
-  // },
-  // {
-  //   id: 'appointments',
-  //   label: 'Appointments',
-  //   icon: (
-  //     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-  //       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-  //       <polyline points="14 2 14 8 20 8"></polyline>
-  //       <line x1="16" y1="13" x2="8" y2="13"></line>
-  //       <line x1="16" y1="17" x2="8" y2="17"></line>
-  //       <polyline points="10 9 9 9 8 9"></polyline>
-  //     </svg>
-  //   ),
-  // },
-  // {
-  //   id: 'patients',
-  //   label: 'My Patients',
-  //   icon: (
-  //     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-  //       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-  //       <circle cx="9" cy="7" r="4"></circle>
-  //       <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-  //       <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-  //     </svg>
-  //   ),
-  // },
-  // {
-  //   id: 'leaves',
-  //   label: 'Leave Requests',
-  //   icon: (
-  //     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-  //       <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
-  //       <line x1="9" y1="14" x2="15" y2="14"></line>
-  //     </svg>
-  //   ),
-  // },
 ];
 
-export default function DoctorSidebar({ activeTab, onTabChange, onLogout, isOpen, onClose }) {
+export default function DoctorSidebar({ onLogout, isOpen, onClose }) {
+  const pathname = usePathname();
+
+  const isActive = (href) => pathname === href;
+
   return (
     <aside className="admin-sidebar">
       <div className="admin-sidebar-header">
@@ -117,20 +80,19 @@ export default function DoctorSidebar({ activeTab, onTabChange, onLogout, isOpen
 
       <nav className="admin-sidebar-menu">
         {menuItems.map((item) => (
-          <button
+          <Link
             key={item.id}
+            href={item.href}
+            title={item.label}
             onClick={() => {
-              onTabChange(item.id);
               if (onClose) onClose();
             }}
-            title={item.label}
-            className={`admin-sidebar-link ${activeTab === item.id ? 'active' : ''}`}
+            className={`admin-sidebar-link ${isActive(item.href) ? 'active' : ''}`}
           >
             <span className="admin-menu-icon">{item.icon}</span>
             <span className="admin-menu-label">{item.label}</span>
-          </button>
+          </Link>
         ))}
-
       </nav>
     </aside>
   );

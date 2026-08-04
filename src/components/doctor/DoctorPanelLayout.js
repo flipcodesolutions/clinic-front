@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import DoctorSidebar from './DoctorSidebar';
 import { clearUserSession, getUserAuth } from '@/utils/auth';
 
-export default function DoctorPanelLayout({ activeTab, onTabChange, doctorProfile, children }) {
+export default function DoctorPanelLayout({ doctorProfile, children }) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -79,8 +79,6 @@ export default function DoctorPanelLayout({ activeTab, onTabChange, doctorProfil
     >
       {/* Sidebar */}
       <DoctorSidebar
-        activeTab={activeTab}
-        onTabChange={onTabChange}
         onLogout={handleLogout}
         isOpen={sidebarOpen}
         onClose={closeSidebar}
