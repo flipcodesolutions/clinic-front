@@ -109,14 +109,14 @@ export default function DoctorDashboard() {
         ))}
       </div>
 
-      {/* Recent Appointments Table*/}
-      <h3 className="admin-section-heading">
+      {/* Recent Appointments Table Heading */}
+      <h3 className="admin-section-heading" style={{ marginTop: '24px' }}>
         Recent Appointments
       </h3>
 
       <div className="admin-table-card">
-        <div className="admin-table-wrap">
-          <table className="admin-table">
+        <div className="admin-table-wrap fixed-height-table">
+          <table className="admin-table sticky-header">
             <thead>
               <tr>
                 <th>Appointment No</th>
@@ -140,7 +140,7 @@ export default function DoctorDashboard() {
                   </td>
                 </tr>
               ) : (
-                appointments.slice(0, 8).map((apt) => {
+                appointments.map((apt) => {
                   const patientName = apt.patient?.user
                     ? `${apt.patient.user.first_name || ''} ${apt.patient.user.last_name || ''}`.trim()
                     : 'Patient';

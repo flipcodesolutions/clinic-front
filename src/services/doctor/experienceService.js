@@ -9,6 +9,14 @@ export async function getDoctorExperiences(params = {}) {
 }
 
 /**
+ * Get Doctor Experience By ID
+ */
+export async function getDoctorExperienceById(id) {
+  const response = await apiClient.get(`/doctor/experiences/${id}`);
+  return response.data;
+}
+
+/**
  * Create Doctor Experience
  */
 export async function createDoctorExperience(data) {

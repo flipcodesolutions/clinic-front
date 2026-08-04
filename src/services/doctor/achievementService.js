@@ -9,6 +9,14 @@ export async function getDoctorAchievements(params = {}) {
 }
 
 /**
+ * Get Doctor Achievement By ID
+ */
+export async function getDoctorAchievementById(id) {
+  const response = await apiClient.get(`/doctor/achievements/${id}`);
+  return response.data;
+}
+
+/**
  * Create Doctor Achievement
  */
 export async function createDoctorAchievement(data) {

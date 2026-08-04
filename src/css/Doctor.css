@@ -442,9 +442,60 @@
   color: #d97706;
 }
 
-/* ============================================================
-   TABLES & CARDS
-   ============================================================ */
+/* Table Header Flex & Controls */
+.admin-table-header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-dropdown-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-dropdown-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--doc-muted);
+  white-space: nowrap;
+}
+
+.admin-select-dropdown {
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--doc-border);
+  background: var(--doc-white);
+  color: var(--doc-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.admin-select-dropdown:hover {
+  border-color: var(--doc-primary);
+}
+
+.admin-select-dropdown:focus {
+  border-color: var(--doc-primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
 .admin-table-card {
   background: var(--doc-white);
   border-radius: var(--doc-radius);
@@ -455,6 +506,41 @@
 
 .admin-table-wrap {
   overflow-x: auto;
+}
+
+/* Fixed Height Scrollable Table Body with Custom Scrollbar */
+.admin-table-wrap.fixed-height-table {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(13, 148, 136, 0.3) transparent;
+}
+
+.admin-table-wrap.fixed-height-table::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-table-wrap.fixed-height-table::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-table-wrap.fixed-height-table::-webkit-scrollbar-thumb {
+  background-color: rgba(13, 148, 136, 0.3);
+  border-radius: 4px;
+}
+
+.admin-table-wrap.fixed-height-table::-webkit-scrollbar-thumb:hover {
+  background-color: var(--doc-primary);
+}
+
+.admin-table.sticky-header thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f8fafc;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .admin-table {

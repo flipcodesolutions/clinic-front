@@ -18,25 +18,33 @@ export default function DoctorAchievements() {
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState({ search: '' });
 
-  // Pagination & Page Size Limit (City Master Style)
+  // Pagination & Page Size Limit State
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Exactly 3 fields state
+  // Form state
   const [form, setForm] = useState({
     title: '',
     year: '',
     description: '',
   });
 
-  const fetchAchievements = useCallback(async (filters = activeFilters) => {
+  const fetchAchievements = useCallback(async (filters = activeFilters, page = currentPage, limit = itemsPerPage) => {
     try {
       setLoading(true);
-      const params = {};
+      const params = {
+        page,
+        limit,
+      };
       if (filters.search) params.search = filters.search;
       const res = await getDoctorAchievements(params);
       if (res?.success && Array.isArray(res?.data)) {
         setAchievements(res.data);
+        const count = res.count !== undefined ? res.count : res.data.length;
+        setTotalCount(count);
+        setTotalPages(res.totalPages !== undefined ? res.totalPages : (Math.ceil(count / limit) || 1));
       }
     } catch (error) {
       console.error('Error fetching achievements:', error);
@@ -44,17 +52,17 @@ export default function DoctorAchievements() {
     } finally {
       setLoading(false);
     }
-  }, [activeFilters]);
+  }, [activeFilters, currentPage, itemsPerPage]);
 
   useEffect(() => {
-    fetchAchievements();
-  }, [fetchAchievements]);
+    fetchAchievements(activeFilters, currentPage, itemsPerPage);
+  }, [fetchAchievements, activeFilters, currentPage, itemsPerPage]);
 
   const handleApplyFilter = () => {
     const filters = { search: search.trim() };
     setActiveFilters(filters);
     setCurrentPage(1);
-    fetchAchievements(filters);
+    fetchAchievements(filters, 1, itemsPerPage);
   };
 
   const handleResetFilter = () => {
@@ -63,7 +71,7 @@ export default function DoctorAchievements() {
     const filters = { search: '' };
     setActiveFilters(filters);
     setCurrentPage(1);
-    fetchAchievements(filters);
+    fetchAchievements(filters, 1, 10);
   };
 
   const resetForm = () => {
@@ -104,7 +112,7 @@ export default function DoctorAchievements() {
       const res = await deleteDoctorAchievement(ach.id);
       if (res?.success) {
         showSuccess(res.message || 'Achievement deleted successfully');
-        fetchAchievements(activeFilters);
+        fetchAchievements(activeFilters, currentPage, itemsPerPage);
       }
     } catch (error) {
       showError(error, 'Failed to delete achievement');
@@ -113,17 +121,37 @@ export default function DoctorAchievements() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.year) {
-      showError(null, 'Please fill all required fields');
+    const titleTrimmed = form.title.trim();
+    const parsedYear = parseInt(form.year, 10);
+
+    if (!titleTrimmed) {
+      showError(null, 'Achievement Title is required');
+      return;
+    }
+    if (titleTrimmed.length > 150) {
+      showError(null, 'Title cannot exceed 150 characters');
+      return;
+    }
+    if (!form.year) {
+      showError(null, 'Year is required');
+      return;
+    }
+    const currentYear = new Date().getFullYear();
+    if (isNaN(parsedYear) || parsedYear <= 0) {
+      showError(null, 'Please enter a valid year');
+      return;
+    }
+    if (parsedYear > currentYear) {
+      showError(null, `Year cannot be in the future (Maximum allowed year is ${currentYear})`);
       return;
     }
 
     try {
       setSaving(true);
       const payload = {
-        title: form.title,
-        year: parseInt(form.year, 10),
-        description: form.description,
+        title: titleTrimmed,
+        year: parsedYear,
+        description: form.description ? form.description.trim() : '',
       };
 
       if (editingId) {
@@ -135,7 +163,7 @@ export default function DoctorAchievements() {
       }
 
       resetForm();
-      fetchAchievements(activeFilters);
+      fetchAchievements(activeFilters, currentPage, itemsPerPage);
     } catch (error) {
       showError(error, 'Failed to save achievement');
     } finally {
@@ -143,21 +171,8 @@ export default function DoctorAchievements() {
     }
   };
 
-  const filteredAchievements = achievements.filter((ach) => {
-    if (!activeFilters.search) return true;
-    const term = activeFilters.search.toLowerCase();
-    return (
-      (ach.title || '').toLowerCase().includes(term) ||
-      (ach.description || '').toLowerCase().includes(term) ||
-      (ach.year ? String(ach.year) : '').includes(term)
-    );
-  });
-
-  // Pagination Math
-  const totalCount = filteredAchievements.length;
-  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedAchievements = filteredAchievements.slice(startIndex, startIndex + itemsPerPage);
+  // Data returned from backend is already filtered & paginated
+  const displayedAchievements = achievements;
 
   return (
     <div className="doc-achievements">
@@ -247,12 +262,11 @@ export default function DoctorAchievements() {
                   </label>
                   <input
                     type="number"
-                    min="1950"
-                    max="2099"
+                    max={new Date().getFullYear()}
                     className="admin-input"
                     value={form.year}
                     onChange={(e) => setForm({ ...form, year: e.target.value })}
-                    placeholder="e.g. 2023"
+                    placeholder={`e.g. ${new Date().getFullYear()}`}
                     required
                   />
                 </div>
@@ -294,9 +308,9 @@ export default function DoctorAchievements() {
           <div className="admin-table-wrap">
             <p className="admin-empty-state">Loading Achievements...</p>
           </div>
-        ) : filteredAchievements.length === 0 ? (
+        ) : achievements.length === 0 ? (
           <div className="admin-table-wrap">
-            <p className="admin-empty-state">No achievements added yet.</p>
+            <p className="admin-empty-state">No achievements found.</p>
           </div>
         ) : (
           <div>
@@ -311,7 +325,7 @@ export default function DoctorAchievements() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedAchievements.map((ach) => (
+                  {achievements.map((ach) => (
                     <tr key={ach.id}>
                       <td className="admin-font-bold">{ach.title}</td>
                       <td>

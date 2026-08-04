@@ -9,6 +9,14 @@ import {
 } from '@/services/doctor/experienceService';
 import { showError, showSuccess } from '@/utils/toast';
 
+const getTodayStr = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function DoctorExperiences() {
   const [experiences, setExperiences] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,11 +26,13 @@ export default function DoctorExperiences() {
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState({ search: '' });
 
-  // Pagination & Page Size Limit0
+  // Pagination & Page Size Limit State
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Exactly 6 fields state
+  // Form state
   const [form, setForm] = useState({
     hospital_name: '',
     designation: '',
@@ -32,14 +42,20 @@ export default function DoctorExperiences() {
     description: '',
   });
 
-  const fetchExperiences = useCallback(async (filters = activeFilters) => {
+  const fetchExperiences = useCallback(async (filters = activeFilters, page = currentPage, limit = itemsPerPage) => {
     try {
       setLoading(true);
-      const params = {};
+      const params = {
+        page,
+        limit,
+      };
       if (filters.search) params.search = filters.search;
       const res = await getDoctorExperiences(params);
       if (res?.success && Array.isArray(res?.data)) {
         setExperiences(res.data);
+        const count = res.count !== undefined ? res.count : res.data.length;
+        setTotalCount(count);
+        setTotalPages(res.totalPages !== undefined ? res.totalPages : (Math.ceil(count / limit) || 1));
       }
     } catch (error) {
       console.error('Error fetching experiences:', error);
@@ -47,17 +63,17 @@ export default function DoctorExperiences() {
     } finally {
       setLoading(false);
     }
-  }, [activeFilters]);
+  }, [activeFilters, currentPage, itemsPerPage]);
 
   useEffect(() => {
-    fetchExperiences();
-  }, [fetchExperiences]);
+    fetchExperiences(activeFilters, currentPage, itemsPerPage);
+  }, [fetchExperiences, activeFilters, currentPage, itemsPerPage]);
 
   const handleApplyFilter = () => {
     const filters = { search: search.trim() };
     setActiveFilters(filters);
     setCurrentPage(1);
-    fetchExperiences(filters);
+    fetchExperiences(filters, 1, itemsPerPage);
   };
 
   const handleResetFilter = () => {
@@ -66,7 +82,7 @@ export default function DoctorExperiences() {
     const filters = { search: '' };
     setActiveFilters(filters);
     setCurrentPage(1);
-    fetchExperiences(filters);
+    fetchExperiences(filters, 1, 10);
   };
 
   const resetForm = () => {
@@ -113,7 +129,7 @@ export default function DoctorExperiences() {
       const res = await deleteDoctorExperience(exp.id);
       if (res?.success) {
         showSuccess(res.message || 'Experience deleted successfully');
-        fetchExperiences(activeFilters);
+        fetchExperiences(activeFilters, currentPage, itemsPerPage);
       }
     } catch (error) {
       showError(error, 'Failed to delete experience');
@@ -122,19 +138,58 @@ export default function DoctorExperiences() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.hospital_name || !form.designation || !form.start_date) {
-      showError(null, 'Please fill all required fields');
+    const hospitalNameTrimmed = form.hospital_name.trim();
+    const designationTrimmed = form.designation.trim();
+
+    if (!hospitalNameTrimmed) {
+      showError(null, 'Hospital/Clinic name is required');
       return;
+    }
+    if (hospitalNameTrimmed.length > 150) {
+      showError(null, 'Hospital name cannot exceed 150 characters');
+      return;
+    }
+
+    if (!designationTrimmed) {
+      showError(null, 'Designation is required');
+      return;
+    }
+    if (designationTrimmed.length > 100) {
+      showError(null, 'Designation cannot exceed 100 characters');
+      return;
+    }
+
+    const todayStr = getTodayStr();
+
+    if (!form.start_date) {
+      showError(null, 'Start date is required');
+      return;
+    }
+
+    if (form.start_date > todayStr) {
+      showError(null, 'Start date cannot be a future date');
+      return;
+    }
+
+    if (!form.currently_working && form.end_date) {
+      if (form.end_date > todayStr) {
+        showError(null, 'End date cannot be a future date');
+        return;
+      }
+      if (form.end_date < form.start_date) {
+        showError(null, 'End date cannot be earlier than start date');
+        return;
+      }
     }
 
     try {
       setSaving(true);
       const payload = {
-        hospital_name: form.hospital_name,
-        designation: form.designation,
+        hospital_name: hospitalNameTrimmed,
+        designation: designationTrimmed,
         start_date: form.start_date,
         end_date: form.currently_working ? null : form.end_date || null,
-        description: form.description,
+        description: form.description ? form.description.trim() : '',
       };
 
       if (editingId) {
@@ -146,7 +201,7 @@ export default function DoctorExperiences() {
       }
 
       resetForm();
-      fetchExperiences(activeFilters);
+      fetchExperiences(activeFilters, currentPage, itemsPerPage);
     } catch (error) {
       showError(error, 'Failed to save experience');
     } finally {
@@ -154,20 +209,8 @@ export default function DoctorExperiences() {
     }
   };
 
-  const filteredExperiences = experiences.filter((exp) => {
-    if (!activeFilters.search) return true;
-    const term = activeFilters.search.toLowerCase();
-    return (
-      (exp.hospital_name || '').toLowerCase().includes(term) ||
-      (exp.designation || '').toLowerCase().includes(term)
-    );
-  });
-
-  // Pagination Math
-  const totalCount = filteredExperiences.length;
-  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedExperiences = filteredExperiences.slice(startIndex, startIndex + itemsPerPage);
+  
+  const displayedExperiences = experiences;
 
   return (
     <div className="doc-experiences">
@@ -272,6 +315,7 @@ export default function DoctorExperiences() {
                   </label>
                   <input
                     type="date"
+                    max={getTodayStr()}
                     className="admin-input"
                     value={form.start_date}
                     onChange={(e) => setForm({ ...form, start_date: e.target.value })}
@@ -284,6 +328,8 @@ export default function DoctorExperiences() {
                   <label className="admin-form-label">End Date</label>
                   <input
                     type="date"
+                    min={form.start_date || undefined}
+                    max={getTodayStr()}
                     className="admin-input"
                     value={form.end_date}
                     onChange={(e) => setForm({ ...form, end_date: e.target.value })}
@@ -347,9 +393,9 @@ export default function DoctorExperiences() {
           <div className="admin-table-wrap">
             <p className="admin-empty-state">Loading Experiences...</p>
           </div>
-        ) : filteredExperiences.length === 0 ? (
+        ) : experiences.length === 0 ? (
           <div className="admin-table-wrap">
-            <p className="admin-empty-state">No experiences added yet.</p>
+            <p className="admin-empty-state">No experiences found.</p>
           </div>
         ) : (
           <div>
@@ -365,7 +411,7 @@ export default function DoctorExperiences() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedExperiences.map((exp) => {
+                  {experiences.map((exp) => {
                     const startDate = exp.start_date ? exp.start_date.split('T')[0] : 'N/A';
                     const endDate = exp.end_date ? exp.end_date.split('T')[0] : 'Present';
 
