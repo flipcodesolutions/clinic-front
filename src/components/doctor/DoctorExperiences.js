@@ -421,7 +421,7 @@ export default function DoctorExperiences() {
                         <td>{exp.designation}</td>
                         <td>
                           <span className="admin-badge active admin-badge-sm">
-                            {startDate} → {endDate}
+                            {startDate}  To  {endDate}
                           </span>
                         </td>
                         <td>
