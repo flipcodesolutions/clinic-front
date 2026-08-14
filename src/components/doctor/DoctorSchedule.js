@@ -1,6 +1,6 @@
 'use client';
+
 import { useState, useEffect, useCallback } from 'react';
-import Swal from 'sweetalert2';
 import {
   getDoctorSchedules,
   createDoctorSchedule,
@@ -11,13 +11,13 @@ import { getDoctorProfile } from '@/services/doctor/profileService';
 import { showError, showSuccess } from '@/utils/toast';
 
 const DAYS_OF_WEEK = [
-  { key: 'monday', label: 'Monday' },
-  { key: 'tuesday', label: 'Tuesday' },
-  { key: 'wednesday', label: 'Wednesday' },
-  { key: 'thursday', label: 'Thursday' },
-  { key: 'friday', label: 'Friday' },
-  { key: 'saturday', label: 'Saturday' },
-  { key: 'sunday', label: 'Sunday' },
+  { key: 'monday', label: 'Monday', short: 'Mon', icon: '' },
+  { key: 'tuesday', label: 'Tuesday', short: 'Tue', icon: '' },
+  { key: 'wednesday', label: 'Wednesday', short: 'Wed', icon: '' },
+  { key: 'thursday', label: 'Thursday', short: 'Thu', icon: '' },
+  { key: 'friday', label: 'Friday', short: 'Fri', icon: '' },
+  { key: 'saturday', label: 'Saturday', short: 'Sat', icon: '' },
+  { key: 'sunday', label: 'Sunday', short: 'Sun', icon: '' },
 ];
 
 const SLOT_DURATIONS = [10, 15, 20, 30, 45, 60];
@@ -49,742 +49,596 @@ const calculateMaxSlots = (startStr, endStr, durationStr) => {
 };
 
 export default function DoctorSchedule() {
-  const [schedules, setSchedules] = useState([]);
   const [clinics, setClinics] = useState([]);
+  const [selectedClinicId, setSelectedClinicId] = useState('');
+  const [rawSchedules, setRawSchedules] = useState([]);
+  const [weeklyPlan, setWeeklyPlan] = useState({});
+  const [deletedScheduleIds, setDeletedScheduleIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [search, setSearch] = useState('');
-  const [dayFilter, setDayFilter] = useState('');
-  const [activeFilters, setActiveFilters] = useState({ search: '', day: '' });
 
-  // Pagination & Page Size Limit
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  // Initialize weekly plan structure for table view
+  const buildInitialWeeklyPlan = useCallback((schedulesList = [], clinicId = '') => {
+    const plan = {};
 
-  // Form state
-  const [form, setForm] = useState({
-    clinic_id: '',
-    day_of_week: 'monday',
-    shift_type: 'morning',
-    start_time: '09:00',
-    end_time: '17:00',
-    slot_duration: '15',
-    maximum_booking: '32',
-    is_available: true,
-  });
+    DAYS_OF_WEEK.forEach((d) => {
+      const daySchedules = schedulesList.filter(
+        (s) =>
+          String(s.day_of_week).toLowerCase() === d.key &&
+          (!clinicId || String(s.clinic_id) === String(clinicId))
+      );
 
-  const [errors, setErrors] = useState({});
+      const morningSched = daySchedules.find((s) => (s.shift_type || 'morning').toLowerCase() === 'morning');
+      const eveningSched = daySchedules.find((s) => (s.shift_type || '').toLowerCase() === 'evening');
 
-  const loadData = useCallback(async (filters = activeFilters) => {
+      const isAvailable = daySchedules.length > 0
+        ? daySchedules.some((s) => Boolean(s.is_available))
+        : false;
+
+      const slotDuration = daySchedules[0]?.slot_duration
+        ? String(daySchedules[0].slot_duration)
+        : '15';
+
+      const maxBooking = daySchedules[0]?.maximum_booking
+        ? String(daySchedules[0].maximum_booking)
+        : '16';
+
+      plan[d.key] = {
+        is_available: isAvailable,
+        slot_duration: slotDuration,
+        maximum_booking: maxBooking,
+        morning: {
+          enabled: Boolean(morningSched),
+          id: morningSched ? morningSched.id : null,
+          start_time: morningSched?.start_time || null,
+          end_time: morningSched?.end_time || null,
+        },
+        evening: {
+          enabled: Boolean(eveningSched),
+          id: eveningSched ? eveningSched.id : null,
+          start_time: eveningSched?.start_time || null,
+          end_time: eveningSched?.end_time || null,
+        },
+      };
+    });
+
+    return plan;
+  }, []);
+
+  // Fetch schedules and profile data
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const params = {};
-      if (filters.search) params.search = filters.search;
-      if (filters.day) params.day = filters.day;
-
+      setDeletedScheduleIds([]);
       const [schedRes, profileRes] = await Promise.all([
-        getDoctorSchedules(params),
+        getDoctorSchedules(),
         getDoctorProfile(),
       ]);
 
-      if (schedRes?.success && Array.isArray(schedRes?.data)) {
-        setSchedules(schedRes.data);
+      let userClinics = [];
+      if (profileRes?.success && profileRes?.data) {
+        userClinics = profileRes.data.user?.clinics || profileRes.data.clinics || [];
       }
 
-      if (profileRes?.success && profileRes?.data) {
-        const userClinics = profileRes.data.user?.clinics || profileRes.data.clinics || [];
-        if (userClinics.length > 0) {
-          setClinics(userClinics);
-          setForm((prev) => ({ ...prev, clinic_id: prev.clinic_id || String(userClinics[0].id) }));
-        } else {
-          const fallbackClinic = [{ id: 1, name: 'Medi Growth Main Clinic' }];
-          setClinics(fallbackClinic);
-          setForm((prev) => ({ ...prev, clinic_id: prev.clinic_id || '1' }));
-        }
-      }
+      setClinics(userClinics);
+
+      const defaultClinicId = userClinics[0]?.id ? String(userClinics[0].id) : '';
+      setSelectedClinicId((prev) => prev || defaultClinicId);
+
+      const fetchedSchedules = (schedRes?.success && Array.isArray(schedRes?.data)) ? schedRes.data : [];
+      setRawSchedules(fetchedSchedules);
+
+      const initialPlan = buildInitialWeeklyPlan(fetchedSchedules, selectedClinicId || defaultClinicId);
+      setWeeklyPlan(initialPlan);
     } catch (error) {
-      console.error('Error loading schedule data:', error);
-      showError(error, 'Failed to load schedule');
+      console.error('Error loading doctor schedule:', error);
+      showError(error, 'Failed to load schedule planner');
     } finally {
       setLoading(false);
     }
-  }, [activeFilters]);
+  }, [buildInitialWeeklyPlan, selectedClinicId]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleApplyFilter = () => {
-    const filters = { search: search.trim(), day: dayFilter };
-    setActiveFilters(filters);
-    setCurrentPage(1);
-    loadData(filters);
+  // Handle clinic dropdown change
+  const handleClinicChange = (e) => {
+    const newClinicId = e.target.value;
+    setSelectedClinicId(newClinicId);
+    setDeletedScheduleIds([]);
+    const updatedPlan = buildInitialWeeklyPlan(rawSchedules, newClinicId);
+    setWeeklyPlan(updatedPlan);
   };
 
-  const handleResetFilter = () => {
-    setSearch('');
-    setDayFilter('');
-    setItemsPerPage(10);
-    const filters = { search: '', day: '' };
-    setActiveFilters(filters);
-    setCurrentPage(1);
-    loadData(filters);
-  };
+  // Toggle Day Available (Clinic On / Off Checkbox)
+  const handleToggleDayAvailable = (dayKey) => {
+    setWeeklyPlan((prev) => {
+      const currentDay = prev[dayKey];
+      const nextAvailable = !currentDay.is_available;
 
-  const resetForm = () => {
-    const initialStart = '09:00';
-    const initialEnd = '17:00';
-    const initialDur = '15';
-    const computedSlots = calculateMaxSlots(initialStart, initialEnd, initialDur) || 32;
+      if (!nextAvailable) {
+        const idsToDelete = [];
+        if (currentDay.morning.id) idsToDelete.push(currentDay.morning.id);
+        if (currentDay.evening.id) idsToDelete.push(currentDay.evening.id);
 
-    setForm({
-      clinic_id: clinics[0]?.id ? String(clinics[0].id) : '',
-      day_of_week: 'monday',
-      shift_type: 'morning',
-      start_time: initialStart,
-      end_time: initialEnd,
-      slot_duration: initialDur,
-      maximum_booking: String(computedSlots),
-      is_available: true,
-    });
-    setErrors({});
-    setEditingId(null);
-    setShowForm(false);
-  };
-
-  const handleEdit = (sch) => {
-    setEditingId(sch.id);
-    const sStart = sch.start_time || '09:00';
-    const sEnd = sch.end_time || '17:00';
-    const sDur = sch.slot_duration ? String(sch.slot_duration) : '15';
-    const autoSlots = calculateMaxSlots(sStart, sEnd, sDur);
-    const maxVal = sch.maximum_booking ? String(sch.maximum_booking) : (autoSlots ? String(autoSlots) : '20');
-
-    setForm({
-      clinic_id: sch.clinic_id ? String(sch.clinic_id) : (clinics[0]?.id ? String(clinics[0].id) : ''),
-      day_of_week: sch.day_of_week || 'monday',
-      shift_type: sch.shift_type || 'morning',
-      start_time: sStart,
-      end_time: sEnd,
-      slot_duration: sDur,
-      maximum_booking: maxVal,
-      is_available: sch.is_available !== undefined ? Boolean(sch.is_available) : true,
-    });
-    setErrors({});
-    setShowForm(true);
-  };
-
-  // Helper to handle time & duration changes with Auto-Calculation of Max Booking
-  const handleTimeOrDurationChange = (field, value) => {
-    setForm((prev) => {
-      const updated = { ...prev, [field]: value };
-      const autoSlots = calculateMaxSlots(updated.start_time, updated.end_time, updated.slot_duration);
-      if (autoSlots !== null && autoSlots > 0) {
-        updated.maximum_booking = String(autoSlots);
+        if (idsToDelete.length > 0) {
+          setDeletedScheduleIds((prevIds) => [...new Set([...prevIds, ...idsToDelete])]);
+        }
       }
-      return updated;
-    });
 
-    setErrors((prev) => ({
+      return {
+        ...prev,
+        [dayKey]: {
+          ...currentDay,
+          is_available: nextAvailable,
+        },
+      };
+    });
+  };
+
+  // Toggle Morning or Evening Shift for a day
+  const handleToggleShift = (dayKey, shiftType) => {
+    setWeeklyPlan((prev) => {
+      const currentDay = prev[dayKey];
+      const shiftData = currentDay[shiftType];
+      const nextEnabled = !shiftData.enabled;
+
+      if (!nextEnabled && shiftData.id) {
+        setDeletedScheduleIds((prevIds) => [...new Set([...prevIds, shiftData.id])]);
+      }
+
+      return {
+        ...prev,
+        [dayKey]: {
+          ...currentDay,
+          [shiftType]: {
+            ...shiftData,
+            enabled: nextEnabled,
+          },
+        },
+      };
+    });
+  };
+
+  // Update specific input fields for a day
+  const handleUpdateDayField = (dayKey, field, value) => {
+    setWeeklyPlan((prev) => ({
       ...prev,
-      [field]: undefined,
-      start_time: undefined,
-      end_time: undefined,
-      slot_duration: undefined,
-      maximum_booking: undefined,
+      [dayKey]: {
+        ...prev[dayKey],
+        [field]: value,
+      },
     }));
   };
 
-  const handleDelete = async (sch) => {
-    const result = await Swal.fire({
-      title: 'Delete Schedule Slot?',
-      text: `Slot for ${sch.day_of_week} (${sch.start_time} - ${sch.end_time}) will be deleted.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Yes, delete it',
-      cancelButtonText: 'Cancel',
+  // Update Morning or Evening Time
+  const handleUpdateTime = (dayKey, shiftType, timeField, value) => {
+    setWeeklyPlan((prev) => {
+      const currentDay = prev[dayKey];
+      const currentShift = currentDay[shiftType];
+      const updatedShift = { ...currentShift, [timeField]: value };
+
+      // Auto compute slots if timing changes
+      const mSlots = shiftType === 'morning'
+        ? calculateMaxSlots(updatedShift.start_time, updatedShift.end_time, currentDay.slot_duration)
+        : calculateMaxSlots(currentDay.morning.start_time, currentDay.morning.end_time, currentDay.slot_duration);
+
+      const eSlots = shiftType === 'evening'
+        ? calculateMaxSlots(updatedShift.start_time, updatedShift.end_time, currentDay.slot_duration)
+        : calculateMaxSlots(currentDay.evening.start_time, currentDay.evening.end_time, currentDay.slot_duration);
+
+      const totalSlots = (currentDay.morning.enabled && mSlots ? mSlots : 0) + (currentDay.evening.enabled && eSlots ? eSlots : 0);
+
+      return {
+        ...prev,
+        [dayKey]: {
+          ...currentDay,
+          maximum_booking: totalSlots > 0 ? String(totalSlots) : currentDay.maximum_booking,
+          [shiftType]: updatedShift,
+        },
+      };
+    });
+  };
+
+  // Clear/Disable a day's schedule (sets is_available = false, tracks IDs for delete)
+  const handleClearDay = (dayKey) => {
+    setWeeklyPlan((prev) => {
+      const currentDay = prev[dayKey];
+      const idsToDelete = [];
+      if (currentDay.morning.id) idsToDelete.push(currentDay.morning.id);
+      if (currentDay.evening.id) idsToDelete.push(currentDay.evening.id);
+
+      if (idsToDelete.length > 0) {
+        setDeletedScheduleIds((prevIds) => [...new Set([...prevIds, ...idsToDelete])]);
+      }
+
+      return {
+        ...prev,
+        [dayKey]: {
+          ...currentDay,
+          is_available: false,
+          morning: { ...currentDay.morning, enabled: false },
+          evening: { ...currentDay.evening, enabled: false },
+        },
+      };
+    });
+  };
+
+  // Quick Action: Copy Monday to Weekdays (Mon -> Tue-Fri)
+  const handleCopyMonToWeekdays = () => {
+    const mon = weeklyPlan['monday'];
+    if (!mon) return;
+
+    setWeeklyPlan((prev) => {
+      const updated = { ...prev };
+      ['tuesday', 'wednesday', 'thursday', 'friday'].forEach((dayKey) => {
+        updated[dayKey] = {
+          ...mon,
+          morning: { ...mon.morning, id: prev[dayKey]?.morning?.id || null },
+          evening: { ...mon.evening, id: prev[dayKey]?.evening?.id || null },
+        };
+      });
+      return updated;
     });
 
-    if (!result.isConfirmed) return;
-
-    try {
-      const res = await deleteDoctorSchedule(sch.id);
-      if (res?.success) {
-        showSuccess(res.message || 'Schedule deleted successfully');
-        loadData(activeFilters);
-      }
-    } catch (error) {
-      showError(error, 'Failed to delete schedule');
-    }
+    showSuccess('Copied Monday schedule to Tue, Wed, Thu & Fri!');
   };
 
-  // Comprehensive Frontend Validation
-  const validateForm = () => {
-    const newErrors = {};
+  // Quick Action: Copy Monday to All Days (Mon -> Tue-Sun)
+  const handleCopyMonToAllDays = () => {
+    const mon = weeklyPlan['monday'];
+    if (!mon) return;
 
-    // 1. Clinic
-    if (!form.clinic_id) {
-      newErrors.clinic_id = 'Clinic selection is required';
-    } else {
-      const clinicExists = clinics.some((c) => String(c.id) === String(form.clinic_id));
-      if (!clinicExists) {
-        newErrors.clinic_id = 'Selected clinic does not exist or belong to doctor';
-      }
-    }
-
-    // 2. Day
-    const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    if (!form.day_of_week || !validDays.includes(String(form.day_of_week).toLowerCase())) {
-      newErrors.day_of_week = 'Please select a valid day of the week';
-    }
-
-    // 3. Shift / Session
-    if (!form.shift_type) {
-      newErrors.shift_type = 'Please select a slot shift / session';
-    }
-
-    // 4 & 5. Start Time & End Time
-    const startMins = timeToMinutes(form.start_time);
-    const endMins = timeToMinutes(form.end_time);
-
-    if (startMins === null) {
-      newErrors.start_time = 'Please select a valid start time';
-    }
-    if (endMins === null) {
-      newErrors.end_time = 'Please select a valid end time';
-    }
-    if (startMins !== null && endMins !== null) {
-      if (startMins === endMins) {
-        newErrors.end_time = 'Start Time and End Time cannot be the same';
-      } else if (startMins > endMins) {
-        newErrors.start_time = 'Start Time must be earlier than End Time';
-        newErrors.end_time = 'End Time must be greater than Start Time';
-      }
-    }
-
-    // 6. Slot Duration
-    const duration = Number(form.slot_duration);
-    if (!form.slot_duration || isNaN(duration) || duration <= 0 || !Number.isInteger(duration)) {
-      newErrors.slot_duration = 'Slot Duration must be a positive integer';
-    } else if (startMins !== null && endMins !== null && startMins < endMins) {
-      const totalWorkingMinutes = endMins - startMins;
-      if (totalWorkingMinutes % duration !== 0) {
-        newErrors.slot_duration = `Slot duration (${duration} mins) does not divide working time (${totalWorkingMinutes} mins) evenly`;
-      }
-    }
-
-    // 7. Maximum Booking with Upper Limit Auto-Check
-    const maxBooking = Number(form.maximum_booking);
-    const maxPossibleSlots = calculateMaxSlots(form.start_time, form.end_time, form.slot_duration);
-
-    if (
-      form.maximum_booking === '' ||
-      form.maximum_booking === null ||
-      form.maximum_booking === undefined ||
-      isNaN(maxBooking) ||
-      !Number.isInteger(maxBooking) ||
-      maxBooking <= 0
-    ) {
-      newErrors.maximum_booking = 'Maximum Booking must be a positive integer greater than 0';
-    } else if (maxPossibleSlots !== null && maxBooking > maxPossibleSlots) {
-      newErrors.maximum_booking = `Maximum Booking (${maxBooking}) cannot exceed total available slots (${maxPossibleSlots} slots between ${form.start_time} and ${form.end_time})`;
-    }
-
-    // 8. Available Status: DO NOT add any validation for Available Status.
-
-    // 9 & 10. Overlapping / Duplicate check
-    if (form.clinic_id && form.day_of_week && startMins !== null && endMins !== null && startMins < endMins) {
-      const overlap = schedules.find((sch) => {
-        if (editingId && String(sch.id) === String(editingId)) return false;
-        if (String(sch.clinic_id) !== String(form.clinic_id)) return false;
-        if (String(sch.day_of_week).toLowerCase() !== String(form.day_of_week).toLowerCase()) return false;
-
-        const existStart = timeToMinutes(sch.start_time);
-        const existEnd = timeToMinutes(sch.end_time);
-
-        if (existStart === null || existEnd === null || existStart >= existEnd) return false;
-
-        return startMins < existEnd && endMins > existStart;
+    setWeeklyPlan((prev) => {
+      const updated = { ...prev };
+      ['tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach((dayKey) => {
+        updated[dayKey] = {
+          ...mon,
+          morning: { ...mon.morning, id: prev[dayKey]?.morning?.id || null },
+          evening: { ...mon.evening, id: prev[dayKey]?.evening?.id || null },
+        };
       });
+      return updated;
+    });
 
-      if (overlap) {
-        const dayLabel = DAYS_OF_WEEK.find((d) => d.key === form.day_of_week)?.label || form.day_of_week;
-        const overlapMsg = `Slot timing (${form.start_time} - ${form.end_time}) clashes with existing schedule (${overlap.start_time} - ${overlap.end_time}) on ${dayLabel}. Please choose a different time!`;
-        newErrors.start_time = overlapMsg;
-        newErrors.end_time = overlapMsg;
-      }
-    }
-
-    setErrors(newErrors);
-    return { valid: Object.keys(newErrors).length === 0, newErrors };
+    showSuccess('Copied Monday schedule to all days (Tue-Sun)!');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const { valid, newErrors } = validateForm();
-    if (!valid) {
-      const firstErrorMessage =
-        newErrors.start_time ||
-        newErrors.end_time ||
-        newErrors.clinic_id ||
-        newErrors.day_of_week ||
-        newErrors.shift_type ||
-        newErrors.slot_duration ||
-        newErrors.maximum_booking ||
-        'Please fix the validation errors before submitting';
-
-      showError(null, firstErrorMessage);
+  // Save Weekly Schedule
+  const handleSaveAllSchedules = async () => {
+    if (!selectedClinicId) {
+      showError(null, 'Please select a valid clinic before saving');
       return;
     }
 
     try {
       setSaving(true);
-      const payload = {
-        clinic_id: parseInt(form.clinic_id, 10),
-        day_of_week: form.day_of_week,
-        shift_type: form.shift_type,
-        start_time: form.start_time,
-        end_time: form.end_time,
-        slot_duration: parseInt(form.slot_duration, 10),
-        maximum_booking: parseInt(form.maximum_booking, 10),
-        is_available: Boolean(form.is_available),
-      };
+      const clinicIdNum = parseInt(selectedClinicId, 10);
+      const savePromises = [];
 
-      if (editingId) {
-        const res = await updateDoctorSchedule(editingId, payload);
-        showSuccess(res?.message || 'Schedule updated successfully');
-      } else {
-        const res = await createDoctorSchedule(payload);
-        showSuccess(res?.message || 'Schedule added successfully');
+      // A. Process deleted schedule IDs tracked from unticking checkboxes
+      deletedScheduleIds.forEach((id) => {
+        savePromises.push(deleteDoctorSchedule(id));
+      });
+
+      // B. Process current weekly plan state
+      DAYS_OF_WEEK.forEach((d) => {
+        const dayPlan = weeklyPlan[d.key];
+        if (!dayPlan) return;
+
+        const buildPayload = (shiftType, shiftData) => ({
+          clinic_id: clinicIdNum,
+          day_of_week: d.key,
+          shift_type: shiftType,
+          start_time: shiftData.start_time,
+          end_time: shiftData.end_time,
+          slot_duration: parseInt(dayPlan.slot_duration, 10),
+          maximum_booking:
+            calculateMaxSlots(shiftData.start_time, shiftData.end_time, dayPlan.slot_duration) || 16,
+          is_available: true,
+        });
+
+        if (dayPlan.is_available) {
+          // ── Morning Shift ──
+          if (dayPlan.morning.enabled && dayPlan.morning.start_time && dayPlan.morning.end_time) {
+            const payload = buildPayload('morning', dayPlan.morning);
+            if (dayPlan.morning.id) {
+              savePromises.push(updateDoctorSchedule(dayPlan.morning.id, payload));
+            } else {
+              savePromises.push(createDoctorSchedule(payload));
+            }
+          } else if (dayPlan.morning.id) {
+            savePromises.push(deleteDoctorSchedule(dayPlan.morning.id));
+          }
+
+          // ── Evening Shift ──
+          if (dayPlan.evening.enabled && dayPlan.evening.start_time && dayPlan.evening.end_time) {
+            const payload = buildPayload('evening', dayPlan.evening);
+            if (dayPlan.evening.id) {
+              savePromises.push(updateDoctorSchedule(dayPlan.evening.id, payload));
+            } else {
+              savePromises.push(createDoctorSchedule(payload));
+            }
+          } else if (dayPlan.evening.id) {
+            savePromises.push(deleteDoctorSchedule(dayPlan.evening.id));
+          }
+
+        } else {
+          // ── Day is OFF → DELETE both shift records if they exist ──
+          if (dayPlan.morning.id) {
+            savePromises.push(deleteDoctorSchedule(dayPlan.morning.id));
+          }
+          if (dayPlan.evening.id) {
+            savePromises.push(deleteDoctorSchedule(dayPlan.evening.id));
+          }
+        }
+      });
+
+      if (savePromises.length === 0) {
+        showSuccess('Weekly Schedule saved successfully!');
+        setDeletedScheduleIds([]);
+        await loadData();
+        return;
       }
 
-      resetForm();
-      loadData(activeFilters);
+      const results = await Promise.allSettled(savePromises);
+      const successful = results.filter((r) => r.status === 'fulfilled');
+      const failed = results.filter((r) => r.status === 'rejected');
+
+      if (successful.length > 0) {
+        showSuccess(`Weekly Schedule saved successfully! (${successful.length} shift(s) updated)`);
+      }
+      if (failed.length > 0) {
+        const firstErr =
+          failed[0]?.reason?.response?.data?.message ||
+          failed[0]?.reason?.message ||
+          'Some shift slots failed to save';
+        showError(null, `Save notice: ${firstErr}`);
+      }
+
+      setDeletedScheduleIds([]);
+      await loadData();
     } catch (error) {
-      const errorMsg = error?.response?.data?.message || error?.message || 'Failed to save schedule';
-      showError(null, errorMsg);
+      console.error('Error saving weekly schedule:', error);
+      showError(error, 'Failed to save weekly schedule');
     } finally {
       setSaving(false);
     }
   };
 
-  const filteredSchedules = schedules.filter((sch) => {
-    const dayMatch = !activeFilters.day ? true : sch.day_of_week === activeFilters.day;
-    const clinicName = (sch.clinic?.name || '').toLowerCase();
-    const searchMatch = !activeFilters.search
-      ? true
-      : clinicName.includes(activeFilters.search.toLowerCase()) ||
-        sch.day_of_week.includes(activeFilters.search.toLowerCase());
-
-    return dayMatch && searchMatch;
-  });
-
-  // Pagination Math
-  const totalCount = filteredSchedules.length;
-  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedSchedules = filteredSchedules.slice(startIndex, startIndex + itemsPerPage);
-
-  const currentComputedMax = calculateMaxSlots(form.start_time, form.end_time, form.slot_duration);
-
   return (
-    <div className="doc-schedule">
-      {/* Header */}
+    <div className="doc-schedule-container">
+      {/* Top Header */}
       <div className="admin-header">
         <div>
-          <h1 className="admin-title">Schedule & Slots</h1>
-          <p className="admin-subtitle">Set your clinic consultation timing, slot duration, and booking limits</p>
+          <h1 className="admin-title">Weekly Schedule Planner</h1>
+          <p className="admin-subtitle">
+            Manage your clinic availability, morning & evening session timings, slot duration, and max booking limit for all 7 days
+          </p>
         </div>
+      </div>
+
+      {/* Toolbar Controls */}
+      <div className="doc-planner-toolbar">
+        <div className="doc-toolbar-left">
+          <div className="doc-clinic-select-group">
+            <label className="doc-clinic-select-label"> Select Clinic:</label>
+            <select
+              className="doc-clinic-select"
+              value={selectedClinicId}
+              onChange={handleClinicChange}
+            >
+              <option value="">-- Select Clinic --</option>
+              {clinics.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="doc-toolbar-actions">
+            <button
+              type="button"
+              className="doc-toolbar-btn"
+              onClick={handleCopyMonToWeekdays}
+              title="Copy Monday timings to Tue, Wed, Thu & Fri"
+            >
+              Copy Mon → Weekdays
+            </button>
+            <button
+              type="button"
+              className="doc-toolbar-btn"
+              onClick={handleCopyMonToAllDays}
+              title="Copy Monday timings to all other 6 days"
+            >
+              Copy Mon → All Days
+            </button>
+          </div>
+        </div>
+
         <button
           type="button"
-          className="admin-add-btn"
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
+          className="doc-save-all-btn"
+          onClick={handleSaveAllSchedules}
+          disabled={saving || loading}
         >
-          + Add Schedule Slot
+          {saving ? 'Saving Changes...' : ' Save Weekly Schedule'}
         </button>
       </div>
 
-      {/* Filter Bar */}
-      <div className="admin-filter-bar">
-        <input
-          type="text"
-          className="admin-search-input"
-          placeholder="Search by clinic or day..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
-        />
-        <select
-          className="admin-filter-select"
-          value={dayFilter}
-          onChange={(e) => setDayFilter(e.target.value)}
-        >
-          <option value="">All Days</option>
-          {DAYS_OF_WEEK.map((d) => (
-            <option key={d.key} value={d.key}>
-              {d.label}
-            </option>
-          ))}
-        </select>
-        <select
-          className="admin-filter-select"
-          value={itemsPerPage}
-          onChange={(e) => {
-            setItemsPerPage(Number(e.target.value));
-            setCurrentPage(1);
-          }}
-        >
-          <option value="10">10 per page</option>
-          <option value="25">25 per page</option>
-          <option value="50">50 per page</option>
-          <option value="100">100 per page</option>
-        </select>
-        <button type="button" className="admin-btn-apply" onClick={handleApplyFilter}>
-          Apply Filter
-        </button>
-        <button type="button" className="admin-btn-reset" onClick={handleResetFilter}>
-          Reset
-        </button>
-      </div>
+      {/* 7 Days Table View */}
+      {loading ? (
+        <div className="admin-table-card" style={{ padding: '40px', textAlign: 'center' }}>
+          <p className="admin-empty-state">Loading Weekly Schedule Data...</p>
+        </div>
+      ) : (
+        <div className="doc-table-card">
+          <table className="doc-schedule-table">
+            <thead>
+              <tr>
+                <th className="doc-th-center" style={{ width: '100px' }}>Clinic On/Off</th>
+                <th style={{ width: '120px' }}>Days</th>
+                <th>Morning Shift (Start - End)</th>
+                <th>Evening Shift (Start - End)</th>
+                <th style={{ width: '130px' }}>Slot Duration</th>
+                <th style={{ width: '140px' }}>Max Patients</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DAYS_OF_WEEK.map((d) => {
+                const dayPlan = weeklyPlan[d.key] || {
+                  is_available: false,
+                  slot_duration: '15',
+                  maximum_booking: '16',
+                  morning: { enabled: false, id: null, start_time: null, end_time: null },
+                  evening: { enabled: false, id: null, start_time: null, end_time: null },
+                };
 
-      {/* Add / Edit Modal */}
-      {showForm && (
-        <div className="admin-modal-backdrop" onClick={resetForm}>
-          <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <h3 className="admin-modal-title">
-                {editingId ? 'Edit Schedule Slot' : 'Add New Schedule Slot'}
-              </h3>
-              <button type="button" className="admin-modal-close" onClick={resetForm}>
-                ✕
-              </button>
-            </div>
+                const isOff = !dayPlan.is_available;
 
-            <form onSubmit={handleSubmit} noValidate>
-              <div className="admin-form-grid">
-                {/* 1. Clinic Dropdown */}
-                <div>
-                  <label className="admin-form-label">
-                    Clinic *
-                  </label>
-                  <select
-                    className="admin-select"
-                    value={form.clinic_id}
-                    onChange={(e) => {
-                      setForm({ ...form, clinic_id: e.target.value });
-                      setErrors((prev) => ({ ...prev, clinic_id: undefined }));
-                    }}
-                  >
-                    <option value="">Select Clinic</option>
-                    {clinics.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.clinic_id && (
-                    <span style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
-                      {errors.clinic_id}
-                    </span>
-                  )}
-                </div>
+                const mSlots = dayPlan.morning.enabled
+                  ? calculateMaxSlots(dayPlan.morning.start_time, dayPlan.morning.end_time, dayPlan.slot_duration)
+                  : null;
 
-                {/* 2. Day Dropdown */}
-                <div>
-                  <label className="admin-form-label">
-                    Day *
-                  </label>
-                  <select
-                    className="admin-select"
-                    value={form.day_of_week}
-                    onChange={(e) => {
-                      setForm({ ...form, day_of_week: e.target.value });
-                      setErrors((prev) => ({ ...prev, day_of_week: undefined }));
-                    }}
-                  >
-                    {DAYS_OF_WEEK.map((d) => (
-                      <option key={d.key} value={d.key}>
-                        {d.label}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.day_of_week && (
-                    <span style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
-                      {errors.day_of_week}
-                    </span>
-                  )}
-                </div>
+                const eSlots = dayPlan.evening.enabled
+                  ? calculateMaxSlots(dayPlan.evening.start_time, dayPlan.evening.end_time, dayPlan.slot_duration)
+                  : null;
 
-                {/* 3. Shift / Session Dropdown */}
-                <div>
-                  <label className="admin-form-label">
-                    Shift / Session *
-                  </label>
-                  <select
-                    className="admin-select"
-                    value={form.shift_type}
-                    onChange={(e) => {
-                      setForm({ ...form, shift_type: e.target.value });
-                      setErrors((prev) => ({ ...prev, shift_type: undefined }));
-                    }}
-                  >
-                    <option value="morning">☀️ Morning</option>
-                    <option value="evening">🌙 Evening</option>
-                    <option value="afternoon">🌤️ Afternoon</option>
-                  </select>
-                  {errors.shift_type && (
-                    <span style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
-                      {errors.shift_type}
-                    </span>
-                  )}
-                </div>
+                const calculatedTotalSlots = (mSlots || 0) + (eSlots || 0);
 
-                {/* 4. Start Time */}
-                <div>
-                  <label className="admin-form-label">
-                    Start Time *
-                  </label>
-                  <input
-                    type="time"
-                    className="admin-input"
-                    value={form.start_time}
-                    onChange={(e) => handleTimeOrDurationChange('start_time', e.target.value)}
-                  />
-                  {errors.start_time && (
-                    <span style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
-                      {errors.start_time}
-                    </span>
-                  )}
-                </div>
+                return (
+                  <tr key={d.key} className={`doc-schedule-tr ${isOff ? 'row-off' : ''}`}>
+                    {/* 1. Clinic Off / On Checkbox */}
+                    <td className="doc-td-center">
+                      <label className="doc-checkbox-wrapper">
+                        <input
+                          type="checkbox"
+                          className="doc-checkbox-input"
+                          checked={dayPlan.is_available}
+                          onChange={() => handleToggleDayAvailable(d.key)}
+                        />
+                        <span className={`doc-status-tag ${dayPlan.is_available ? 'tag-on' : 'tag-off'}`}>
+                          {dayPlan.is_available ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </td>
 
-                {/* 5. End Time */}
-                <div>
-                  <label className="admin-form-label">
-                    End Time *
-                  </label>
-                  <input
-                    type="time"
-                    className="admin-input"
-                    value={form.end_time}
-                    onChange={(e) => handleTimeOrDurationChange('end_time', e.target.value)}
-                  />
-                  {errors.end_time && (
-                    <span style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
-                      {errors.end_time}
-                    </span>
-                  )}
-                </div>
+                    {/* 2. Days */}
+                    <td>
+                      <div className="doc-day-cell">
+                        <span className="doc-day-icon">{d.icon}</span>
+                        <span className="doc-day-label">{d.label}</span>
+                      </div>
+                    </td>
 
-                {/* 6. Slot Duration Dropdown */}
-                <div>
-                  <label className="admin-form-label">
-                    Slot Duration *
-                  </label>
-                  <select
-                    className="admin-select"
-                    value={form.slot_duration}
-                    onChange={(e) => handleTimeOrDurationChange('slot_duration', e.target.value)}
-                  >
-                    {SLOT_DURATIONS.map((dur) => (
-                      <option key={dur} value={dur}>
-                        {dur} Minutes
-                      </option>
-                    ))}
-                  </select>
-                  {errors.slot_duration && (
-                    <span style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
-                      {errors.slot_duration}
-                    </span>
-                  )}
-                </div>
+                    {/* 3. Morning Shift */}
+                    <td>
+                      <div className="doc-shift-cell-group">
+                        <label className="doc-shift-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={dayPlan.morning.enabled}
+                            disabled={isOff}
+                            onChange={() => handleToggleShift(d.key, 'morning')}
+                          />
+                          <span>Morning</span>
+                        </label>
+                        {dayPlan.morning.enabled && !isOff && (
+                          <div className="doc-time-inputs-pair">
+                            <input
+                              type="time"
+                              className="doc-table-time-input"
+                              value={dayPlan.morning.start_time ?? ''}
+                              onChange={(e) => handleUpdateTime(d.key, 'morning', 'start_time', e.target.value)}
+                            />
+                            <span className="doc-time-separator">to</span>
+                            <input
+                              type="time"
+                              className="doc-table-time-input"
+                              value={dayPlan.morning.end_time ?? ''}
+                              onChange={(e) => handleUpdateTime(d.key, 'morning', 'end_time', e.target.value)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </td>
 
-                {/* 7. Maximum Booking (Auto-Calculated & Validated Upper Limit) */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label className="admin-form-label">
-                      Maximum Booking *
-                    </label>
-                    {currentComputedMax !== null && (
-                      <span style={{ fontSize: '0.75rem', color: '#0d9488', fontWeight: '600' }}>
-                        Auto-slots: {currentComputedMax}
-                      </span>
-                    )}
-                  </div>
-                  <input
-                    type="number"
-                    min="1"
-                    className="admin-input"
-                    value={form.maximum_booking}
-                    onChange={(e) => {
-                      setForm({ ...form, maximum_booking: e.target.value });
-                      setErrors((prev) => ({ ...prev, maximum_booking: undefined }));
-                    }}
-                    placeholder="e.g. 20"
-                  />
-                  {errors.maximum_booking && (
-                    <span style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
-                      {errors.maximum_booking}
-                    </span>
-                  )}
-                </div>
+                    {/* 4. Evening Shift */}
+                    <td>
+                      <div className="doc-shift-cell-group">
+                        <label className="doc-shift-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={dayPlan.evening.enabled}
+                            disabled={isOff}
+                            onChange={() => handleToggleShift(d.key, 'evening')}
+                          />
+                          <span>Evening</span>
+                        </label>
+                        {dayPlan.evening.enabled && !isOff && (
+                          <div className="doc-time-inputs-pair">
+                            <input
+                              type="time"
+                              className="doc-table-time-input"
+                              value={dayPlan.evening.start_time ?? ''}
+                              onChange={(e) => handleUpdateTime(d.key, 'evening', 'start_time', e.target.value)}
+                            />
+                            <span className="doc-time-separator">to</span>
+                            <input
+                              type="time"
+                              className="doc-table-time-input"
+                              value={dayPlan.evening.end_time ?? ''}
+                              onChange={(e) => handleUpdateTime(d.key, 'evening', 'end_time', e.target.value)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </td>
 
-                {/* 8. Available Status */}
-                <div>
-                  <label className="admin-form-label">
-                    Available Status *
-                  </label>
-                  <select
-                    className="admin-select"
-                    value={form.is_available ? 'true' : 'false'}
-                    onChange={(e) => setForm({ ...form, is_available: e.target.value === 'true' })}
-                  >
-                    <option value="true">Active (Available)</option>
-                    <option value="false">Inactive (Unavailable)</option>
-                  </select>
-                </div>
-              </div>
+                    {/* 5. Slot Duration */}
+                    <td>
+                      <select
+                        className="doc-table-select"
+                        value={dayPlan.slot_duration}
+                        disabled={isOff}
+                        onChange={(e) => handleUpdateDayField(d.key, 'slot_duration', e.target.value)}
+                      >
+                        {SLOT_DURATIONS.map((dur) => (
+                          <option key={dur} value={dur}>
+                            {dur} Mins
+                          </option>
+                        ))}
+                      </select>
+                    </td>
 
-              {/* Form Actions */}
-              <div className="admin-form-actions">
-                <button
-                  type="button"
-                  className="admin-cancel-btn"
-                  onClick={resetForm}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Saving...' : editingId ? 'Update Schedule' : 'Save Schedule'}
-                </button>
-              </div>
-            </form>
-          </div>
+                    {/* 6. Max Patients / Slots */}
+                    <td>
+                      <div className="doc-max-patients-cell">
+                        <input
+                          type="number"
+                          min="1"
+                          className="doc-table-number-input"
+                          value={calculatedTotalSlots > 0 ? calculatedTotalSlots : dayPlan.maximum_booking}
+                          readOnly
+                          disabled={isOff}
+                          title="Max Patients automatically matches total calculated slots"
+                        />
+                        <span className="doc-slots-badge">
+                          Slots: {calculatedTotalSlots > 0 ? calculatedTotalSlots : dayPlan.maximum_booking}
+                        </span>
+                      </div>
+                    </td>
+
+
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
-
-      {/* Schedule List Table */}
-      <div className="admin-table-card">
-        {loading ? (
-          <div className="admin-table-wrap">
-            <p className="admin-empty-state">Loading Schedules...</p>
-          </div>
-        ) : filteredSchedules.length === 0 ? (
-          <div className="admin-table-wrap">
-            <p className="admin-empty-state">No schedule slots created yet.</p>
-          </div>
-        ) : (
-          <div>
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Clinic</th>
-                    <th>Day</th>
-                    <th>Timing & Shift</th>
-                    <th>Slot Duration</th>
-                    <th>Max Booking</th>
-                    <th>Status</th>
-                    <th className="admin-text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedSchedules.map((sch) => {
-                    const dayObj = DAYS_OF_WEEK.find((d) => d.key === sch.day_of_week);
-                    const dayLabel = dayObj ? dayObj.label : sch.day_of_week;
-                    const clinicName = sch.clinic?.name || 'Medi Growth Clinic';
-                    const shiftType = sch.shift_type || 'morning';
-
-                    return (
-                      <tr key={sch.id}>
-                        <td className="admin-font-bold">{clinicName}</td>
-                        <td className="admin-visit-type">{dayLabel}</td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span>{sch.start_time} - {sch.end_time}</span>
-                            <span
-                              style={{
-                                fontSize: '0.72rem',
-                                fontWeight: '600',
-                                color: (shiftType === 'evening' ? '#4f46e5' : shiftType === 'afternoon' ? '#0284c7' : '#d97706'),
-                                backgroundColor: (shiftType === 'evening' ? '#e0e7ff' : shiftType === 'afternoon' ? '#e0f2fe' : '#fef3c7'),
-                                padding: '2px 8px',
-                                borderRadius: '10px',
-                                textTransform: 'capitalize',
-                              }}
-                            >
-                              {shiftType === 'evening' ? '🌙 Evening' : shiftType === 'afternoon' ? '🌤️ Afternoon' : '☀️ Morning'}
-                            </span>
-                          </div>
-                        </td>
-                        <td>{sch.slot_duration || 15} Mins</td>
-                        <td>{sch.maximum_booking || '-'} Patients</td>
-                        <td>
-                          <span className={`admin-badge ${sch.is_available ? 'active' : 'inactive'}`}>
-                            {sch.is_available ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="admin-text-right">
-                          <div className="admin-table-actions-cell">
-                            <button
-                              type="button"
-                              className="admin-action-btn-edit"
-                              onClick={() => handleEdit(sch)}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="admin-action-btn-delete"
-                              onClick={() => handleDelete(sch)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 0 && (
-              <div className="admin-pagination">
-                <span className="admin-pagination-info">
-                  Showing page {currentPage} of {totalPages} ({totalCount} total schedule slots)
-                </span>
-                <div className="admin-pagination-actions">
-                  <button
-                    type="button"
-                    className="admin-btn-reset"
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentPage <= 1}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    className="admin-btn-apply"
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage >= totalPages}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

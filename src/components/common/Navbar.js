@@ -53,7 +53,7 @@ export default function Navbar() {
     <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-3 z-3" style={{ fontFamily: "'Inter', sans-serif" }}>
       <div className="container">
 
-        {/* Logo (eClinicPro style) */}
+        {/* Logo*/}
         <Link
           href="/"
           className="navbar-brand d-flex align-items-center gap-2 fw-bold navbar-brand-custom text-decoration-none"
@@ -154,7 +154,7 @@ export default function Navbar() {
                 </Link>
 
                 <Link
-                  href="/doctor-panel"
+                  href="/doctor-panel/dashboard"
                   className="btn text-white rounded-pill px-3 py-2 fw-semibold"
                   style={{ background: '#00a676', borderColor: '#00a676', fontSize: 14 }}
                 >

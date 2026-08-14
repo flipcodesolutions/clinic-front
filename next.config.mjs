@@ -20,6 +20,21 @@ const nextConfig = {
         destination: '/specialties',
         permanent: true,
       },
+      {
+        source: '/doctor-panel',
+        destination: '/doctor-panel/dashboard',
+        permanent: false,
+      },
+      {
+        source: '/clinic-panel',
+        destination: '/clinic-panel/dashboard',
+        permanent: false,
+      },
+      {
+        source: '/super-admin-panel',
+        destination: '/super-admin-panel/dashboard',
+        permanent: false,
+      },
     ];
   },
 };

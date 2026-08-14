@@ -457,7 +457,7 @@ export default function DoctorExperiences() {
               <div className="admin-pagination">
                 <span className="admin-pagination-info">
                   Showing page {currentPage} of {totalPages} ({totalCount} total experiences)
-                </span>
+                </span>npm run dev 
                 <div className="admin-pagination-actions">
                   <button
                     type="button"

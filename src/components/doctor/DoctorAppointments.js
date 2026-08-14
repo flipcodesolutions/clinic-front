@@ -98,12 +98,21 @@ export default function DoctorAppointments() {
     fetchData();
 
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (!e.target.closest('.admin-dots-dropdown-wrap')) {
         setOpenDropdownId(null);
       }
     };
+
+    const handleScroll = () => {
+      setOpenDropdownId(null);
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
   }, [fetchData]);
 
   const handleApplyFilter = () => {
@@ -159,8 +168,8 @@ export default function DoctorAppointments() {
   const handleOpenCompleteModal = (appt) => {
     setCompleteModalAppt(appt);
     setOpenDropdownId(null);
-    const existingVital = appt.vital || {};
-    const existingRecord = appt.medicalRecord || {};
+    const existingVital = apt.vital || {};
+    const existingRecord = apt.medicalRecord || {};
 
     setVitalsForm({
       height_cm: existingVital.height_cm ? String(existingVital.height_cm) : '',
@@ -183,6 +192,8 @@ export default function DoctorAppointments() {
     try {
       setSaving(true);
       const payload = {
+        patient_id: completeModalAppt.patient_id || completeModalAppt.patient?.id,
+        chief_complaint: recordForm.symptoms,
         vitals: {
           height_cm: vitalsForm.height_cm ? parseFloat(vitalsForm.height_cm) : null,
           weight_kg: vitalsForm.weight_kg ? parseFloat(vitalsForm.weight_kg) : null,
@@ -192,6 +203,7 @@ export default function DoctorAppointments() {
         },
         medicalRecord: {
           symptoms: recordForm.symptoms,
+          chief_complaint: recordForm.symptoms,
           diagnosis: recordForm.diagnosis,
           notes: recordForm.notes,
         },
@@ -384,14 +396,14 @@ export default function DoctorAppointments() {
                                     setOpenDropdownId(null);
                                   }}
                                 >
-                                  👁️ View Details
+                                   View Details
                                 </button>
                                 <button
                                   type="button"
                                   className="admin-dots-item"
                                   onClick={() => handleOpenStatusModal(apt)}
                                 >
-                                  🔄 Update Status
+                                   Update Status
                                 </button>
                                 {apt.status !== 'completed' && (
                                   <button
@@ -399,7 +411,7 @@ export default function DoctorAppointments() {
                                     className="admin-dots-item"
                                     onClick={() => handleOpenCompleteModal(apt)}
                                   >
-                                    🩺 Log Consultation
+                                     Log Consultation
                                   </button>
                                 )}
                               </div>

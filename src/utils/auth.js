@@ -1,9 +1,9 @@
 // Where each role should go after login
 export const ROLE_REDIRECT = {
   super_admin: '/super-admin-panel/dashboard',
-  clinic: '/clinic-panel',
-  clinic_admin: '/clinic-panel',
-  doctor: '/doctor-panel',
+  clinic: '/clinic-panel/dashboard',
+  clinic_admin: '/clinic-panel/dashboard',
+  doctor: '/doctor-panel/dashboard',
 };
 
 /**
