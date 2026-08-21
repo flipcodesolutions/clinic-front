@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   getDoctorAppointments,
   updateAppointmentStatus,
+  bulkUpdateAppointmentStatus,
   createConsultationRecord,
   getDoctorSchedules,
 } from '@/services/doctor/appointmentService';
@@ -30,21 +31,24 @@ export default function DoctorAppointments() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Filters
+  // Filters — 'booked' is now the actual DB value
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('booked');
   const [visitTypeFilter, setVisitTypeFilter] = useState('');
-  const [activeFilters, setActiveFilters] = useState({ search: '', status: '', visitType: '' });
+  const [activeFilters, setActiveFilters] = useState({ search: '', status: 'booked', visitType: '' });
 
-  // Pagination & Page Size Limit (City Master Style)
+  // Bulk Checkbox Selection State
+  const [selectedApptIds, setSelectedApptIds] = useState([]);
+
+  // Pagination & Page Size Limit 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Three Dots Dropdown Menu State
+  // Three Dots Dropdown Menu State (kept for safety/fallback)
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const dropdownRef = useRef(null);
 
-  // View Details Modal (SS1)
+  // View Details Modal 
   const [selectedAppt, setSelectedAppt] = useState(null);
 
   // Update Status Modal
@@ -67,13 +71,13 @@ export default function DoctorAppointments() {
     notes: '',
   });
 
-  const fetchData = useCallback(async (filters = activeFilters) => {
+  const fetchData = useCallback(async (filters) => {
     try {
       setLoading(true);
       const params = {};
-      if (filters.search) params.search = filters.search;
-      if (filters.status) params.status = filters.status;
-      if (filters.visitType) params.visit_type = filters.visitType;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.status) params.status = filters.status;
+      if (filters?.visitType) params.visit_type = filters.visitType;
 
       const [apptRes, schedRes] = await Promise.all([
         getDoctorAppointments(params),
@@ -92,10 +96,11 @@ export default function DoctorAppointments() {
     } finally {
       setLoading(false);
     }
-  }, [activeFilters]);
+  }, []);
 
   useEffect(() => {
-    fetchData();
+    // Initial load with default booked filter
+    fetchData({ search: '', status: 'booked', visitType: '' });
 
     const handleClickOutside = (e) => {
       if (!e.target.closest('.admin-dots-dropdown-wrap')) {
@@ -113,30 +118,67 @@ export default function DoctorAppointments() {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleApplyFilter = () => {
     const filters = { search: search.trim(), status: statusFilter, visitType: visitTypeFilter };
-    setActiveFilters(filters);
+    setActiveFilters(filters);   // client-side filter sync ke liye
     setCurrentPage(1);
-    fetchData(filters);
+    setSelectedApptIds([]);
+    fetchData(filters);         
   };
 
   const handleResetFilter = () => {
     setSearch('');
-    setStatusFilter('');
+    setStatusFilter('booked');
     setVisitTypeFilter('');
     setItemsPerPage(10);
-    const filters = { search: '', status: '', visitType: '' };
+    const filters = { search: '', status: 'booked', visitType: '' };
     setActiveFilters(filters);
     setCurrentPage(1);
+    setSelectedApptIds([]);
     fetchData(filters);
   };
 
-  // Status Modal Action
+  // Bulk Selection Handlers
+  const handleToggleSelect = (id) => {
+    setSelectedApptIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (e, visibleItems) => {
+    if (e.target.checked) {
+      const allIds = visibleItems.map((apt) => apt.id);
+      setSelectedApptIds(allIds);
+    } else {
+      setSelectedApptIds([]);
+    }
+  };
+
+  const handleBulkStatusUpdate = async (targetStatus) => {
+    if (selectedApptIds.length === 0) return;
+    try {
+      setSaving(true);
+      const res = await bulkUpdateAppointmentStatus(selectedApptIds, targetStatus);
+      if (res?.success) {
+        showSuccess(res.message || `Successfully updated ${selectedApptIds.length} appointment(s) to ${targetStatus}`);
+        setSelectedApptIds([]);
+        fetchData(activeFilters);
+      }
+    } catch (error) {
+      showError(error, 'Failed to update selected appointments');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Status Modal 
   const handleOpenStatusModal = (appt) => {
     setStatusModalAppt(appt);
-    setNewStatus(appt.status || 'confirmed');
+    // DB se jo status aaya wahi set karo — koi mapping nahi
+    setNewStatus(appt.status || 'booked');
     setStatusRemarks(appt.remarks || '');
     setOpenDropdownId(null);
   };
@@ -168,8 +210,8 @@ export default function DoctorAppointments() {
   const handleOpenCompleteModal = (appt) => {
     setCompleteModalAppt(appt);
     setOpenDropdownId(null);
-    const existingVital = apt.vital || {};
-    const existingRecord = apt.medicalRecord || {};
+    const existingVital = appt?.vital || {};
+    const existingRecord = appt?.medicalRecord || {};
 
     setVitalsForm({
       height_cm: existingVital.height_cm ? String(existingVital.height_cm) : '',
@@ -222,9 +264,13 @@ export default function DoctorAppointments() {
     }
   };
 
-  // Filtered Appointments client fallback
+  // Filtered Appointments client-side fallback
   const filteredAppointments = appointments.filter((apt) => {
-    const statusMatch = !activeFilters.status ? true : apt.status === activeFilters.status;
+    const statusMatch = !activeFilters.status
+      ? true
+      : activeFilters.status === 'booked'
+        ? (apt.status === 'booked' || apt.status === 'scheduled' || !apt.status)
+        : apt.status === activeFilters.status;
     const visitMatch = !activeFilters.visitType ? true : apt.visit_type === activeFilters.visitType;
 
     const patientName = apt.patient?.user
@@ -234,7 +280,7 @@ export default function DoctorAppointments() {
     const searchMatch = !activeFilters.search
       ? true
       : patientName.includes(activeFilters.search.toLowerCase()) ||
-        aptNumber.includes(activeFilters.search.toLowerCase());
+      aptNumber.includes(activeFilters.search.toLowerCase());
 
     return statusMatch && visitMatch && searchMatch;
   });
@@ -245,10 +291,13 @@ export default function DoctorAppointments() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + itemsPerPage);
 
+  // Status badge class 
   const getStatusBadgeClass = (st) => {
     switch (st) {
       case 'completed':
       case 'confirmed':
+      case 'checked_in':
+      case 'in_progress':
         return 'admin-badge active';
       case 'cancelled':
       case 'no_show':
@@ -258,6 +307,10 @@ export default function DoctorAppointments() {
         return 'admin-badge pending';
     }
   };
+
+  const isAllPaginatedSelected =
+    paginatedAppointments.length > 0 &&
+    paginatedAppointments.every((apt) => selectedApptIds.includes(apt.id));
 
   return (
     <div className="doc-appointments" ref={dropdownRef}>
@@ -269,7 +322,7 @@ export default function DoctorAppointments() {
         </div>
       </div>
 
-      {/* City Master Style Filter Bar with Items Per Page Dropdown */}
+      {/* Filter Bar with Items Per Page Dropdown */}
       <div className="admin-filter-bar">
         <input
           type="text"
@@ -318,9 +371,51 @@ export default function DoctorAppointments() {
           Apply Filter
         </button>
         <button type="button" className="admin-btn-reset" onClick={handleResetFilter}>
-          Reset
+          Reset Filter
         </button>
       </div>
+
+      {/* Bulk Action Banner */}
+      {selectedApptIds.length > 0 && (
+        <div className="admin-bulk-action-bar">
+          <div className="admin-bulk-action-info">
+            <span className="admin-bulk-count-badge">{selectedApptIds.length}</span> appointment(s) selected
+          </div>
+          <div className="admin-bulk-action-btns">
+            <button
+              type="button"
+              className="admin-btn-bulk-confirm"
+              onClick={() => handleBulkStatusUpdate('confirmed')}
+              disabled={saving}
+            >
+              Confirm Selected ({selectedApptIds.length})
+            </button>
+            <button
+              type="button"
+              className="admin-btn-bulk-complete"
+              onClick={() => handleBulkStatusUpdate('completed')}
+              disabled={saving}
+            >
+               Mark Completed
+            </button>
+            <button
+              type="button"
+              className="admin-btn-bulk-cancel"
+              onClick={() => handleBulkStatusUpdate('cancelled')}
+              disabled={saving}
+            >
+               Cancel Selected
+            </button>
+            <button
+              type="button"
+              className="admin-btn-bulk-clear"
+              onClick={() => setSelectedApptIds([])}
+            >
+              Deselect All
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Appointments List Table */}
       <div className="admin-table-card">
@@ -338,6 +433,15 @@ export default function DoctorAppointments() {
               <table className="admin-table">
                 <thead>
                   <tr>
+                    <th style={{ width: '40px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        className="admin-checkbox"
+                        checked={isAllPaginatedSelected}
+                        onChange={(e) => handleSelectAll(e, paginatedAppointments)}
+                        title="Select All Visible Appointments"
+                      />
+                    </th>
                     <th>Appt #</th>
                     <th>Patient Name</th>
                     <th>Clinic</th>
@@ -354,10 +458,18 @@ export default function DoctorAppointments() {
                       ? `${patientUser.first_name} ${patientUser.last_name || ''}`.trim()
                       : `Patient #${apt.patient_id}`;
                     const clinicName = apt.clinic?.name || 'Medi Growth Clinic';
-                    const isDropdownOpen = openDropdownId === apt.id;
+                    const isSelected = selectedApptIds.includes(apt.id);
 
                     return (
-                      <tr key={apt.id}>
+                      <tr key={apt.id} className={isSelected ? 'admin-row-selected' : ''}>
+                        <td style={{ textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            className="admin-checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelect(apt.id)}
+                          />
+                        </td>
                         <td className="admin-font-bold">
                           {apt.appointment_number || `#APT-${apt.id}`}
                         </td>
@@ -371,50 +483,38 @@ export default function DoctorAppointments() {
                           {(apt.visit_type || 'new').replace('_', ' ')}
                         </td>
                         <td>
+                          
                           <span className={getStatusBadgeClass(apt.status)}>
                             {(apt.status || 'booked').replace('_', ' ')}
                           </span>
                         </td>
                         <td className="admin-text-right">
-                          <div className="admin-dots-dropdown-wrap">
+                          <div className="doc-action-btns-group">
                             <button
                               type="button"
-                              className="admin-dots-btn"
-                              onClick={() => setOpenDropdownId(isDropdownOpen ? null : apt.id)}
-                              title="Actions Menu"
+                              className="doc-action-btn doc-action-btn-view"
+                              onClick={() => setSelectedAppt(apt)}
+                              title="View Details"
                             >
-                              ⋮
+                               View
                             </button>
-
-                            {isDropdownOpen && (
-                              <div className="admin-dots-dropdown-menu">
-                                <button
-                                  type="button"
-                                  className="admin-dots-item"
-                                  onClick={() => {
-                                    setSelectedAppt(apt);
-                                    setOpenDropdownId(null);
-                                  }}
-                                >
-                                   View Details
-                                </button>
-                                <button
-                                  type="button"
-                                  className="admin-dots-item"
-                                  onClick={() => handleOpenStatusModal(apt)}
-                                >
-                                   Update Status
-                                </button>
-                                {apt.status !== 'completed' && (
-                                  <button
-                                    type="button"
-                                    className="admin-dots-item"
-                                    onClick={() => handleOpenCompleteModal(apt)}
-                                  >
-                                     Log Consultation
-                                  </button>
-                                )}
-                              </div>
+                            <button
+                              type="button"
+                              className="doc-action-btn doc-action-btn-status"
+                              onClick={() => handleOpenStatusModal(apt)}
+                              title="Update Status"
+                            >
+                               Status
+                            </button>
+                            {apt.status !== 'completed' && (
+                              <button
+                                type="button"
+                                className="doc-action-btn doc-action-btn-log"
+                                onClick={() => handleOpenCompleteModal(apt)}
+                                title="Log Consultation"
+                              >
+                                 Consult
+                              </button>
                             )}
                           </div>
                         </td>

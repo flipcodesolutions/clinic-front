@@ -28,6 +28,16 @@ export async function updateAppointmentStatus(appointmentId, statusOrData, optio
   return response.data;
 }
 
+// Bulk Update Appointment Status
+export async function bulkUpdateAppointmentStatus(appointmentIds, status, remarks = '') {
+  const response = await apiClient.put('/doctor/appointments/bulk-status', {
+    appointment_ids: appointmentIds,
+    status,
+    remarks,
+  });
+  return response.data;
+}
+
 
 //  Create Consultation / Medical Record
 

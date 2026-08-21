@@ -1218,6 +1218,180 @@
   color: var(--doc-primary-dark);
 }
 
+/* Direct Action Buttons Group in Table Row */
+.doc-action-btns-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.doc-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 11px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.doc-action-btn-view {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.doc-action-btn-view:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.doc-action-btn-status {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.doc-action-btn-status:hover {
+  background: #fde68a;
+  color: #78350f;
+}
+
+.doc-action-btn-log {
+  background: rgba(13, 148, 136, 0.1);
+  color: #0d9488;
+  border-color: rgba(13, 148, 136, 0.3);
+}
+
+.doc-action-btn-log:hover {
+  background: #0d9488;
+  color: #ffffff;
+}
+
+/* Bulk Action Banner */
+.admin-bulk-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-bulk-action-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-bulk-count-badge {
+  background: #0d9488;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.admin-bulk-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-btn-bulk-confirm {
+  background: #10b981;
+  color: #ffffff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-bulk-confirm:hover {
+  background: #059669;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.admin-btn-bulk-complete {
+  background: #0ea5e9;
+  color: #ffffff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-bulk-complete:hover {
+  background: #0284c7;
+}
+
+.admin-btn-bulk-cancel {
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-bulk-cancel:hover {
+  background: #dc2626;
+}
+
+.admin-btn-bulk-clear {
+  background: rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-bulk-clear:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Checkbox & Table Selection */
+.admin-checkbox {
+  width: 17px;
+  height: 17px;
+  accent-color: #0d9488;
+  cursor: pointer;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.admin-table tr.admin-row-selected td {
+  background: rgba(13, 148, 136, 0.06) !important;
+}
+
 /* ============================================================
    CITY MASTER STYLE PAGINATION
    ============================================================ */
