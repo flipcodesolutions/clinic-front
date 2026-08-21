@@ -11,7 +11,7 @@ export default function DoctorPatients() {
   const [genderFilter, setGenderFilter] = useState('');
   const [activeFilters, setActiveFilters] = useState({ search: '', gender: '' });
 
-  // Pagination & Page Size Limit (City Master Style)
+  // Pagination & Page Size Limit 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -132,7 +132,7 @@ export default function DoctorPatients() {
               className="admin-action-btn-view"
               onClick={handleBackToList}
             >
-              ← Back to Patient List
+               Back
             </button>
             <h1 className="admin-title">
               Patient Details: {user.first_name ? `${user.first_name} ${user.last_name || ''}` : `Patient #${selectedPatientId}`}
@@ -165,13 +165,11 @@ export default function DoctorPatients() {
                     {user.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Patient Profile'}
                   </h2>
                   <p className="doc-profile-spec">
-                    📧 {user.email || 'N/A'} • 📱 {user.phone || 'N/A'}
+                     {user.email || 'N/A'} •  {user.phone || 'N/A'}
                   </p>
                   <div className="doc-profile-meta">
                     <span>Gender: <strong>{pt?.gender || 'N/A'}</strong></span>
-                    <span>•</span>
                     <span>DOB: <strong>{pt?.dob ? pt.dob.split('T')[0] : 'N/A'}</strong></span>
-                    <span>•</span>
                     <span>Blood Group: <strong>{pt?.blood_group || 'N/A'}</strong></span>
                   </div>
                 </div>
@@ -382,7 +380,7 @@ export default function DoctorPatients() {
                             className="admin-action-btn-view"
                             onClick={() => handleSelectPatient(pt.id)}
                           >
-                            View Details →
+                            View
                           </button>
                         </td>
                       </tr>

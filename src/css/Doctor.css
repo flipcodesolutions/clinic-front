@@ -994,9 +994,9 @@
   font-size: 20px;
   font-weight: 700;
   color: var(--doc-text);
-  margin: 0 0 20px 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--doc-border);
+  margin: 20px 0 0px 10px;
+  /* padding-bottom: 12px; */
+  /* border-bottom: 1px solid var(--doc-border); */
 }
 
 .admin-modal-header {
