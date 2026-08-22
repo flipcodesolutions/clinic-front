@@ -30,3 +30,19 @@ export async function uploadDoctorPhoto(file) {
   });
   return response.data;
 }
+
+/**
+ * Change Doctor Password
+ */
+export async function changeDoctorPassword(currentPassword, newPassword) {
+  try {
+    const res = await apiClient.put('/auth/change-password', { currentPassword, newPassword });
+    if (res?.data?.success) {
+      return { success: true, message: res.data.message || 'Password changed successfully' };
+    }
+    throw new Error(res?.data?.message || 'Failed to update password');
+  } catch (e) {
+    const message = e.response?.data?.message || e.message || 'Failed to update password';
+    return { success: false, message };
+  }
+}

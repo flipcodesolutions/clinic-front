@@ -193,7 +193,7 @@ export default function DoctorLeaves() {
             setShowForm(true);
           }}
         >
-          + Apply For Leave
+           Apply For Leave
         </button>
       </div>
 
@@ -247,7 +247,7 @@ export default function DoctorLeaves() {
                 New Leave Application
               </h3>
               <button type="button" className="admin-modal-close" onClick={resetForm}>
-                ✕
+                X
               </button>
             </div>
 
@@ -307,7 +307,7 @@ export default function DoctorLeaves() {
                   Cancel
                 </button>
                 <button type="submit" className="admin-save-btn" disabled={saving}>
-                  {saving ? 'Submitting...' : 'Submit Leave Application'}
+                  {saving ? 'Submitting...' : 'Submit'}
                 </button>
               </div>
             </form>
@@ -335,7 +335,7 @@ export default function DoctorLeaves() {
                     <th>To Date</th>
                     <th>Duration</th>
                     <th>Reason</th>
-                    <th>Approval Status</th>
+                    <th>Status</th>
                     <th className="admin-text-right">Actions</th>
                   </tr>
                 </thead>
