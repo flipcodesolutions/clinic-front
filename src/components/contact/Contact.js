@@ -65,7 +65,7 @@ export default function Contact() {
               <div className="contact-card-info h-100 d-flex flex-column justify-content-between">
                 <div>
                   <h3 className="fw-bold text-dark mb-4">Get in Touch</h3>
-                  <p className="text-secondary mb-5" style={{ lineHeight: "1.7" }}>
+                  <p className="text-secondary mb-5 contact-intro-desc">
                     We aim to acknowledge all support and billing requests within 24 hours. For formal grievances, we resolve them within 15 days as required by law.
                   </p>
 

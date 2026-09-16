@@ -13,7 +13,7 @@ const CervicalCancerPrevention = () => {
       <div className="prevention-top">
         <div className="prevention-copy">
           <span className="prevention-pill">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="cervical-icon-mr-6">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
             THREE WAYS TO PROTECT

@@ -24,6 +24,7 @@ export async function getDoctors(filters = {}) {
         bio: u.doctorProfile?.bio || '',
         status: u.status || 'active',
         photo_url: u.doctorProfile?.profile_image || u.profile_image || '',
+        offers_video_consult: Boolean(u.doctorProfile?.offers_video_consult),
         experiences: u.doctorProfile?.experiences || u.experiences || [],
         achievements: u.achievements || u.doctorProfile?.achievements || [],
         schedules: u.schedules || u.doctorProfile?.schedules || [],
@@ -64,6 +65,7 @@ export async function createDoctor(payload) {
       gender: payload.gender,
       dob: payload.dob,
       photo_url: payload.photo_url,
+      offers_video_consult: Boolean(payload.offers_video_consult),
       department_id: payload.department_id,
       clinic_id: payload.clinic_id,
     };
@@ -96,6 +98,7 @@ export async function updateDoctor(id, payload) {
       gender: payload.gender,
       dob: payload.dob,
       photo_url: payload.photo_url,
+      offers_video_consult: Boolean(payload.offers_video_consult),
       department_id: payload.department_id,
       clinic_id: payload.clinic_id,
     };

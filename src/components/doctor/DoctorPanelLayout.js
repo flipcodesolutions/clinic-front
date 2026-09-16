@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DoctorSidebar from './DoctorSidebar';
 import { clearUserSession, getUserAuth } from '@/utils/auth';
+import { getFullImageUrl } from '@/utils/imageHelper';
 
 export default function DoctorPanelLayout({ doctorProfile, children }) {
   const router = useRouter();
@@ -32,13 +33,14 @@ export default function DoctorPanelLayout({ doctorProfile, children }) {
       }
     });
 
-    if (doctorProfile?.user) {
-      const u = doctorProfile.user;
+    if (doctorProfile) {
+      const u = doctorProfile.user || doctorProfile;
       if (u.first_name || u.last_name) {
         setDoctorName(`Dr. ${u.first_name || ''} ${u.last_name || ''}`.trim());
       }
-      if (u.profile_photo) {
-        setProfilePhoto(u.profile_photo);
+      const photo = u.profile_photo || u.profile_image || doctorProfile.profile_image;
+      if (photo) {
+        setProfilePhoto(getFullImageUrl(photo));
       }
     }
 
@@ -74,9 +76,8 @@ export default function DoctorPanelLayout({ doctorProfile, children }) {
 
   return (
     <div
-      className={`admin-panel-layout ${
-        sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'
-      }`}
+      className={`admin-panel-layout ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'
+        }`}
     >
       {/* Sidebar */}
       <DoctorSidebar

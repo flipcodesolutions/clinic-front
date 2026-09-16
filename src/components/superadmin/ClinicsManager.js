@@ -7,6 +7,7 @@ import {
   getClinics,
   getClinicById,
   updateClinic,
+  resolveMapUrl,
 } from '@/services/superadmin/clinicService';
 import { getCities } from '@/services/superadmin/cityService';
 import {
@@ -24,13 +25,88 @@ function formatStatus(status) {
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 }
 
+const CITY_COORDINATES = {
+  'limbdi': { lat: 22.5658, lng: 71.8083 },
+  'surendranagar': { lat: 22.7284, lng: 71.6371 },
+  'wadhwan': { lat: 22.7011, lng: 71.6781 },
+  'chotila': { lat: 22.4239, lng: 71.1963 },
+  'dhrangadhra': { lat: 22.9961, lng: 71.4646 },
+  'ahmedabad': { lat: 23.0225, lng: 72.5714 },
+  'rajkot': { lat: 22.3039, lng: 70.8022 },
+  'surat': { lat: 21.1702, lng: 72.8311 },
+  'vadodara': { lat: 22.3072, lng: 73.1812 },
+  'bhavnagar': { lat: 21.7645, lng: 72.1519 },
+  'jamnagar': { lat: 22.4707, lng: 70.0577 },
+  'junagadh': { lat: 21.5222, lng: 70.4579 },
+  'gandhinagar': { lat: 23.2156, lng: 72.6369 },
+  'anand': { lat: 22.5645, lng: 72.9289 },
+  'nadiad': { lat: 22.6916, lng: 72.8634 },
+  'morbi': { lat: 22.8120, lng: 70.8378 },
+  'mehsana': { lat: 23.5880, lng: 72.3693 },
+  'patan': { lat: 23.8493, lng: 72.1266 },
+  'palanpur': { lat: 24.1724, lng: 72.4346 },
+  'bharuch': { lat: 21.7051, lng: 72.9959 },
+  'navsari': { lat: 20.9500, lng: 72.9200 },
+  'valsad': { lat: 20.5992, lng: 72.9342 },
+  'vapi': { lat: 20.3893, lng: 72.9106 },
+  'porbandar': { lat: 21.6417, lng: 69.6293 },
+  'godhra': { lat: 22.7758, lng: 73.6149 },
+  'bhuj': { lat: 23.2420, lng: 69.6669 },
+  'gandhidham': { lat: 23.0753, lng: 70.1337 },
+  'veraval': { lat: 20.9077, lng: 70.3678 },
+  'somnath': { lat: 20.8880, lng: 70.4012 },
+  'amreli': { lat: 21.6032, lng: 71.2221 },
+  'botad': { lat: 22.1706, lng: 71.6662 },
+  'gondal': { lat: 21.9619, lng: 70.7983 },
+  'mumbai': { lat: 19.0760, lng: 72.8777 },
+  'delhi': { lat: 28.7041, lng: 77.1025 },
+  'bangalore': { lat: 12.9716, lng: 77.5946 },
+  'hyderabad': { lat: 17.3850, lng: 78.4867 },
+  'chennai': { lat: 13.0827, lng: 80.2707 },
+  'kolkata': { lat: 22.5726, lng: 88.3639 },
+  'pune': { lat: 18.5204, lng: 73.8567 },
+  'jaipur': { lat: 26.9124, lng: 75.7873 },
+  'indore': { lat: 22.7196, lng: 75.8577 },
+};
+
+function extractCoordsFromMapUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  const cleanUrl = decodeURIComponent(url.trim());
+
+  // 1. Matches !3d23.1234!4d72.1234
+  const placeMatch = cleanUrl.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if (placeMatch) return { lat: parseFloat(placeMatch[1]), lng: parseFloat(placeMatch[2]) };
+
+  // 2. Matches ?q=23.1234,72.1234 or &q=23.1234,72.1234
+  const qMatch = cleanUrl.match(/[?&]q=(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/i);
+  if (qMatch) return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
+
+  // 3. Matches /@23.1234,72.1234
+  const atMatch = cleanUrl.match(/@(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
+  if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
+
+  // 4. Matches ?ll=23.1234,72.1234
+  const llMatch = cleanUrl.match(/[?&]ll=(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/i);
+  if (llMatch) return { lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) };
+
+  // 5. Matches raw coordinates "23.1234, 72.1234"
+  const rawMatch = cleanUrl.match(/(-?\d{1,2}\.\d{3,})[,\s]+(-?\d{1,3}\.\d{3,})/);
+  if (rawMatch) return { lat: parseFloat(rawMatch[1]), lng: parseFloat(rawMatch[2]) };
+
+  return null;
+}
+
 const emptyClinicForm = {
   name: '',
   email: '',
   phone: '',
+  website: '',
   address: '',
   city: '',
   state: '',
+  latitude: '',
+  longitude: '',
+  google_maps_url: '',
   status: 'active',
 };
 
@@ -98,6 +174,7 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
   const [savingClinic, setSavingClinic] = useState(false);
   const [loadingClinicForm, setLoadingClinicForm] = useState(false);
   const [clinicFormError, setClinicFormError] = useState('');
+  const [detectingLocation, setDetectingLocation] = useState(false);
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
@@ -377,6 +454,8 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
     }
     setWizardError('');
     setWizardStep(2);
+    // Automatically auto-fill live GPS coordinates and Google Maps link when landing on Clinic Details
+    autoDetectGPS('wizard');
   };
 
   const handleWizardSubmit = async (e) => {
@@ -406,9 +485,13 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
         name: wizardClinicForm.name.trim(),
         email: wizardClinicForm.email.trim(),
         phone: wizardClinicForm.phone.trim(),
+        website: wizardClinicForm.website ? wizardClinicForm.website.trim() : null,
         address: wizardClinicForm.address.trim(),
         city: wizardClinicForm.city.trim(),
         state: wizardClinicForm.state.trim(),
+        latitude: wizardClinicForm.latitude ? parseFloat(wizardClinicForm.latitude) : null,
+        longitude: wizardClinicForm.longitude ? parseFloat(wizardClinicForm.longitude) : null,
+        google_maps_url: wizardClinicForm.google_maps_url ? wizardClinicForm.google_maps_url.trim() : null,
         status: wizardClinicForm.status,
       };
       const createdClinicRes = await createClinic(clinicPayload);
@@ -453,27 +536,47 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
     setLoadingClinicForm(true);
     try {
       const data = await getClinicById(clinic.id);
+      const lat = data.latitude || clinic.latitude || '';
+      const lng = data.longitude || clinic.longitude || '';
+      const mapLink = data.google_maps_url || clinic.google_maps_url || (lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : '');
       setClinicForm({
         name: data.name || '',
         email: data.email || '',
         phone: data.phone || '',
+        website: data.website || clinic.website || '',
         address: data.address || '',
         city: data.city || '',
         state: data.state || '',
+        latitude: lat,
+        longitude: lng,
+        google_maps_url: mapLink,
         status: data.status || 'active',
       });
       setCityEditSearch(data.city || clinic.city || '');
+      if (!lat || !lng) {
+        autoDetectGPS('edit');
+      }
     } catch (err) {
+      const lat = clinic.latitude || '';
+      const lng = clinic.longitude || '';
+      const mapLink = clinic.google_maps_url || (lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : '');
       setClinicForm({
         name: clinic.name || '',
         email: clinic.email || '',
         phone: clinic.phone || '',
+        website: clinic.website || '',
         address: clinic.address || '',
         city: clinic.city || '',
         state: clinic.state || '',
+        latitude: lat,
+        longitude: lng,
+        google_maps_url: mapLink,
         status: clinic.status || 'active',
       });
       setCityEditSearch(clinic.city || '');
+      if (!lat || !lng) {
+        autoDetectGPS('edit');
+      }
     } finally {
       setLoadingClinicForm(false);
     }
@@ -499,9 +602,13 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
         name: clinicForm.name.trim(),
         email: clinicForm.email.trim(),
         phone: clinicForm.phone.trim(),
+        website: clinicForm.website ? clinicForm.website.trim() : null,
         address: clinicForm.address.trim(),
         city: clinicForm.city.trim(),
         state: clinicForm.state.trim(),
+        latitude: clinicForm.latitude ? parseFloat(clinicForm.latitude) : null,
+        longitude: clinicForm.longitude ? parseFloat(clinicForm.longitude) : null,
+        google_maps_url: clinicForm.google_maps_url ? clinicForm.google_maps_url.trim() : null,
         status: clinicForm.status,
       };
       const result = await updateClinic(editingClinicId, payload);
@@ -514,6 +621,126 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
       showError(err, message);
     } finally {
       setSavingClinic(false);
+    }
+  };
+
+  // --- LIVE GPS LOCATION AUTO-DETECT ---
+  const autoDetectGPS = (target) => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      return;
+    }
+
+    setDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = parseFloat(position.coords.latitude.toFixed(6));
+        const lng = parseFloat(position.coords.longitude.toFixed(6));
+        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+        if (target === 'wizard') {
+          setWizardClinicForm((prev) => ({
+            ...prev,
+            latitude: lat,
+            longitude: lng,
+            google_maps_url: prev.google_maps_url && prev.google_maps_url.trim() !== '' ? prev.google_maps_url : mapsUrl,
+          }));
+        } else if (target === 'edit') {
+          setClinicForm((prev) => ({
+            ...prev,
+            latitude: prev.latitude || lat,
+            longitude: prev.longitude || lng,
+            google_maps_url: prev.google_maps_url && prev.google_maps_url.trim() !== '' ? prev.google_maps_url : mapsUrl,
+          }));
+        }
+
+        setDetectingLocation(false);
+      },
+      (error) => {
+        setDetectingLocation(false);
+        console.warn('Geolocation auto-detect notice:', error?.message);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  };
+
+  const handleDetectLocation = autoDetectGPS;
+
+  const handleMapUrlChange = async (newUrl, formType) => {
+    // 1. Immediate synchronous regex extraction
+    const extracted = extractCoordsFromMapUrl(newUrl);
+    if (formType === 'wizard') {
+      setWizardClinicForm((prev) => ({
+        ...prev,
+        google_maps_url: newUrl,
+        ...(extracted ? { latitude: extracted.lat, longitude: extracted.lng } : {}),
+      }));
+    } else {
+      setClinicForm((prev) => ({
+        ...prev,
+        google_maps_url: newUrl,
+        ...(extracted ? { latitude: extracted.lat, longitude: extracted.lng } : {}),
+      }));
+    }
+
+    // 2. If it's a short URL (goo.gl, maps.app, bit.ly, etc.) and didn't match immediately, resolve via backend
+    if (newUrl && (newUrl.includes('goo.gl') || newUrl.includes('maps.app') || newUrl.includes('http')) && !extracted) {
+      try {
+        const res = await resolveMapUrl(newUrl);
+        if (res?.success && res.data?.latitude && res.data?.longitude) {
+          if (formType === 'wizard') {
+            setWizardClinicForm((prev) => ({
+              ...prev,
+              latitude: res.data.latitude,
+              longitude: res.data.longitude,
+            }));
+          } else {
+            setClinicForm((prev) => ({
+              ...prev,
+              latitude: res.data.latitude,
+              longitude: res.data.longitude,
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to resolve map URL on client:', e);
+      }
+    }
+  };
+
+  const handleCitySelect = (cityName, formType) => {
+    const cityKey = (cityName || '').toLowerCase().trim();
+    const cityCoords = CITY_COORDINATES[cityKey];
+
+    if (formType === 'wizard') {
+      setWizardClinicForm((prev) => {
+        const hasCustomUrl = prev.google_maps_url && !prev.google_maps_url.includes('google.com/maps?q=');
+        return {
+          ...prev,
+          city: cityName,
+          ...(cityCoords && !hasCustomUrl
+            ? {
+                latitude: cityCoords.lat,
+                longitude: cityCoords.lng,
+                google_maps_url: `https://www.google.com/maps?q=${cityCoords.lat},${cityCoords.lng}`,
+              }
+            : {}),
+        };
+      });
+    } else {
+      setClinicForm((prev) => {
+        const hasCustomUrl = prev.google_maps_url && !prev.google_maps_url.includes('google.com/maps?q=');
+        return {
+          ...prev,
+          city: cityName,
+          ...(cityCoords && !hasCustomUrl
+            ? {
+                latitude: cityCoords.lat,
+                longitude: cityCoords.lng,
+                google_maps_url: `https://www.google.com/maps?q=${cityCoords.lat},${cityCoords.lng}`,
+              }
+            : {}),
+        };
+      });
     }
   };
 
@@ -636,70 +863,25 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
       </div>
 
       {/* Main Tab Navigation */}
-      <div className="admin-tabs-nav" style={{ display: 'flex', gap: 12, marginBottom: 20, borderBottom: '2px solid #e2e8f0' }}>
+      <div className="admin-tabs-nav">
         <button
           type="button"
           onClick={() => setActiveTab('clinics')}
-          style={{
-            padding: '12px 20px',
-            fontSize: 15,
-            fontWeight: 700,
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-            color: activeTab === 'clinics' ? '#4f46e5' : '#64748b',
-            borderBottom: activeTab === 'clinics' ? '3px solid #4f46e5' : '3px solid transparent',
-            marginBottom: -2,
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
+          className={`admin-tab-btn admin-tab-btn-flex ${activeTab === 'clinics' ? 'active' : ''}`}
         >
           <span>🏥 Clinic Directory</span>
-          <span
-            style={{
-              fontSize: 12,
-              background: activeTab === 'clinics' ? '#e0e7ff' : '#f1f5f9',
-              color: activeTab === 'clinics' ? '#4338ca' : '#64748b',
-              padding: '2px 8px',
-              borderRadius: 12,
-              fontWeight: 600,
-            }}
-          >
+          <span className={`admin-tab-badge ${activeTab === 'clinics' ? 'active' : ''}`}>
             {clinicPagination.count}
           </span>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('admins')}
-          style={{
-            padding: '12px 20px',
-            fontSize: 15,
-            fontWeight: 700,
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-            color: activeTab === 'admins' ? '#4f46e5' : '#64748b',
-            borderBottom: activeTab === 'admins' ? '3px solid #4f46e5' : '3px solid transparent',
-            marginBottom: -2,
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
+          className={`admin-tab-btn admin-tab-btn-flex ${activeTab === 'admins' ? 'active' : ''}`}
         >
           <span>👤 Admin Management</span>
-          <span
-            style={{
-              fontSize: 12,
-              background: activeTab === 'admins' ? '#e0e7ff' : '#f1f5f9',
-              color: activeTab === 'admins' ? '#4338ca' : '#64748b',
-              padding: '2px 8px',
-              borderRadius: 12,
-              fontWeight: 600,
-            }}
-          >
+          <span className={`admin-tab-badge ${activeTab === 'admins' ? 'active' : ''}`}>
             {userPagination.count}
           </span>
         </button>
@@ -758,19 +940,19 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
                 <tbody>
                   {loadingClinics ? (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', padding: 30, color: '#64748b' }}>
+                      <td colSpan="5" className="admin-table-center-msg-lg">
                         Loading clinics...
                       </td>
                     </tr>
                   ) : clinicsError ? (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', padding: 30, color: '#dc2626' }}>
+                      <td colSpan="5" className="admin-table-center-error-lg">
                         {clinicsError}
                       </td>
                     </tr>
                   ) : clinics.length === 0 ? (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', padding: 30, color: '#64748b' }}>
+                      <td colSpan="5" className="admin-table-center-msg-lg">
                         No clinics found.
                       </td>
                     </tr>
@@ -781,29 +963,29 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
                       return (
                         <tr key={c.id}>
                           <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div className="admin-cell-flex">
                               <span className="clinic-avatar">🏥</span>
                               <div>
-                                <div style={{ fontWeight: 600, fontSize: 15 }}>{c.name}</div>
-                                <div style={{ fontSize: 12, color: '#94a3b8' }}>ID: CLN-{c.id}</div>
+                                <div className="admin-cell-title-lg">{c.name}</div>
+                                <div className="admin-cell-subtitle">ID: CLN-{c.id}</div>
                               </div>
                             </div>
                           </td>
                           <td>
-                            <div style={{ fontSize: 13, fontWeight: 500 }}>{c.email || '—'}</div>
-                            <div style={{ fontSize: 13, color: '#64748b' }}>{c.phone || '—'}</div>
+                            <div className="admin-cell-text-bold">{c.email || '—'}</div>
+                            <div className="admin-cell-text-muted">{c.phone || '—'}</div>
                           </td>
                           <td>
-                            <div style={{ fontSize: 13, color: '#475569', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.address}>
+                            <div className="admin-cell-address" title={c.address}>
                               {c.address || '—'}
                             </div>
                             {(c.city || c.state) && (
-                              <div style={{ fontSize: 12, color: '#94a3b8' }}>{[c.city, c.state].filter(Boolean).join(', ')}</div>
+                              <div className="admin-cell-subtitle">{[c.city, c.state].filter(Boolean).join(', ')}</div>
                             )}
                           </td>
                           <td>
                             <button
-                              style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                              className="admin-btn-transparent"
                               onClick={() => handleToggleClinicStatus(c)}
                               title="Click to toggle status"
                             >
@@ -1010,73 +1192,45 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
       {/* ============================================================ */}
       {showWizardModal && (
         <div className="admin-modal-backdrop" onClick={() => !wizardSaving && setShowWizardModal(false)}>
-          <div className="admin-modal-card" style={{ maxWidth: 650 }} onClick={(e) => e.stopPropagation()}>
+          <div className="admin-modal-card admin-modal-card-lg" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+            <div className="admin-modal-header-row">
               <div>
-                <h3 className="admin-modal-title" style={{ marginBottom: 4 }}>Add Clinic & Admin</h3>
-                <p style={{ margin: 0, fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+                <h3 className="admin-modal-title admin-modal-title-sm">Add Clinic & Admin</h3>
+                <p className="admin-modal-subtitle">
                   Step {wizardStep} of 2: {wizardStep === 1 ? 'Admin Details' : 'Clinic Details'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => !wizardSaving && setShowWizardModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: 20, color: '#94a3b8', cursor: 'pointer' }}
+                className="admin-modal-close-icon"
               >
                 ✕
               </button>
             </div>
 
             {/* Stepper Progress Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '12px 0 18px 0', gap: 16 }}>
+            <div className="admin-wizard-row">
               {/* Step 1 Indicator */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    background: wizardStep >= 1 ? '#4f46e5' : '#e2e8f0',
-                    color: wizardStep >= 1 ? '#ffffff' : '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: 14,
-                    boxShadow: wizardStep === 1 ? '0 0 0 4px rgba(99, 102, 241, 0.2)' : 'none',
-                  }}
-                >
+              <div className="admin-wizard-step">
+                <div className={`admin-wizard-num ${wizardStep >= 1 ? 'active' : ''} ${wizardStep === 1 ? 'active-ring' : ''}`}>
                   1
                 </div>
-                <span style={{ fontSize: 14, fontWeight: wizardStep === 1 ? 700 : 500, color: wizardStep === 1 ? '#0f172a' : '#64748b' }}>
+                <span className={`admin-wizard-label ${wizardStep === 1 ? 'active' : ''}`}>
                   Admin Details
                 </span>
               </div>
 
               {/* Line connector */}
-              <div style={{ width: 80, height: 2, background: wizardStep === 2 ? '#4f46e5' : '#e2e8f0' }}></div>
+              <div className={`admin-wizard-line ${wizardStep === 2 ? 'active' : ''}`}></div>
 
               {/* Step 2 Indicator */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    background: wizardStep === 2 ? '#4f46e5' : '#e2e8f0',
-                    color: wizardStep === 2 ? '#ffffff' : '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: 14,
-                    boxShadow: wizardStep === 2 ? '0 0 0 4px rgba(99, 102, 241, 0.2)' : 'none',
-                  }}
-                >
+              <div className="admin-wizard-step">
+                <div className={`admin-wizard-num ${wizardStep === 2 ? 'active active-ring' : ''}`}>
                   2
                 </div>
-                <span style={{ fontSize: 14, fontWeight: wizardStep === 2 ? 700 : 500, color: wizardStep === 2 ? '#0f172a' : '#64748b' }}>
+                <span className={`admin-wizard-label ${wizardStep === 2 ? 'active' : ''}`}>
                   Clinic Details
                 </span>
               </div>
@@ -1176,10 +1330,9 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
                   <div className="admin-form-full">
                     <label className="admin-form-label">Admin User</label>
                     <input
-                      className="admin-input"
+                      className="admin-input admin-input-readonly"
                       value={`👤 ${wizardAdminForm.first_name} ${wizardAdminForm.last_name || ''} (${wizardAdminForm.email})`}
                       disabled
-                      style={{ background: '#f8fafc', color: '#475569', fontWeight: 600 }}
                     />
                   </div>
 
@@ -1249,7 +1402,7 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
                                 className={`admin-searchable-item ${isSelected ? 'selected' : ''}`}
                                 onMouseDown={(e) => {
                                   e.preventDefault();
-                                  setWizardClinicForm({ ...wizardClinicForm, city: c.name });
+                                  handleCitySelect(c.name, 'wizard');
                                   setCityWizardSearch(c.name);
                                   setShowCityWizardDropdown(false);
                                 }}
@@ -1299,7 +1452,7 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
                     </select>
                   </div>
 
-                  <div className="admin-form-full">
+                  <div>
                     <label className="admin-form-label">Clinic Email (Optional)</label>
                     <input
                       type="email"
@@ -1307,6 +1460,67 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
                       placeholder="e.g. contact@clinic.com"
                       value={wizardClinicForm.email}
                       onChange={(e) => setWizardClinicForm({ ...wizardClinicForm, email: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Website (Optional)</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      placeholder="e.g. www.preetclinic.com"
+                      value={wizardClinicForm.website || ''}
+                      onChange={(e) => setWizardClinicForm({ ...wizardClinicForm, website: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="admin-form-full">
+                    <div className="admin-label-row">
+                      <span className="admin-form-label admin-label-row-title">
+                        📍 GPS Location Coordinates
+                      </span>
+                      {detectingLocation ? (
+                        <span className="badge admin-badge-optional">
+                          Detecting live GPS...
+                        </span>
+                      ) : wizardClinicForm.latitude ? (
+                        <span className="badge admin-badge-recommended">
+                          ✓ Coordinates Available
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Latitude</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      placeholder="e.g. 22.5658"
+                      value={wizardClinicForm.latitude !== undefined && wizardClinicForm.latitude !== null ? wizardClinicForm.latitude : ''}
+                      onChange={(e) => setWizardClinicForm({ ...wizardClinicForm, latitude: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Longitude</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      placeholder="e.g. 71.8083"
+                      value={wizardClinicForm.longitude !== undefined && wizardClinicForm.longitude !== null ? wizardClinicForm.longitude : ''}
+                      onChange={(e) => setWizardClinicForm({ ...wizardClinicForm, longitude: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="admin-form-full">
+                    <label className="admin-form-label">Google Maps Link</label>
+                    <input
+                      type="url"
+                      className="admin-input"
+                      placeholder="e.g. https://maps.google.com/?q=... or https://maps.app.goo.gl/..."
+                      value={wizardClinicForm.google_maps_url || ''}
+                      onChange={(e) => handleMapUrlChange(e.target.value, 'wizard')}
                     />
                   </div>
                 </div>
@@ -1338,7 +1552,7 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
           <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Edit Clinic Details</h3>
             {loadingClinicForm ? (
-              <p style={{ textAlign: 'center', padding: 20 }}>Loading details...</p>
+              <p className="admin-modal-loading">Loading details...</p>
             ) : (
               <form onSubmit={handleSaveClinic}>
                 <div className="admin-form-grid">
@@ -1358,6 +1572,16 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
                       className="admin-input"
                       value={clinicForm.email}
                       onChange={(e) => setClinicForm({ ...clinicForm, email: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="admin-form-label">Website (Optional)</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      placeholder="e.g. www.preetclinic.com"
+                      value={clinicForm.website || ''}
+                      onChange={(e) => setClinicForm({ ...clinicForm, website: e.target.value })}
                     />
                   </div>
                   <div>
@@ -1412,7 +1636,7 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
                                 className={`admin-searchable-item ${isSelected ? 'selected' : ''}`}
                                 onMouseDown={(e) => {
                                   e.preventDefault();
-                                  setClinicForm({ ...clinicForm, city: c.name });
+                                  handleCitySelect(c.name, 'edit');
                                   setCityEditSearch(c.name);
                                   setShowCityEditDropdown(false);
                                 }}
@@ -1440,6 +1664,53 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
                       className="admin-textarea"
                       value={clinicForm.address}
                       onChange={(e) => setClinicForm({ ...clinicForm, address: e.target.value })}
+                    />
+                  </div>
+                  <div className="admin-form-full">
+                    <div className="admin-label-row">
+                      <span className="admin-form-label admin-label-row-title">
+                        📍 GPS Location Coordinates
+                      </span>
+                      {detectingLocation ? (
+                        <span className="badge admin-badge-optional">
+                          Detecting live GPS...
+                        </span>
+                      ) : clinicForm.latitude ? (
+                        <span className="badge admin-badge-recommended">
+                          ✓ Coordinates Available
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="admin-form-label">Latitude</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      placeholder="e.g. 22.5658"
+                      value={clinicForm.latitude !== undefined && clinicForm.latitude !== null ? clinicForm.latitude : ''}
+                      onChange={(e) => setClinicForm({ ...clinicForm, latitude: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="admin-form-label">Longitude</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      placeholder="e.g. 71.8083"
+                      value={clinicForm.longitude !== undefined && clinicForm.longitude !== null ? clinicForm.longitude : ''}
+                      onChange={(e) => setClinicForm({ ...clinicForm, longitude: e.target.value })}
+                    />
+                  </div>
+                  <div className="admin-form-full">
+                    <label className="admin-form-label">Google Maps Link</label>
+                    <input
+                      type="url"
+                      className="admin-input"
+                      placeholder="e.g. https://maps.google.com/?q=... or https://maps.app.goo.gl/..."
+                      value={clinicForm.google_maps_url || ''}
+                      onChange={(e) => handleMapUrlChange(e.target.value, 'edit')}
                     />
                   </div>
                   <div>
@@ -1475,7 +1746,7 @@ export default function ClinicsManager({ initialTab = 'clinics' }) {
           <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Edit Clinic Admin</h3>
             {loadingUserForm ? (
-              <p style={{ textAlign: 'center', padding: 20 }}>Loading admin details...</p>
+              <p className="admin-modal-loading">Loading admin details...</p>
             ) : (
               <form onSubmit={handleSaveUser}>
                 <div className="admin-form-grid">

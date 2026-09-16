@@ -11,13 +11,13 @@ import { getDoctorProfile } from '@/services/doctor/profileService';
 import { showError, showSuccess } from '@/utils/toast';
 
 const DAYS_OF_WEEK = [
-  { key: 'monday', label: 'Monday', short: 'Mon', icon: '' },
-  { key: 'tuesday', label: 'Tuesday', short: 'Tue', icon: '' },
-  { key: 'wednesday', label: 'Wednesday', short: 'Wed', icon: '' },
-  { key: 'thursday', label: 'Thursday', short: 'Thu', icon: '' },
-  { key: 'friday', label: 'Friday', short: 'Fri', icon: '' },
-  { key: 'saturday', label: 'Saturday', short: 'Sat', icon: '' },
-  { key: 'sunday', label: 'Sunday', short: 'Sun', icon: '' },
+  { key: 'monday', label: 'Monday', short: 'Mon', icon: '📅' },
+  { key: 'tuesday', label: 'Tuesday', short: 'Tue', icon: '📅' },
+  { key: 'wednesday', label: 'Wednesday', short: 'Wed', icon: '📅' },
+  { key: 'thursday', label: 'Thursday', short: 'Thu', icon: '📅' },
+  { key: 'friday', label: 'Friday', short: 'Fri', icon: '📅' },
+  { key: 'saturday', label: 'Saturday', short: 'Sat', icon: '📅' },
+  { key: 'sunday', label: 'Sunday', short: 'Sun', icon: '📅' },
 ];
 
 const SLOT_DURATIONS = [10, 15, 20, 30, 45, 60];
@@ -90,14 +90,14 @@ export default function DoctorSchedule() {
         morning: {
           enabled: Boolean(morningSched),
           id: morningSched ? morningSched.id : null,
-          start_time: morningSched?.start_time || null,
-          end_time: morningSched?.end_time || null,
+          start_time: morningSched?.start_time ? String(morningSched.start_time).slice(0, 5) : '10:00',
+          end_time: morningSched?.end_time ? String(morningSched.end_time).slice(0, 5) : '13:00',
         },
         evening: {
           enabled: Boolean(eveningSched),
           id: eveningSched ? eveningSched.id : null,
-          start_time: eveningSched?.start_time || null,
-          end_time: eveningSched?.end_time || null,
+          start_time: eveningSched?.start_time ? String(eveningSched.start_time).slice(0, 5) : '17:00',
+          end_time: eveningSched?.end_time ? String(eveningSched.end_time).slice(0, 5) : '20:00',
         },
       };
     });
@@ -157,14 +157,14 @@ export default function DoctorSchedule() {
       const currentDay = prev[dayKey];
       const nextAvailable = !currentDay.is_available;
 
-      if (!nextAvailable) {
-        const idsToDelete = [];
-        if (currentDay.morning.id) idsToDelete.push(currentDay.morning.id);
-        if (currentDay.evening.id) idsToDelete.push(currentDay.evening.id);
+      let morning = { ...currentDay.morning };
+      let evening = { ...currentDay.evening };
 
-        if (idsToDelete.length > 0) {
-          setDeletedScheduleIds((prevIds) => [...new Set([...prevIds, ...idsToDelete])]);
-        }
+      // When turning ON, if neither morning nor evening was enabled, auto-enable morning with preserved time
+      if (nextAvailable && !morning.enabled && !evening.enabled) {
+        morning.enabled = true;
+        if (!morning.start_time) morning.start_time = '10:00';
+        if (!morning.end_time) morning.end_time = '13:00';
       }
 
       return {
@@ -172,6 +172,8 @@ export default function DoctorSchedule() {
         [dayKey]: {
           ...currentDay,
           is_available: nextAvailable,
+          morning,
+          evening,
         },
       };
     });
@@ -184,10 +186,6 @@ export default function DoctorSchedule() {
       const shiftData = currentDay[shiftType];
       const nextEnabled = !shiftData.enabled;
 
-      if (!nextEnabled && shiftData.id) {
-        setDeletedScheduleIds((prevIds) => [...new Set([...prevIds, shiftData.id])]);
-      }
-
       return {
         ...prev,
         [dayKey]: {
@@ -195,6 +193,8 @@ export default function DoctorSchedule() {
           [shiftType]: {
             ...shiftData,
             enabled: nextEnabled,
+            start_time: shiftData.start_time || (shiftType === 'morning' ? '10:00' : '17:00'),
+            end_time: shiftData.end_time || (shiftType === 'morning' ? '13:00' : '20:00'),
           },
         },
       };
@@ -241,25 +241,16 @@ export default function DoctorSchedule() {
     });
   };
 
-  // Clear/Disable a day's schedule (sets is_available = false, tracks IDs for delete)
+  // Clear/Disable a day's schedule
   const handleClearDay = (dayKey) => {
     setWeeklyPlan((prev) => {
       const currentDay = prev[dayKey];
-      const idsToDelete = [];
-      if (currentDay.morning.id) idsToDelete.push(currentDay.morning.id);
-      if (currentDay.evening.id) idsToDelete.push(currentDay.evening.id);
-
-      if (idsToDelete.length > 0) {
-        setDeletedScheduleIds((prevIds) => [...new Set([...prevIds, ...idsToDelete])]);
-      }
 
       return {
         ...prev,
         [dayKey]: {
           ...currentDay,
           is_available: false,
-          morning: { ...currentDay.morning, enabled: false },
-          evening: { ...currentDay.evening, enabled: false },
         },
       };
     });
@@ -317,7 +308,7 @@ export default function DoctorSchedule() {
       const clinicIdNum = parseInt(selectedClinicId, 10);
       const savePromises = [];
 
-      // A. Process deleted schedule IDs tracked from unticking checkboxes
+      // A. Process deleted 
       deletedScheduleIds.forEach((id) => {
         savePromises.push(deleteDoctorSchedule(id));
       });
@@ -327,50 +318,50 @@ export default function DoctorSchedule() {
         const dayPlan = weeklyPlan[d.key];
         if (!dayPlan) return;
 
-        const buildPayload = (shiftType, shiftData) => ({
+        const buildPayload = (shiftType, shiftData, isAvailableFlag) => ({
           clinic_id: clinicIdNum,
           day_of_week: d.key,
           shift_type: shiftType,
-          start_time: shiftData.start_time,
-          end_time: shiftData.end_time,
-          slot_duration: parseInt(dayPlan.slot_duration, 10),
+          start_time: shiftData.start_time ? `${shiftData.start_time}:00`.slice(0, 8) : (shiftType === 'morning' ? '10:00:00' : '17:00:00'),
+          end_time: shiftData.end_time ? `${shiftData.end_time}:00`.slice(0, 8) : (shiftType === 'morning' ? '13:00:00' : '20:00:00'),
+          slot_duration: parseInt(dayPlan.slot_duration, 10) || 15,
           maximum_booking:
             calculateMaxSlots(shiftData.start_time, shiftData.end_time, dayPlan.slot_duration) || 16,
-          is_available: true,
+          is_available: isAvailableFlag,
         });
 
         if (dayPlan.is_available) {
-          // ── Morning Shift ──
+          // ── Day is ON ──
           if (dayPlan.morning.enabled && dayPlan.morning.start_time && dayPlan.morning.end_time) {
-            const payload = buildPayload('morning', dayPlan.morning);
+            const payload = buildPayload('morning', dayPlan.morning, true);
             if (dayPlan.morning.id) {
               savePromises.push(updateDoctorSchedule(dayPlan.morning.id, payload));
             } else {
               savePromises.push(createDoctorSchedule(payload));
             }
-          } else if (dayPlan.morning.id) {
-            savePromises.push(deleteDoctorSchedule(dayPlan.morning.id));
           }
 
-          // ── Evening Shift ──
           if (dayPlan.evening.enabled && dayPlan.evening.start_time && dayPlan.evening.end_time) {
-            const payload = buildPayload('evening', dayPlan.evening);
+            const payload = buildPayload('evening', dayPlan.evening, true);
             if (dayPlan.evening.id) {
               savePromises.push(updateDoctorSchedule(dayPlan.evening.id, payload));
             } else {
               savePromises.push(createDoctorSchedule(payload));
             }
-          } else if (dayPlan.evening.id) {
-            savePromises.push(deleteDoctorSchedule(dayPlan.evening.id));
+          }
+        } else {
+          if (dayPlan.morning.start_time && dayPlan.morning.end_time) {
+            const payload = buildPayload('morning', dayPlan.morning, false);
+            if (dayPlan.morning.id) {
+              savePromises.push(updateDoctorSchedule(dayPlan.morning.id, payload));
+            } else if (dayPlan.morning.enabled) {
+              savePromises.push(createDoctorSchedule(payload));
+            }
           }
 
-        } else {
-          // ── Day is OFF → DELETE both shift records if they exist ──
-          if (dayPlan.morning.id) {
-            savePromises.push(deleteDoctorSchedule(dayPlan.morning.id));
-          }
-          if (dayPlan.evening.id) {
-            savePromises.push(deleteDoctorSchedule(dayPlan.evening.id));
+          if (dayPlan.evening.start_time && dayPlan.evening.end_time && dayPlan.evening.id) {
+            const payload = buildPayload('evening', dayPlan.evening, false);
+            savePromises.push(updateDoctorSchedule(dayPlan.evening.id, payload));
           }
         }
       });
@@ -387,7 +378,7 @@ export default function DoctorSchedule() {
       const failed = results.filter((r) => r.status === 'rejected');
 
       if (successful.length > 0) {
-        showSuccess(`Weekly Schedule saved successfully! (${successful.length} shift(s) updated)`);
+        showSuccess(`Weekly Schedule saved successfully!`);
       }
       if (failed.length > 0) {
         const firstErr =
@@ -423,7 +414,7 @@ export default function DoctorSchedule() {
       <div className="doc-planner-toolbar">
         <div className="doc-toolbar-left">
           <div className="doc-clinic-select-group">
-            <label className="doc-clinic-select-label"> Select Clinic:</label>
+            <label className="doc-clinic-select-label">Select Clinic:</label>
             <select
               className="doc-clinic-select"
               value={selectedClinicId}
@@ -464,13 +455,13 @@ export default function DoctorSchedule() {
           onClick={handleSaveAllSchedules}
           disabled={saving || loading}
         >
-          {saving ? 'Saving Changes...' : ' Save Weekly Schedule'}
+          {saving ? 'Saving Changes...' : 'Save Weekly Schedule'}
         </button>
       </div>
 
       {/* 7 Days Table View */}
       {loading ? (
-        <div className="admin-table-card" style={{ padding: '40px', textAlign: 'center' }}>
+        <div className="admin-table-card doc-schedule-loading-card">
           <p className="admin-empty-state">Loading Weekly Schedule Data...</p>
         </div>
       ) : (
@@ -478,12 +469,12 @@ export default function DoctorSchedule() {
           <table className="doc-schedule-table">
             <thead>
               <tr>
-                <th className="doc-th-center" style={{ width: '100px' }}>Clinic On/Off</th>
-                <th style={{ width: '120px' }}>Days</th>
+                <th className="doc-th-center doc-col-onoff">Clinic On/Off</th>
+                <th className="doc-col-days">Days</th>
                 <th>Morning Shift (Start - End)</th>
                 <th>Evening Shift (Start - End)</th>
-                <th style={{ width: '130px' }}>Slot Duration</th>
-                <th style={{ width: '140px' }}>Max Patients</th>
+                <th className="doc-col-slot">Slot Duration</th>
+                <th className="doc-col-max">Max Patients</th>
               </tr>
             </thead>
             <tbody>
@@ -492,8 +483,8 @@ export default function DoctorSchedule() {
                   is_available: false,
                   slot_duration: '15',
                   maximum_booking: '16',
-                  morning: { enabled: false, id: null, start_time: null, end_time: null },
-                  evening: { enabled: false, id: null, start_time: null, end_time: null },
+                  morning: { enabled: false, id: null, start_time: '10:00', end_time: '13:00' },
+                  evening: { enabled: false, id: null, start_time: '17:00', end_time: '20:00' },
                 };
 
                 const isOff = !dayPlan.is_available;
@@ -545,12 +536,13 @@ export default function DoctorSchedule() {
                           />
                           <span>Morning</span>
                         </label>
-                        {dayPlan.morning.enabled && !isOff && (
-                          <div className="doc-time-inputs-pair">
+                        {dayPlan.morning.enabled && (
+                          <div className={`doc-time-inputs-pair ${isOff ? 'inputs-disabled' : ''}`}>
                             <input
                               type="time"
                               className="doc-table-time-input"
                               value={dayPlan.morning.start_time ?? ''}
+                              disabled={isOff}
                               onChange={(e) => handleUpdateTime(d.key, 'morning', 'start_time', e.target.value)}
                             />
                             <span className="doc-time-separator">to</span>
@@ -558,6 +550,7 @@ export default function DoctorSchedule() {
                               type="time"
                               className="doc-table-time-input"
                               value={dayPlan.morning.end_time ?? ''}
+                              disabled={isOff}
                               onChange={(e) => handleUpdateTime(d.key, 'morning', 'end_time', e.target.value)}
                             />
                           </div>
@@ -577,12 +570,13 @@ export default function DoctorSchedule() {
                           />
                           <span>Evening</span>
                         </label>
-                        {dayPlan.evening.enabled && !isOff && (
-                          <div className="doc-time-inputs-pair">
+                        {dayPlan.evening.enabled && (
+                          <div className={`doc-time-inputs-pair ${isOff ? 'inputs-disabled' : ''}`}>
                             <input
                               type="time"
                               className="doc-table-time-input"
                               value={dayPlan.evening.start_time ?? ''}
+                              disabled={isOff}
                               onChange={(e) => handleUpdateTime(d.key, 'evening', 'start_time', e.target.value)}
                             />
                             <span className="doc-time-separator">to</span>
@@ -590,6 +584,7 @@ export default function DoctorSchedule() {
                               type="time"
                               className="doc-table-time-input"
                               value={dayPlan.evening.end_time ?? ''}
+                              disabled={isOff}
                               onChange={(e) => handleUpdateTime(d.key, 'evening', 'end_time', e.target.value)}
                             />
                           </div>
@@ -630,8 +625,6 @@ export default function DoctorSchedule() {
                         </span>
                       </div>
                     </td>
-
-
                   </tr>
                 );
               })}

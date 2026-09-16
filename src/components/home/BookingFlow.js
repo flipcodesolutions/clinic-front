@@ -162,7 +162,7 @@ export default function BookingFlow() {
 
         {/* CTA Find Doctor Button */}
         <div className="text-center mt-5">
-          <Link href="/services" className="btn btn-brand-green text-white px-4 py-2.5 rounded-pill fw-bold shadow-sm">
+          <Link href="/finddoctor" className="btn btn-brand-green text-white px-4 py-2.5 rounded-pill fw-bold shadow-sm">
             Find your doctor &rarr;
           </Link>
         </div>

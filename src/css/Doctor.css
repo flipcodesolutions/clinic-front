@@ -2833,3 +2833,38 @@
   }
 }
 
+/* Helper Classes for Doctor Dashboard & Appointments & Schedule */
+.admin-section-heading-spacing {
+  margin-top: 24px;
+}
+
+.doc-th-check-col {
+  width: 40px;
+  text-align: center;
+}
+
+.doc-schedule-loading-card {
+  padding: 40px;
+  text-align: center;
+}
+
+.doc-col-onoff {
+  width: 100px;
+}
+
+.doc-col-days {
+  width: 120px;
+}
+
+.doc-col-slot {
+  width: 130px;
+}
+
+.doc-col-max {
+  width: 140px;
+}
+
+.doc-time-inputs-pair.inputs-disabled {
+  opacity: 0.45;
+}
+

@@ -16,6 +16,8 @@ export async function getDepartments(filters = {}) {
 
   if (filters.search) params.search = filters.search;
   if (filters.status) params.status = filters.status;
+  if (filters.is_parent !== undefined) params.is_parent = filters.is_parent;
+  if (filters.parent_id !== undefined) params.parent_id = filters.parent_id;
   params.page = filters.page || 1;
   params.limit = filters.limit || 10;
 

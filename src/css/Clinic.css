@@ -3021,3 +3021,13 @@
     gap: 10px;
   }
 }
+
+/* Doctor Availability / Consult Status */
+.doc-status-available {
+  color: #00a676;
+  font-weight: 600;
+}
+
+.doc-status-unavailable {
+  color: #64748b;
+}

@@ -1,28 +1,60 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { login } from '@/services/authService';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { login, register } from '@/services/authService';
 import { getRedirectPath, saveUserSession } from '@/utils/auth';
 
 const ROLE_CARDS = [
   { role: 'super_admin', icon: '👑', name: 'Super Admin', desc: 'Manage clinics, depts & services' },
   { role: 'clinic', icon: '🏥', name: 'Clinic Admin', desc: 'Manage staff, gallery & doctors' },
   { role: 'doctor', icon: '👨‍⚕️', name: 'Doctor', desc: 'Appointments, schedule & profile' },
+  { role: 'patient', icon: '👤', name: 'Patient', desc: 'Book appointments & health history' },
 ];
 
-export default function LoginForm() {
+function LoginFormContent() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const searchParams = useSearchParams();
+
+  const redirectUrl = searchParams.get('redirect') || '';
+  const initialTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
+
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
-  const handleSubmit = async (e) => {
+  // Login form state
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+
+  // Register form state
+  const [regData, setRegData] = useState({
+    first_name: '',
+    last_name: '',
+    phone: '',
+    email: '',
+    password: '',
+  });
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'register') {
+      setActiveTab('register');
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setError('');
+    setSuccess('');
+  };
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
-    if (!form.email || !form.password) {
+    if (!loginData.email || !loginData.password) {
       setError('Please fill in both email and password.');
       return;
     }
@@ -30,17 +62,16 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const { user, token } = await login(form.email, form.password);
-      const redirectPath = getRedirectPath(user.roles);
+      const { user, token } = await login(loginData.email, loginData.password);
+      saveUserSession(user, token);
 
-      if (!redirectPath) {
-        setError('Your account role is not allowed to access any panel.');
-        setLoading(false);
+      if (redirectUrl) {
+        router.push(redirectUrl);
         return;
       }
 
-      saveUserSession(user, token);
-      router.push(redirectPath);
+      const redirectPath = getRedirectPath(user.roles);
+      router.push(redirectPath || '/');
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -51,40 +82,81 @@ export default function LoginForm() {
     }
   };
 
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!regData.first_name.trim()) {
+      setError('Please enter your first name.');
+      return;
+    }
+    if (!regData.phone.trim() || regData.phone.trim().length < 10) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    if (!regData.email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (!regData.password || regData.password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        first_name: regData.first_name.trim(),
+        last_name: regData.last_name.trim() || undefined,
+        phone: regData.phone.trim(),
+        email: regData.email.toLowerCase().trim(),
+        password: regData.password,
+        roles: ['patient'],
+      };
+
+      const { user, token } = await register(payload);
+      saveUserSession(user, token);
+
+      setSuccess('Account created successfully! Redirecting...');
+
+      setTimeout(() => {
+        if (redirectUrl) {
+          router.push(redirectUrl);
+        } else {
+          router.push('/');
+        }
+      }, 500);
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        'Registration failed. Please check your details.';
+      setError(message);
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="login-page">
-
-      {/* ── Top Navbar ── */}
-      <nav className="navbar navbar-light bg-white border-bottom py-3 px-4">
-        <Link href="/" className="navbar-brand d-flex align-items-center gap-2 fw-bold text-decoration-none">
-          <div className="login-nav-logo">
-            <span className="login-nav-plus">+</span>
-          </div>
-          <span>
-            <span className="login-nav-brand-green">Medi </span>
-            <span className="login-nav-brand-dark">Growth</span>
-          </span>
-        </Link>
-        <span className="text-muted small">Role-based access portal</span>
-      </nav>
-
       {/* ── Body ── */}
       <div className="login-body">
         <div className="login-container">
 
           {/* ── Left Panel ── */}
-          <div className="login-left d-none d-md-flex flex-column justify-content-between">
+          <div className="login-left d-none d-md-flex flex-column justify-content-center">
 
             <div className="login-left-brand">
               <div className="login-left-logo">👑</div>
               <h2 className="login-left-title">Medi Growth Portal</h2>
               <p className="login-left-subtitle">
-                One login for all roles — the system automatically directs you to your panel.
+                One unified portal for Patients, Doctors, and Clinic Administrators.
               </p>
 
               {/* Role cards */}
               <div className="login-roles">
-                {ROLE_CARDS.map(rc => (
+                {ROLE_CARDS.map((rc) => (
                   <div key={rc.role} className="login-role-card">
                     <span className="login-role-card-icon">{rc.icon}</span>
                     <div>
@@ -95,96 +167,237 @@ export default function LoginForm() {
                 ))}
               </div>
             </div>
-
-            {/* Login info */}
-            <div className="login-demo-section">
-              <p className="login-demo-label">🔐 Secure Login</p>
-              <p className="text-white-50 small mb-0">
-                Sign in with your registered email and password.
-                You will be redirected to your panel based on your role.
-              </p>
-            </div>
           </div>
 
           {/* ── Right Form Panel ── */}
           <div className="login-right">
-            <h1 className="login-form-title">Welcome back 👋</h1>
-            <p className="login-form-subtitle">
-              Enter your credentials — we&apos;ll take you to your panel automatically.
-            </p>
 
-            <form onSubmit={handleSubmit} noValidate>
-
-              {/* Error */}
-              {error && (
-                <div className="alert alert-danger login-alert d-flex align-items-center gap-2 py-2 px-3 mb-3">
-                  <span>⚠️</span> {error}
-                </div>
-              )}
-
-              {/* Email */}
-              <div className="mb-3">
-                <label htmlFor="login-email" className="login-form-label">
-                  Email Address
-                </label>
-                <input
-                  id="login-email"
-                  type="email"
-                  className="form-control login-input"
-                  placeholder="your@email.com"
-                  value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                  autoComplete="email"
-                />
-              </div>
-
-              {/* Password */}
-              <div className="mb-4">
-                <label htmlFor="login-password" className="login-form-label">
-                  Password
-                </label>
-                <div className="input-group">
-                  <input
-                    id="login-password"
-                    type={showPass ? 'text' : 'password'}
-                    className="form-control login-input border-end-0"
-                    placeholder="Enter your password"
-                    value={form.password}
-                    onChange={e => setForm({ ...form, password: e.target.value })}
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary login-eye-btn border-start-0"
-                    onClick={() => setShowPass(!showPass)}
-                  >
-                    {showPass ? '🙈' : '👁️'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Submit */}
+            {/* Tab Switcher */}
+            <div className="login-tabs-nav">
               <button
-                type="submit"
-                className="login-submit-btn mb-3"
-                disabled={loading}
+                type="button"
+                className={`login-tab-btn ${activeTab === 'login' ? 'active' : ''}`}
+                onClick={() => handleTabChange('login')}
               >
-                {loading
-                  ? <><span className="spinner-border spinner-border-sm me-2" role="status" /> Verifying...</>
-                  : 'Sign In →'
-                }
+                <span>Sign In</span>
               </button>
+              <button
+                type="button"
+                className={`login-tab-btn ${activeTab === 'register' ? 'active' : ''}`}
+                onClick={() => handleTabChange('register')}
+              >
+                <span>Register</span>
+                <span className="login-tab-badge">Patient</span>
+              </button>
+            </div>
 
-              {/* Info text */}
-              <p className="text-center text-muted small mb-0">
-                Your role is detected automatically from our system.
-                <br />Unauthorised users cannot access any panel.
-              </p>
-            </form>
+            {/* ═══════════ TAB 1: SIGN IN ═══════════ */}
+            {activeTab === 'login' && (
+              <div>
+                <h1 className="login-form-title">Welcome back 👋</h1>
+                <p className="login-form-subtitle">
+                  Enter your credentials — we&apos;ll direct you to your destination automatically.
+                </p>
 
-            <p className="login-footer-note">
-              Medi Growth © 2026 · Secure Role-Based Access
-            </p>
+                <form onSubmit={handleLoginSubmit} noValidate>
+
+                  {/* Error / Success alerts */}
+                  {error && (
+                    <div className="alert alert-danger login-alert d-flex align-items-center gap-2 py-2 px-3 mb-3">
+                      <span>⚠️</span> <span>{error}</span>
+                    </div>
+                  )}
+
+                  {/* Email */}
+                  <div className="mb-3">
+                    <label htmlFor="login-email" className="login-form-label">
+                      Email Address
+                    </label>
+                    <input
+                      id="login-email"
+                      type="email"
+                      className="form-control login-input"
+                      placeholder="your@email.com"
+                      value={loginData.email}
+                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="mb-4">
+                    <label htmlFor="login-password" className="login-form-label">
+                      Password
+                    </label>
+                    <div className="input-group">
+                      <input
+                        id="login-password"
+                        type={showPass ? 'text' : 'password'}
+                        className="form-control login-input border-end-0"
+                        placeholder="Enter your password"
+                        value={loginData.password}
+                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                        autoComplete="current-password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary login-eye-btn border-start-0"
+                        onClick={() => setShowPass(!showPass)}
+                      >
+                        {showPass ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    className="login-submit-btn mb-2"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <><span className="spinner-border spinner-border-sm me-2" role="status" /> Signing In...</>
+                    ) : (
+                      'Sign In →'
+                    )}
+                  </button>
+
+                  <p className="login-switch-text">
+                    New patient? 
+                    <button
+                      type="button"
+                      className="login-switch-btn"
+                      onClick={() => handleTabChange('register')}
+                    >
+                      Create an account
+                    </button>
+                  </p>
+                </form>
+              </div>
+            )}
+
+            {/* ═══════════ TAB 2: REGISTER (PATIENT) ═══════════ */}
+            {activeTab === 'register' && (
+              <div>
+                <h1 className="login-form-title mb-4">Create Patient Account</h1>
+
+                <form onSubmit={handleRegisterSubmit} noValidate>
+
+                  {/* Alerts */}
+                  {error && (
+                    <div className="alert alert-danger login-alert d-flex align-items-center gap-2 py-2 px-3 mb-3">
+                      <span>⚠️</span> <span>{error}</span>
+                    </div>
+                  )}
+                  {success && (
+                    <div className="alert alert-success login-alert d-flex align-items-center gap-2 py-2 px-3 mb-3">
+                      <span>✅</span> <span>{success}</span>
+                    </div>
+                  )}
+
+                  {/* Names (2 columns) */}
+                  <div className="login-form-row mb-3">
+                    <div>
+                      <label className="login-form-label">First Name *</label>
+                      <input
+                        type="text"
+                        className="form-control login-input"
+                        placeholder="e.g. Rahul"
+                        value={regData.first_name}
+                        onChange={(e) => setRegData({ ...regData, first_name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="login-form-label">Last Name</label>
+                      <input
+                        type="text"
+                        className="form-control login-input"
+                        placeholder="e.g. Patel"
+                        value={regData.last_name}
+                        onChange={(e) => setRegData({ ...regData, last_name: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone & Email (2 columns) */}
+                  <div className="login-form-row mb-3">
+                    <div>
+                      <label className="login-form-label">Mobile Number *</label>
+                      <input
+                        type="tel"
+                        className="form-control login-input"
+                        placeholder="10-digit number"
+                        maxLength={10}
+                        value={regData.phone}
+                        onChange={(e) => setRegData({ ...regData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="login-form-label">Email Address *</label>
+                      <input
+                        type="email"
+                        className="form-control login-input"
+                        placeholder="your@email.com"
+                        value={regData.email}
+                        onChange={(e) => setRegData({ ...regData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password */}
+                  <div className="mb-4">
+                    <label className="login-form-label">Password *</label>
+                    <div className="input-group">
+                      <input
+                        type={showPass ? 'text' : 'password'}
+                        className="form-control login-input border-end-0"
+                        placeholder="Create a password (min. 6 chars)"
+                        value={regData.password}
+                        onChange={(e) => setRegData({ ...regData, password: e.target.value })}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary login-eye-btn border-start-0"
+                        onClick={() => setShowPass(!showPass)}
+                      >
+                        {showPass ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    className="login-submit-btn mb-2"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <><span className="spinner-border spinner-border-sm me-2" role="status" /> Registering...</>
+                    ) : (
+                      'Create Account & Sign In →'
+                    )}
+                  </button>
+
+                  <p className="login-switch-text">
+                    Already have an account? 
+                    <button
+                      type="button"
+                      className="login-switch-btn"
+                      onClick={() => handleTabChange('login')}
+                    >
+                      Sign In
+                    </button>
+                  </p>
+                </form>
+              </div>
+            )}
+
           </div>
 
         </div>
@@ -192,3 +405,12 @@ export default function LoginForm() {
     </div>
   );
 }
+
+export default function LoginForm(props) {
+  return (
+    <Suspense fallback={<div className="panel-loading">Loading portal...</div>}>
+      <LoginFormContent {...props} />
+    </Suspense>
+  );
+}
+

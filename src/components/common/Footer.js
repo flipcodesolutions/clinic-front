@@ -30,11 +30,11 @@ export default function Footer() {
               PRODUCT
             </h6>
             <ul className="list-unstyled d-flex flex-column gap-2 small">
-              <li><Link href="/services" className="text-secondary text-decoration-none hover-link">Find a doctor</Link></li>
+              <li><Link href="/finddoctor" className="text-secondary text-decoration-none hover-link">Find a doctor</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none hover-link">Health Store</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none hover-link">Lab Tests</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none hover-link">Health Insurance</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">For doctors</Link></li>
+              <li><Link href="/for-doctors" className="text-secondary text-decoration-none hover-link">For doctors</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none hover-link">Product tour</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none hover-link">Pricing</Link></li>
             </ul>
@@ -46,12 +46,12 @@ export default function Footer() {
               SPECIALTIES
             </h6>
             <ul className="list-unstyled d-flex flex-column gap-2 small">
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">General practice</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">Dentistry</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">Homeopathy</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">Dermatology</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">Pediatrics</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">Physiotherapy</Link></li>
+              <li><Link href="/specialties" className="text-secondary text-decoration-none hover-link">General practice</Link></li>
+              <li><Link href="/specialties" className="text-secondary text-decoration-none hover-link">Dentistry</Link></li>
+              <li><Link href="/specialties" className="text-secondary text-decoration-none hover-link">Homeopathy</Link></li>
+              <li><Link href="/specialties" className="text-secondary text-decoration-none hover-link">Dermatology</Link></li>
+              <li><Link href="/specialties" className="text-secondary text-decoration-none hover-link">Pediatrics</Link></li>
+              <li><Link href="/specialties" className="text-secondary text-decoration-none hover-link">Physiotherapy</Link></li>
             </ul>
           </div>
 
@@ -61,11 +61,11 @@ export default function Footer() {
               TRUST
             </h6>
             <ul className="list-unstyled d-flex flex-column gap-2 small">
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">Security</Link></li>
+              <li><Link href="/security" className="text-secondary text-decoration-none hover-link">Security</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none hover-link">Customer stories</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none hover-link">HIPAA / GDPR</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">Cervical Cancer Awareness</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none hover-link">Find a doctor</Link></li>
+              <li><Link href="/cervical-cancer" className="text-secondary text-decoration-none hover-link">Cervical Cancer Awareness</Link></li>
+              <li><Link href="/finddoctor" className="text-secondary text-decoration-none hover-link">Find a doctor</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none hover-link">Book a demo</Link></li>
             </ul>
           </div>

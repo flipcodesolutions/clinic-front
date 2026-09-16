@@ -17,3 +17,17 @@ export async function login(email, password) {
 
   throw new Error(response.data?.message || 'Login failed');
 }
+
+/**
+ * Register a new user / patient.
+ */
+export async function register(userData) {
+  const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
+
+  if (response.data?.success) {
+    return response.data.data;
+  }
+
+  throw new Error(response.data?.message || 'Registration failed');
+}
+

@@ -82,12 +82,12 @@ export default function DoctorsDashboard() {
                 return (
                   <div key={idx} className="col">
                     <div className="doctors-dashboard-feature-item">
-                      <div className="doctors-dashboard-feature-icon-wrapper d-flex align-items-center justify-content-center" style={{ width: "32px", height: "32px", overflow: "hidden" }}>
+                      <div className="doctors-dashboard-feature-icon-wrapper d-flex align-items-center justify-content-center doctors-dashboard-feature-icon-wrapper-sized">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={feat.icon.src}
                           alt={feat.title}
-                          style={{ width: "100%", height: "100%", objectFit: "contain", filter: "brightness(0) invert(1)" }}
+                          className="doctors-dashboard-feature-icon-img"
                         />
                       </div>
                       <h5 className="doctors-dashboard-feature-title">

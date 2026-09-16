@@ -79,15 +79,7 @@ export default function PricingSection() {
   ];
 
   return (
-    <section 
-      className="pricing-section"
-      style={{
-        backgroundImage: `url(${pricingBgImg.src})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
-      }}
-    >
+    <section className="pricing-section pricing-section-bg">
       <div className="container">
         {/* Top Header */}
         <div className="text-center mb-5">

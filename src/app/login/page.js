@@ -1,10 +1,15 @@
+import { Suspense } from 'react';
 import LoginForm from '@/components/login/LoginForm';
 
 export const metadata = {
-  title: 'Login - Medi Growth',
-  description: 'Sign in to your Medi Growth panel. Role-based access.',
+  title: 'Login & Register - Medi Growth',
+  description: 'Sign in or register for Medi Growth portal. Role-based access.',
 };
 
 export default function LoginPage() {
-  return <LoginForm />;
+  return (
+    <Suspense fallback={<div className="panel-loading">Loading portal...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
 }

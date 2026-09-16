@@ -28,6 +28,7 @@ export default function DoctorProfile() {
     bio: '',
     department: '',
     clinic_name: '',
+    offers_video_consult: false,
   });
 
   const getFullImageUrl = (url) => {
@@ -68,6 +69,7 @@ export default function DoctorProfile() {
           bio: data.bio || '',
           department: data.department || dept.name || '',
           clinic_name: clinic.name || data.clinic_name || '',
+          offers_video_consult: Boolean(data.offers_video_consult),
         });
       }
     } catch (error) {
@@ -376,7 +378,20 @@ export default function DoctorProfile() {
               />
             </div>
 
-            {/* 15. Bio */}
+            {/* 15. Video Consult */}
+            <div>
+              <label className="admin-form-label">Video Consult Option</label>
+              <select
+                className="admin-select"
+                value={form.offers_video_consult ? 'yes' : 'no'}
+                onChange={(e) => setForm({ ...form, offers_video_consult: e.target.value === 'yes' })}
+              >
+                <option value="yes">Available (Offer Video Consultations)</option>
+                <option value="no">Not Available (In-Clinic Only)</option>
+              </select>
+            </div>
+
+            {/* 16. Bio */}
             <div className="admin-form-full">
               <label className="admin-form-label">Bio</label>
               <textarea

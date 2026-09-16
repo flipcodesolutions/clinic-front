@@ -19,6 +19,8 @@ const emptyForm = {
   name: '',
   description: '',
   status: 'active',
+  is_parent: false,
+  parent_id: '',
 };
 
 const defaultFilters = {
@@ -30,6 +32,7 @@ const defaultFilters = {
 
 export default function DepartmentsManager() {
   const [departments, setDepartments] = useState([]);
+  const [parentCategories, setParentCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm);
@@ -47,6 +50,15 @@ export default function DepartmentsManager() {
     totalPages: 1,
     limit: 10,
   });
+
+  const loadParentCategories = async () => {
+    try {
+      const result = await getDepartments({ is_parent: true, limit: 100 });
+      setParentCategories(result.data || []);
+    } catch (err) {
+      console.error('Failed to load parent categories:', err);
+    }
+  };
 
   const loadDepartments = async (filters = activeFilters) => {
     try {
@@ -71,6 +83,7 @@ export default function DepartmentsManager() {
 
   useEffect(() => {
     let isMounted = true;
+    loadParentCategories();
     getDepartments(defaultFilters)
       .then((result) => {
         if (isMounted) {
@@ -145,6 +158,7 @@ export default function DepartmentsManager() {
     setForm(emptyForm);
     setFormError('');
     setShowModal(true);
+    loadParentCategories();
   };
 
   const handleOpenEdit = async (department) => {
@@ -152,6 +166,7 @@ export default function DepartmentsManager() {
     setFormError('');
     setShowModal(true);
     setLoadingForm(true);
+    loadParentCategories();
 
     try {
       const data = await getDepartmentById(department.id);
@@ -159,6 +174,8 @@ export default function DepartmentsManager() {
         name: data.name || '',
         description: data.description || '',
         status: data.status || 'active',
+        is_parent: Boolean(data.is_parent),
+        parent_id: data.parent_id ? String(data.parent_id) : '',
       });
     } catch (err) {
       const message = err.response?.data?.message || err.message || 'Failed to load department details.';
@@ -168,6 +185,8 @@ export default function DepartmentsManager() {
         name: department.name || '',
         description: department.description || '',
         status: department.status || 'active',
+        is_parent: Boolean(department.is_parent),
+        parent_id: department.parent_id ? String(department.parent_id) : '',
       });
     } finally {
       setLoadingForm(false);
@@ -198,16 +217,20 @@ export default function DepartmentsManager() {
         name: form.name.trim(),
         description: form.description.trim(),
         status: form.status,
+        is_parent: Boolean(form.is_parent),
+        parent_id: form.is_parent ? null : (form.parent_id ? Number(form.parent_id) : null),
       };
 
       if (editingId) {
         const result = await updateDepartment(editingId, payload);
         showSuccess(result.message);
         await loadDepartments(activeFilters);
+        loadParentCategories();
       } else {
         const result = await createDepartment(payload);
         showSuccess(result.message);
         await loadDepartments(activeFilters);
+        loadParentCategories();
       }
 
       setForm(emptyForm);
@@ -242,6 +265,7 @@ export default function DepartmentsManager() {
     try {
       const deleteResult = await deleteDepartment(department.id);
       await loadDepartments(activeFilters);
+      loadParentCategories();
       showSuccess(deleteResult.message);
     } catch (err) {
       showError(err, 'Failed to delete department.');
@@ -318,6 +342,7 @@ export default function DepartmentsManager() {
               <tr>
                 <th>ID</th>
                 <th>Department Name</th>
+                <th>Category Type</th>
                 <th>Description</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -326,19 +351,19 @@ export default function DepartmentsManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="6" className="admin-table-center-msg">
                     Loading departments...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#dc2626' }}>
+                  <td colSpan="6" className="admin-table-center-error">
                     {error}
                   </td>
                 </tr>
               ) : departments.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="6" className="admin-table-center-msg">
                     No departments found.
                   </td>
                 </tr>
@@ -348,16 +373,29 @@ export default function DepartmentsManager() {
 
                   return (
                     <tr key={d.id}>
-                      <td style={{ color: '#94a3b8', fontSize: 13, width: 80 }}>DEP-{d.id}</td>
+                      <td className="admin-cell-id">DEP-{d.id}</td>
                       <td>
-                        <span style={{ fontWeight: 600 }}>{d.name}</span>
+                        <span className="admin-cell-title">{d.name}</span>
                       </td>
                       <td>
-                        <span style={{ fontSize: 13, color: '#64748b' }}>{d.description || '—'}</span>
+                        {d.is_parent ? (
+                          <span className="admin-badge-parent">
+                            ★ Parent Category
+                          </span>
+                        ) : d.parent?.name ? (
+                          <span className="admin-badge-subdept">
+                            📁 {d.parent.name}
+                          </span>
+                        ) : (
+                          <span className="admin-badge-independent">— Independent</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="admin-cell-text-muted">{d.description || '—'}</span>
                       </td>
                       <td>
                         <button
-                          style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                          className="admin-btn-transparent"
                           onClick={() => toggleStatus(d)}
                           title="Click to toggle status"
                         >
@@ -383,21 +421,11 @@ export default function DepartmentsManager() {
         </div>
 
         {!loading && !error && pagination.totalPages > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderTop: '1px solid #e2e8f0',
-              flexWrap: 'wrap',
-              gap: 12,
-            }}
-          >
-            <span style={{ fontSize: 14, color: '#64748b' }}>
+          <div className="admin-pagination-bar">
+            <span className="admin-pagination-info">
               Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total departments)
             </span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="admin-pagination-btns">
               <button
                 className="admin-btn-reset"
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
@@ -425,7 +453,7 @@ export default function DepartmentsManager() {
             </h3>
 
             {loadingForm ? (
-              <p style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+              <p className="admin-table-center-msg">
                 Loading department details...
               </p>
             ) : (
@@ -435,13 +463,64 @@ export default function DepartmentsManager() {
                     <label className="admin-form-label">Department Name *</label>
                     <input
                       className="admin-input"
-                      placeholder="e.g. Ophthalmology"
+                      placeholder="e.g. Ophthalmology, Dental, etc."
                       value={form.name}
                       onChange={e => setForm({ ...form, name: e.target.value })}
                       required
                       autoFocus
                     />
                   </div>
+
+                  <div className="admin-form-full">
+                    <div className="admin-checkbox-box">
+                      <label className="admin-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={form.is_parent}
+                          onChange={e => {
+                            const checked = e.target.checked;
+                            setForm({
+                              ...form,
+                              is_parent: checked,
+                              parent_id: checked ? '' : form.parent_id,
+                            });
+                          }}
+                          className="admin-checkbox-input"
+                        />
+                        <div>
+                          <div className="admin-checkbox-title">
+                            Is Parent Category?
+                          </div>
+                          <div className="admin-checkbox-subtitle">
+                            Tick this if this department is a top-level category (e.g. Medical, Surgical, Dental, Wellness, Mental Health).
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {!form.is_parent && (
+                    <div className="admin-form-full">
+                      <label className="admin-form-label">Select Parent Category</label>
+                      <select
+                        className="admin-select"
+                        value={form.parent_id}
+                        onChange={e => setForm({ ...form, parent_id: e.target.value })}
+                      >
+                        <option value="">-- None (Independent Specialty) --</option>
+                        {parentCategories
+                          .filter(p => !editingId || p.id !== editingId)
+                          .map(parent => (
+                            <option key={parent.id} value={parent.id}>
+                              {parent.name}
+                            </option>
+                          ))}
+                      </select>
+                      <span className="admin-field-helper">
+                        Choose the parent category this specialty belongs to (e.g. choose &quot;Dental&quot; for Dentist).
+                      </span>
+                    </div>
+                  )}
 
                   <div className="admin-form-full">
                     <label className="admin-form-label">Description</label>
@@ -467,7 +546,7 @@ export default function DepartmentsManager() {
                 </div>
 
                 {formError && (
-                  <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
+                  <p className="admin-form-error-msg">{formError}</p>
                 )}
 
                 <div className="admin-form-actions">

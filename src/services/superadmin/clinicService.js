@@ -96,3 +96,15 @@ export async function deleteClinic(id) {
 
   throw new Error(response.data?.message || 'Failed to delete clinic');
 }
+
+/**
+ * Resolve Google Maps Short/Long URL to coordinates
+ */
+export async function resolveMapUrl(url) {
+  try {
+    const response = await apiClient.post('/admin/clinics/resolve-map', { url });
+    return response.data;
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}

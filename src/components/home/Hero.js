@@ -7,15 +7,7 @@ import bgImg from "@/assets/images/Homepage/bg.png";
 
 export default function Hero() {
   return (
-    <section 
-      className="hero-section-custom"
-      style={{
-        backgroundImage: `url(${bgImg.src})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
-      }}
-    >
+    <section className="hero-section-custom hero-section-bg">
       {/* Background decoration elements */}
       <div className="decor-dot-grid"></div>
       <div className="decor-circle-lines"></div>
@@ -43,7 +35,7 @@ export default function Hero() {
             </p>
 
             {/* Interactive Search Card */}
-            <Link href="/services" className="search-card-custom d-flex align-items-center justify-content-between mb-4">
+            <Link href="/finddoctor" className="search-card-custom d-flex align-items-center justify-content-between mb-4">
               <div className="d-flex align-items-center gap-3">
                 <div className="search-icon-wrapper-custom">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

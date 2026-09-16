@@ -41,7 +41,7 @@ export default function About() {
           <div className="row justify-content-center">
             <div className="col-lg-8 text-center mb-5">
               <h2 className="fw-bold text-dark mb-4">Our Mission</h2>
-              <p className="lead text-secondary" style={{ lineHeight: "1.8" }}>
+              <p className="lead text-secondary about-mission-lead">
                 Medi Growth, a brand operated by <strong>Silver Webbuzz Pvt Ltd</strong>, was founded on the belief that healthcare technology should be modern, reliable, and exceptionally designed. We remove the administrative burden of running a clinic by consolidating scheduling, prescriptions, billing, and patient records into a single, cohesive dashboard.
               </p>
             </div>
@@ -56,7 +56,7 @@ export default function About() {
                     {val.icon}
                   </div>
                   <h4 className="fw-bold text-dark mb-3">{val.title}</h4>
-                  <p className="text-secondary small mb-0" style={{ lineHeight: "1.6" }}>
+                  <p className="text-secondary small mb-0 about-value-desc">
                     {val.desc}
                   </p>
                 </div>

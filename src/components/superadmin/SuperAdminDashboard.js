@@ -96,7 +96,7 @@ export default function SuperAdminDashboard() {
       </div>
 
       {/* Recent Clinics Table */}
-      <h3 style={{ margin: '30px 0 16px 0', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+      <h3 className="admin-section-subtitle">
         Recent Clinic Registrations
       </h3>
       <div className="admin-table-card">
@@ -113,13 +113,13 @@ export default function SuperAdminDashboard() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="4" className="admin-table-center-msg">
                     Loading recent clinics...
                   </td>
                 </tr>
               ) : recentClinics.length === 0 ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="4" className="admin-table-center-msg">
                     No registered clinics found.
                   </td>
                 </tr>
@@ -130,20 +130,20 @@ export default function SuperAdminDashboard() {
                   return (
                     <tr key={c.id}>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div className="admin-cell-flex">
                           <span className="clinic-avatar">🏥</span>
                           <div>
-                            <span style={{ fontWeight: 600 }}>{c.name}</span>
-                            <div style={{ fontSize: 12, color: '#94a3b8' }}>ID: CLN-{c.id}</div>
+                            <span className="admin-cell-title">{c.name}</span>
+                            <div className="admin-cell-subtitle">ID: CLN-{c.id}</div>
                           </div>
                         </div>
                       </td>
                       <td>
-                        <div style={{ fontSize: 13, color: '#64748b' }}>{c.email || '—'}</div>
-                        <div style={{ fontSize: 13, color: '#64748b' }}>{c.phone || '—'}</div>
+                        <div className="admin-cell-text-muted">{c.email || '—'}</div>
+                        <div className="admin-cell-text-muted">{c.phone || '—'}</div>
                       </td>
                       <td>
-                        <div style={{ fontSize: 13, color: '#475569' }}>
+                        <div className="admin-cell-text">
                           {[c.city, c.state].filter(Boolean).join(', ') || c.address || '—'}
                         </div>
                       </td>

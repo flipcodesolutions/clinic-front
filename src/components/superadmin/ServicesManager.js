@@ -332,19 +332,19 @@ export default function ServicesManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="6" className="admin-table-center-msg">
                     Loading services...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#dc2626' }}>
+                  <td colSpan="6" className="admin-table-center-error">
                     {error}
                   </td>
                 </tr>
               ) : services.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="6" className="admin-table-center-msg">
                     No services found.
                   </td>
                 </tr>
@@ -354,21 +354,21 @@ export default function ServicesManager() {
 
                   return (
                     <tr key={s.id}>
-                      <td style={{ color: '#94a3b8', fontSize: 13, width: 80 }}>SRV-{s.id}</td>
+                      <td className="admin-cell-id">SRV-{s.id}</td>
                       <td>
-                        <span style={{ fontWeight: 600 }}>{s.name}</span>
+                        <span className="admin-cell-title">{s.name}</span>
                       </td>
                       <td>
-                        <span style={{ fontSize: 13, color: '#64748b' }}>{s.description || '—'}</span>
+                        <span className="admin-cell-text-muted">{s.description || '—'}</span>
                       </td>
                       <td>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: '#0f172a' }}>
+                        <span className="admin-cell-text-bold">
                           {s.price ? `₹${s.price}` : 'Free'}
                         </span>
                       </td>
                       <td>
                         <button
-                          style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                          className="admin-btn-transparent"
                           onClick={() => toggleStatus(s)}
                           title="Click to toggle status"
                         >
@@ -394,21 +394,11 @@ export default function ServicesManager() {
         </div>
 
         {!loading && !error && pagination.totalPages > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderTop: '1px solid #e2e8f0',
-              flexWrap: 'wrap',
-              gap: 12,
-            }}
-          >
-            <span style={{ fontSize: 14, color: '#64748b' }}>
+          <div className="admin-pagination-bar">
+            <span className="admin-pagination-info">
               Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total services)
             </span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="admin-pagination-btns">
               <button
                 className="admin-btn-reset"
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
@@ -436,7 +426,7 @@ export default function ServicesManager() {
             </h3>
 
             {loadingForm ? (
-              <p style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+              <p className="admin-table-center-msg">
                 Loading service details...
               </p>
             ) : (
@@ -490,7 +480,7 @@ export default function ServicesManager() {
                 </div>
 
                 {formError && (
-                  <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
+                  <p className="admin-form-error-msg">{formError}</p>
                 )}
 
                 <div className="admin-form-actions">

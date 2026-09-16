@@ -1,11 +1,18 @@
-import DoctorBookingDetails from '@/components/finddoctor/DoctorBookingDetails';
+'use client';
 
-export const metadata = {
-  title: 'Doctor Details & Slot Booking - Medi Growth',
-  description: 'Book your appointment online with top verified doctors.',
-};
+import React from "react";
+import { useParams } from "next/navigation";
+import DoctorBookingDetails from "@/components/finddoctor/DoctorBookingDetails";
+import FooterCta from "@/components/home/FooterCta";
 
-export default async function DoctorDetailPage({ params }) {
-  const { id } = await params;
-  return <DoctorBookingDetails doctorId={id} />;
+export default function DoctorDetailPage() {
+  const params = useParams();
+  const doctorId = params?.id;
+
+  return (
+    <div>
+      <DoctorBookingDetails doctorId={doctorId} />
+      <FooterCta />
+    </div>
+  );
 }

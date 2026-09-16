@@ -110,7 +110,7 @@ export default function DoctorDashboard() {
       </div>
 
       {/* Recent Appointments Table Heading */}
-      <h3 className="admin-section-heading" style={{ marginTop: '24px' }}>
+      <h3 className="admin-section-heading admin-section-heading-spacing">
         Recent Appointments
       </h3>
 

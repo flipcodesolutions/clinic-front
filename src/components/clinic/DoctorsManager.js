@@ -14,7 +14,9 @@ import {
 } from "@/services/clinic/doctorService";
 import { getClinicDepartments } from "@/services/clinic/departmentService";
 import { getClinics } from "@/services/superadmin/clinicService";
+import { uploadFile } from "@/services/clinic/galleryService";
 import { showError, showSuccess } from "@/utils/toast";
+import { getFullImageUrl } from "@/utils/imageHelper";
 
 const defaultFilters = {
   search: "",
@@ -54,18 +56,7 @@ function formatLanguages(val) {
 }
 
 function formatImageUrl(url) {
-  if (!url) return "";
-  if (
-    url.startsWith("data:") ||
-    url.startsWith("http://") ||
-    url.startsWith("https://")
-  ) {
-    return url;
-  }
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "")
-    : "http://localhost:5000";
-  return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+  return getFullImageUrl(url);
 }
 
 function SearchableDepartmentSelect({ departments, value, onChange }) {
@@ -292,6 +283,7 @@ export default function DoctorsManager() {
     dob: "",
     department_id: "",
     clinic_id: "",
+    offers_video_consult: false,
   });
 
   const loadDoctorsList = async (filters = activeFilters) => {
@@ -357,7 +349,7 @@ export default function DoctorsManager() {
       search: search.trim(),
       status: statusFilter,
       page: 1,
-      limit: activeFilters.limit,
+      limit: activeFilters.limit || 10,
     };
     setActiveFilters(filters);
     loadDoctorsList(filters);
@@ -449,6 +441,7 @@ export default function DoctorsManager() {
       dob: "",
       department_id: departments.length > 0 ? departments[0].id : "",
       clinic_id: clinics.length > 0 ? clinics[0].id : "",
+      offers_video_consult: false,
       status: "active",
     });
     setPhotoPreview("");
@@ -477,6 +470,7 @@ export default function DoctorsManager() {
       department_id:
         doc.department_id || (departments.length > 0 ? departments[0].id : ""),
       clinic_id: doc.clinic_id || (clinics.length > 0 ? clinics[0].id : ""),
+      offers_video_consult: Boolean(doc.offers_video_consult),
       status: (doc.status || "active").toLowerCase(),
     });
     setPhotoPreview(doc.photo_url || "");
@@ -1294,6 +1288,24 @@ export default function DoctorsManager() {
                   </select>
                 </div>
 
+                {/* Video Consult */}
+                <div>
+                  <label className="admin-form-label">Video Consult</label>
+                  <select
+                    className="admin-select"
+                    value={formData.offers_video_consult ? "yes" : "no"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        offers_video_consult: e.target.value === "yes",
+                      })
+                    }
+                  >
+                    <option value="yes">Available (Offers Video Consult)</option>
+                    <option value="no">Not Available (In-Clinic Only)</option>
+                  </select>
+                </div>
+
                 {/* Bio */}
                 <div className="admin-form-full">
                   <label className="admin-form-label">Doctor Bio</label>
@@ -1423,6 +1435,14 @@ export default function DoctorsManager() {
               <div>
                 <strong>Status:</strong> {formatStatus(viewDoctor.status)}
               </div>
+              <div>
+                <strong>Video Consult:</strong>{" "}
+                {viewDoctor.offers_video_consult ? (
+                  <span className="doc-status-available">Available</span>
+                ) : (
+                  <span className="doc-status-unavailable">Not Available</span>
+                )}
+              </div>
             </div>
 
             {viewDoctor.bio && (
@@ -1523,13 +1543,31 @@ export default function DoctorsManager() {
                 type="file"
                 accept="image/*"
                 className="admin-input"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    handleFileUpload(file, (dataUrl) => {
-                      setPhotoUrlInput(dataUrl);
-                      setPhotoPreview(dataUrl);
-                    });
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const res = await uploadFile(file, 'doctors');
+                    const uploadedUrl = res?.data?.fullUrl || res?.data?.url || res?.fileUrl || res?.url;
+                    if (uploadedUrl) {
+                      setPhotoUrlInput(uploadedUrl);
+                      setPhotoPreview(uploadedUrl);
+                    } else {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setPhotoUrlInput(reader.result);
+                        setPhotoPreview(reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  } catch (err) {
+                    console.error('File upload error:', err);
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setPhotoUrlInput(reader.result);
+                      setPhotoPreview(reader.result);
+                    };
+                    reader.readAsDataURL(file);
                   }
                 }}
               />

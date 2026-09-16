@@ -31,11 +31,11 @@ export default function DoctorAppointments() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Filters — 'booked' is now the actual DB value
+  // Filtes 
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('booked');
+  const [statusFilter, setStatusFilter] = useState('');
   const [visitTypeFilter, setVisitTypeFilter] = useState('');
-  const [activeFilters, setActiveFilters] = useState({ search: '', status: 'booked', visitType: '' });
+  const [activeFilters, setActiveFilters] = useState({ search: '', status: '', visitType: '' });
 
   // Bulk Checkbox Selection State
   const [selectedApptIds, setSelectedApptIds] = useState([]);
@@ -99,8 +99,8 @@ export default function DoctorAppointments() {
   }, []);
 
   useEffect(() => {
-    // Initial load with default booked filter
-    fetchData({ search: '', status: 'booked', visitType: '' });
+    // Initial load with All Statuses
+    fetchData({ search: '', status: '', visitType: '' });
 
     const handleClickOutside = (e) => {
       if (!e.target.closest('.admin-dots-dropdown-wrap')) {
@@ -123,7 +123,7 @@ export default function DoctorAppointments() {
 
   const handleApplyFilter = () => {
     const filters = { search: search.trim(), status: statusFilter, visitType: visitTypeFilter };
-    setActiveFilters(filters);   // client-side filter sync ke liye
+    setActiveFilters(filters);
     setCurrentPage(1);
     setSelectedApptIds([]);
     fetchData(filters);         
@@ -131,10 +131,10 @@ export default function DoctorAppointments() {
 
   const handleResetFilter = () => {
     setSearch('');
-    setStatusFilter('booked');
+    setStatusFilter('');
     setVisitTypeFilter('');
     setItemsPerPage(10);
-    const filters = { search: '', status: 'booked', visitType: '' };
+    const filters = { search: '', status: '', visitType: '' };
     setActiveFilters(filters);
     setCurrentPage(1);
     setSelectedApptIds([]);
@@ -433,7 +433,7 @@ export default function DoctorAppointments() {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '40px', textAlign: 'center' }}>
+                    <th className="doc-th-check-col">
                       <input
                         type="checkbox"
                         className="admin-checkbox"
@@ -462,7 +462,7 @@ export default function DoctorAppointments() {
 
                     return (
                       <tr key={apt.id} className={isSelected ? 'admin-row-selected' : ''}>
-                        <td style={{ textAlign: 'center' }}>
+                        <td className="doc-td-center">
                           <input
                             type="checkbox"
                             className="admin-checkbox"

@@ -4,6 +4,7 @@ export const ROLE_REDIRECT = {
   clinic: '/clinic-panel/dashboard',
   clinic_admin: '/clinic-panel/dashboard',
   doctor: '/doctor-panel/dashboard',
+  patient: '/',
 };
 
 /**
@@ -19,13 +20,13 @@ export function getAuthToken() {
  * Pick the main role when user has multiple roles.
  */
 export function getPrimaryRole(roles = []) {
-  const priority = ['super_admin', 'clinic_admin', 'clinic', 'doctor'];
+  const priority = ['super_admin', 'clinic_admin', 'clinic', 'doctor', 'patient'];
 
   for (const role of priority) {
     if (roles.includes(role)) return role;
   }
 
-  return roles[0] || null;
+  return roles[0] || 'patient';
 }
 
 /**
@@ -33,7 +34,7 @@ export function getPrimaryRole(roles = []) {
  */
 export function getRedirectPath(roles = []) {
   const role = getPrimaryRole(roles);
-  return ROLE_REDIRECT[role] || null;
+  return ROLE_REDIRECT[role] || '/';
 }
 
 /**

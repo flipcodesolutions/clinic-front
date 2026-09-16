@@ -39,8 +39,8 @@ export default function Card({
               {typeof Icon === "function" ? (
                 <Icon size={18} />
               ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={Icon.src || Icon} alt={title} style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+                
+                <img src={Icon.src || Icon} alt={title} className="common-card-img-24" />
               )}
             </div>
           )}
@@ -77,7 +77,7 @@ export default function Card({
                 <Icon size={22} />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={Icon.src || Icon} alt={title} style={{ width: "28px", height: "28px", objectFit: "contain" }} />
+                <img src={Icon.src || Icon} alt={title} className="common-card-img-28" />
               )}
             </div>
           )}

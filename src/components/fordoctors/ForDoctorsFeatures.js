@@ -90,8 +90,8 @@ export default function ForDoctorsFeatures() {
   }, []);
 
   return (
-    <section className="fordoctors-features-section pt-0 pb-5 px-0" style={{ paddingLeft: 0, paddingRight: 0 }}>
-      {/* Navigation Tabs (Full Width Bar) */}
+    <section className="fordoctors-features-section pt-0 pb-5 px-0">
+      {/* Navigation Tabs  */}
       <div className="fordoctors-tabs-bar-wrapper mb-5">
         <div className="container">
           <div className="fordoctors-tabs-container">

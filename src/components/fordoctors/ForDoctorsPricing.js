@@ -30,16 +30,16 @@ export default function ForDoctorsPricing() {
         {/* Header Section */}
         <div className="text-center mb-5">
           <div className="d-flex align-items-center justify-content-center gap-2 mb-3">
-            <div className="specialties-header-line" style={{ width: "40px", height: "1.5px", backgroundColor: "#15803d" }}></div>
-            <span className="text-uppercase fw-bold small text-brand-green" style={{ letterSpacing: "1.5px", color: "#15803d" }}>
+            <div className="specialties-header-line fdp-header-line"></div>
+            <span className="text-uppercase fw-bold small text-brand-green fdp-header-tag">
               PRICING
             </span>
-            <div className="specialties-header-line" style={{ width: "40px", height: "1.5px", backgroundColor: "#15803d" }}></div>
+            <div className="specialties-header-line fdp-header-line"></div>
           </div>
           <h2 className="display-5 fw-bold text-dark mb-3">
             One plan. Everything included.
           </h2>
-          <p className="text-muted col-lg-6 mx-auto" style={{ fontSize: "1.05rem", lineHeight: "1.6" }}>
+          <p className="text-muted col-lg-6 mx-auto fdp-header-desc">
             No tiers, no per-seat games, no surprise upsells. One annual price gets you the whole clinic system — and you start with a 30-day free trial, no card needed.
           </p>
         </div>
@@ -49,71 +49,49 @@ export default function ForDoctorsPricing() {
 
           {/* Left Column: Standard Plan Card */}
           <div className="col-lg-6 col-md-11">
-            <div
-              className="card h-100 p-4 bg-white shadow-sm"
-              style={{
-                borderRadius: "24px",
-                border: "2px solid #15803d",
-                boxShadow: "0 10px 30px rgba(21, 128, 61, 0.05)"
-              }}
-            >
+            <div className="card h-100 p-4 bg-white shadow-sm fdp-plan-card">
               {/* Card Header */}
               <div className="mb-3">
-                <span
-                  className="badge px-3 py-2 rounded-pill fw-bold mb-3"
-                  style={{
-                    backgroundColor: "#effaf5",
-                    color: "#15803d",
-                    fontSize: "0.75rem",
-                    letterSpacing: "0.5px"
-                  }}
-                >
+                <span className="badge px-3 py-2 rounded-pill fw-bold mb-3 fdp-plan-badge">
                   STANDARD PLAN
                 </span>
                 <div className="d-flex align-items-baseline gap-1 my-2">
                   <span className="fs-2 fw-semibold text-dark">₹</span>
-                  <span className="display-4 fw-bold text-dark" style={{ letterSpacing: "-1px" }}>16,000</span>
+                  <span className="display-4 fw-bold text-dark fdp-plan-amount">16,000</span>
                   <span className="text-muted fs-5 fw-normal ms-1">/year</span>
                 </div>
                 <div className="d-flex align-items-center gap-2 flex-wrap">
                   <span className="text-muted text-decoration-line-through small">₹17,988</span>
-                  <span
-                    className="badge rounded-pill fw-bold text-white px-2 py-1"
-                    style={{ backgroundColor: "#15803d", fontSize: "0.68rem" }}
-                  >
+                  <span className="badge rounded-pill fw-bold text-white px-2 py-1 fdp-save-badge">
                     Save 10%
                   </span>
                   <span className="text-muted small ms-1">+ 18% GST at checkout</span>
                 </div>
               </div>
 
-              <hr className="my-3" style={{ borderTop: "1px solid #e2e8f0" }} />
+              <hr className="my-3 fdp-hr" />
 
               {/* Card Features List */}
               <div className="mb-3">
                 <ul className="list-unstyled d-flex flex-column gap-2 mb-0">
                   {standardFeatures.map((feature, idx) => (
                     <li key={idx} className="d-flex align-items-start gap-3">
-                      <div
-                        className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 mt-1"
-                        style={{ width: "18px", height: "18px", backgroundColor: "#effaf5" }}
-                      >
-                        <FaCheck style={{ color: "#15803d", fontSize: "0.65rem" }} />
+                      <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 mt-1 fdp-feature-icon-wrap">
+                        <FaCheck className="fdp-feature-icon" />
                       </div>
-                      <span className="text-dark fw-medium" style={{ fontSize: "0.92rem" }}>{feature}</span>
+                      <span className="text-dark fw-medium fdp-feature-text">{feature}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <hr className="my-3" style={{ borderTop: "1px solid #e2e8f0" }} />
+              <hr className="my-3 fdp-hr" />
 
               {/* Card Footer Actions */}
               <div>
                 <Link
                   href="/signup"
-                  className="btn text-white w-100 py-2.5 rounded-pill fw-bold mb-3 d-flex align-items-center justify-content-center gap-2"
-                  style={{ backgroundColor: "#15803d", transition: "all 0.2s ease", fontSize: "1.05rem" }}
+                  className="btn text-white w-100 py-2.5 rounded-pill fw-bold mb-3 d-flex align-items-center justify-content-center gap-2 fdp-trial-btn"
                 >
                   Start 30-day free trial &rarr;
                 </Link>
@@ -133,19 +111,9 @@ export default function ForDoctorsPricing() {
             <div className="d-flex flex-column gap-3">
 
               {/* Add-on 1: Patient Connect */}
-              <div
-                className="card border shadow-sm p-3 bg-white"
-                style={{
-                  borderRadius: "20px",
-                  borderColor: "#f1f5f9",
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.02)"
-                }}
-              >
+              <div className="card border shadow-sm p-3 bg-white fdp-addon-card">
                 <div className="d-flex gap-3 align-items-start">
-                  <div
-                    className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-3"
-                    style={{ width: "48px", height: "48px", backgroundColor: "#effaf5" }}
-                  >
+                  <div className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-3 fdp-addon-icon-wrap">
                     <Image
                       src={patientConnectImg}
                       alt="Patient Connect"
@@ -154,13 +122,13 @@ export default function ForDoctorsPricing() {
                     />
                   </div>
                   <div className="flex-grow-1">
-                    <h5 className="fw-bold text-dark mb-2" style={{ fontSize: "1.05rem" }}>
+                    <h5 className="fw-bold text-dark mb-2 fdp-addon-title">
                       Patient Connect
                     </h5>
-                    <p className="text-muted small mb-2" style={{ lineHeight: "1.5" }}>
+                    <p className="text-muted small mb-2 fdp-addon-desc">
                       WhatsApp automation: appointment reminders, prescription delivery, follow-up nudges. Cuts no-show rates in half.
                     </p>
-                    <div className="fw-bold" style={{ color: "#15803d", fontSize: "0.95rem" }}>
+                    <div className="fw-bold fdp-addon-price">
                       +₹499 / month
                     </div>
                   </div>
@@ -168,19 +136,9 @@ export default function ForDoctorsPricing() {
               </div>
 
               {/* Add-on 2: Clinic Network */}
-              <div
-                className="card border shadow-sm p-3 bg-white"
-                style={{
-                  borderRadius: "20px",
-                  borderColor: "#f1f5f9",
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.02)"
-                }}
-              >
+              <div className="card border shadow-sm p-3 bg-white fdp-addon-card">
                 <div className="d-flex gap-3 align-items-start">
-                  <div
-                    className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-3"
-                    style={{ width: "48px", height: "48px", backgroundColor: "#effaf5" }}
-                  >
+                  <div className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-3 fdp-addon-icon-wrap">
                     <Image
                       src={clinicNetworkImg}
                       alt="Clinic Network"
@@ -189,13 +147,13 @@ export default function ForDoctorsPricing() {
                     />
                   </div>
                   <div className="flex-grow-1">
-                    <h5 className="fw-bold text-dark mb-2" style={{ fontSize: "1.05rem" }}>
+                    <h5 className="fw-bold text-dark mb-2 fdp-addon-title">
                       Clinic Network
                     </h5>
-                    <p className="text-muted small mb-2" style={{ lineHeight: "1.5" }}>
+                    <p className="text-muted small mb-2 fdp-addon-desc">
                       Add an extra clinic branch under one account. Unified patient records, separate queues per branch.
                     </p>
-                    <div className="fw-bold" style={{ color: "#15803d", fontSize: "0.95rem" }}>
+                    <div className="fw-bold fdp-addon-price">
                       +₹999 / month per branch
                     </div>
                   </div>
@@ -203,7 +161,7 @@ export default function ForDoctorsPricing() {
               </div>
 
               {/* Bottom Note */}
-              <p className="text-muted small mt-2 mb-0" style={{ lineHeight: "1.6" }}>
+              <p className="text-muted small mt-2 mb-0 fdp-note-text">
                 GST (18%) is added at checkout. After the 30-day trial you decide whether to continue — no automatic charges and no card taken upfront.
               </p>
 

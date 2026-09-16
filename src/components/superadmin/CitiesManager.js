@@ -290,19 +290,19 @@ export default function CitiesManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="3" className="admin-table-center-msg">
                     Loading cities...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#dc2626' }}>
+                  <td colSpan="3" className="admin-table-center-error">
                     {error}
                   </td>
                 </tr>
               ) : cities.length === 0 ? (
                 <tr>
-                  <td colSpan="3" style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                  <td colSpan="3" className="admin-table-center-msg">
                     No cities found.
                   </td>
                 </tr>
@@ -313,11 +313,11 @@ export default function CitiesManager() {
                   return (
                     <tr key={c.id}>
                       <td>
-                        <span style={{ fontWeight: 600 }}>{c.name}</span>
+                        <span className="admin-cell-title">{c.name}</span>
                       </td>
                       <td>
                         <button
-                          style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                          className="admin-btn-transparent"
                           onClick={() => toggleStatus(c)}
                           title="Click to toggle status"
                         >
@@ -343,21 +343,11 @@ export default function CitiesManager() {
         </div>
 
         {!loading && !error && pagination.totalPages > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderTop: '1px solid #e2e8f0',
-              flexWrap: 'wrap',
-              gap: 12,
-            }}
-          >
-            <span style={{ fontSize: 14, color: '#64748b' }}>
+          <div className="admin-pagination-bar">
+            <span className="admin-pagination-info">
               Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.count} total cities)
             </span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="admin-pagination-btns">
               <button
                 className="admin-btn-reset"
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
@@ -385,7 +375,7 @@ export default function CitiesManager() {
             </h3>
 
             {loadingForm ? (
-              <p style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+              <p className="admin-table-center-msg">
                 Loading city details...
               </p>
             ) : (
@@ -417,7 +407,7 @@ export default function CitiesManager() {
                 </div>
 
                 {formError && (
-                  <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: 14 }}>{formError}</p>
+                  <p className="admin-form-error-msg">{formError}</p>
                 )}
 
                 <div className="admin-form-actions">
