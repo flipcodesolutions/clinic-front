@@ -2,13 +2,26 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getUserAuth, clearUserSession } from '@/utils/auth';
+import { getUserAuth, clearUserSession, setUserAuth, getAuthToken } from '@/utils/auth';
 import {
   getPatientAppointments,
   cancelPatientAppointment,
   getPatientProfile,
   updatePatientProfile,
+  getPatientShortlist,
+  removeDoctorFromShortlist,
+  getFamilyMembers,
+  addFamilyMember,
+  updateFamilyMember,
+  deleteFamilyMember,
+  getPatientPrescriptions,
+  createPatientPrescription,
+  deletePatientPrescription,
+  getPatientLabReports,
+  createPatientDocument,
+  deletePatientDocument,
 } from '@/services/patientService';
+import { getDoctorImageUrl } from '@/utils/imageHelper';
 import toast from 'react-hot-toast';
 
 export default function PatientDashboard() {
@@ -20,6 +33,10 @@ export default function PatientDashboard() {
   // Appointments state
   const [appointments, setAppointments] = useState([]);
   const [loadingAppts, setLoadingAppts] = useState(false);
+
+  // Shortlisted Doctors state
+  const [shortlistedDoctors, setShortlistedDoctors] = useState([]);
+  const [loadingShortlist, setLoadingShortlist] = useState(false);
 
   // Profile state
   const [profile, setProfile] = useState({
@@ -36,49 +53,55 @@ export default function PatientDashboard() {
   });
   const [savingProfile, setSavingProfile] = useState(false);
 
-  // Family Members state (defaults to primary user)
+  // Family Members state
   const [familyMembers, setFamilyMembers] = useState([]);
+  const [loadingFamily, setLoadingFamily] = useState(false);
   const [showFamilyModal, setShowFamilyModal] = useState(false);
+  const [editingFamilyId, setEditingFamilyId] = useState(null);
   const [familyForm, setFamilyForm] = useState({
     name: '',
     relation: 'Spouse',
     dob: '',
     gender: 'female',
     blood_group: 'B+',
+    phone: '',
   });
 
-  // Upload Prescriptions / Reports state
+  // E-Prescriptions state
   const [prescriptions, setPrescriptions] = useState([]);
+  const [loadingPrescriptions, setLoadingPrescriptions] = useState(false);
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
-  const [prescriptionForm, setPrescriptionForm] = useState({ title: '', doctor_name: '', date: '' });
+  const [prescriptionForm, setPrescriptionForm] = useState({ title: '', doctor_name: '' });
 
+  // Lab Reports state
   const [labReports, setLabReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportForm, setReportForm] = useState({ test_name: '', lab_name: '', date: '' });
+  const [reportForm, setReportForm] = useState({ test_name: '', lab_name: '', date: '', file_path: '' });
 
   useEffect(() => {
     const user = getUserAuth();
-    if (!user) {
+    const token = getAuthToken();
+    if (!user || !token) {
+      clearUserSession();
       router.push('/login?redirect=/patient');
       return;
     }
     setAuthUser(user);
 
-    // Initial family member as Self
-    setFamilyMembers([
-      {
-        id: 1,
-        name: user.name || 'meet rameshbhai patel',
-        relation: 'Self',
-        initials: (user.name || 'MP').split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase(),
-      },
-    ]);
-
-    // Fetch live data
-    fetchAppointments();
-    fetchProfileData();
+    // Fetch all dynamic data on load
+    fetchAllData();
     setLoading(false);
   }, []);
+
+  const fetchAllData = async () => {
+    fetchAppointments();
+    fetchShortlist();
+    fetchFamily();
+    fetchPrescriptions();
+    fetchLabReports();
+    fetchProfileData();
+  };
 
   const fetchAppointments = async () => {
     try {
@@ -91,6 +114,62 @@ export default function PatientDashboard() {
       console.error('Error fetching patient appointments:', err);
     } finally {
       setLoadingAppts(false);
+    }
+  };
+
+  const fetchShortlist = async () => {
+    try {
+      setLoadingShortlist(true);
+      const res = await getPatientShortlist();
+      if (res.success && Array.isArray(res.data)) {
+        setShortlistedDoctors(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching shortlist:', err);
+    } finally {
+      setLoadingShortlist(false);
+    }
+  };
+
+  const fetchFamily = async () => {
+    try {
+      setLoadingFamily(true);
+      const res = await getFamilyMembers();
+      if (res.success && Array.isArray(res.data)) {
+        setFamilyMembers(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching family members:', err);
+    } finally {
+      setLoadingFamily(false);
+    }
+  };
+
+  const fetchPrescriptions = async () => {
+    try {
+      setLoadingPrescriptions(true);
+      const res = await getPatientPrescriptions();
+      if (res.success && Array.isArray(res.data)) {
+        setPrescriptions(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching prescriptions:', err);
+    } finally {
+      setLoadingPrescriptions(false);
+    }
+  };
+
+  const fetchLabReports = async () => {
+    try {
+      setLoadingReports(true);
+      const res = await getPatientLabReports();
+      if (res.success && Array.isArray(res.data)) {
+        setLabReports(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching lab reports:', err);
+    } finally {
+      setLoadingReports(false);
     }
   };
 
@@ -138,6 +217,176 @@ export default function PatientDashboard() {
     }
   };
 
+  const handleRemoveShortlist = async (doctorId) => {
+    try {
+      const res = await removeDoctorFromShortlist(doctorId);
+      if (res.success) {
+        toast.success('Doctor removed from shortlist');
+        setShortlistedDoctors((prev) => prev.filter((d) => d.doctor_id !== doctorId));
+      } else {
+        toast.error(res.message || 'Failed to remove doctor');
+      }
+    } catch (err) {
+      toast.error('Failed to remove doctor from shortlist');
+    }
+  };
+
+  const handleOpenAddFamily = () => {
+    setEditingFamilyId(null);
+    setFamilyForm({
+      name: '',
+      relation: 'Spouse',
+      dob: '',
+      gender: 'female',
+      blood_group: 'B+',
+      phone: '',
+    });
+    setShowFamilyModal(true);
+  };
+
+  const handleOpenEditFamily = (m) => {
+    setEditingFamilyId(m.id);
+    setFamilyForm({
+      name: m.name || '',
+      relation: m.relation || 'Spouse',
+      dob: m.dob || '',
+      gender: m.gender || 'female',
+      blood_group: m.blood_group || 'B+',
+      phone: m.phone || '',
+    });
+    setShowFamilyModal(true);
+  };
+
+  const handleSaveFamilyMember = async (e) => {
+    e.preventDefault();
+    if (!familyForm.name.trim()) {
+      toast.error('Full name is required');
+      return;
+    }
+
+    try {
+      if (editingFamilyId) {
+        const res = await updateFamilyMember(editingFamilyId, familyForm);
+        if (res.success) {
+          toast.success('Family member updated');
+          fetchFamily();
+          setShowFamilyModal(false);
+        } else {
+          toast.error(res.message || 'Failed to update');
+        }
+      } else {
+        const res = await addFamilyMember(familyForm);
+        if (res.success) {
+          toast.success('Family member added');
+          fetchFamily();
+          setShowFamilyModal(false);
+        } else {
+          toast.error(res.message || 'Failed to add');
+        }
+      }
+    } catch (err) {
+      toast.error('Failed to save family member');
+    }
+  };
+
+  const handleDeleteFamily = async (id) => {
+    if (!confirm('Are you sure you want to remove this family member?')) return;
+    try {
+      const res = await deleteFamilyMember(id);
+      if (res.success) {
+        toast.success('Family member removed');
+        setFamilyMembers((prev) => prev.filter((m) => m.id !== id));
+      } else {
+        toast.error(res.message || 'Failed to remove');
+      }
+    } catch (err) {
+      toast.error('Failed to remove family member');
+    }
+  };
+
+  const handleAddPrescription = async (e) => {
+    e.preventDefault();
+    if (!prescriptionForm.title.trim()) {
+      toast.error('Prescription title is required');
+      return;
+    }
+
+    try {
+      const res = await createPatientPrescription({
+        title: prescriptionForm.title.trim(),
+        doctor_name: prescriptionForm.doctor_name ? prescriptionForm.doctor_name.trim() : '',
+      });
+      if (res.success) {
+        toast.success('Prescription uploaded');
+        setShowPrescriptionModal(false);
+        setPrescriptionForm({ title: '', doctor_name: '' });
+        fetchPrescriptions();
+      } else {
+        toast.error(res.message || 'Failed to add prescription');
+      }
+    } catch (err) {
+      toast.error('Failed to upload prescription');
+    }
+  };
+
+  const handleDeletePrescriptionItem = async (id) => {
+    if (!confirm('Are you sure you want to remove this prescription?')) return;
+    try {
+      const res = await deletePatientPrescription(id);
+      if (res.success) {
+        toast.success('Prescription removed');
+        fetchPrescriptions();
+      } else {
+        toast.error(res.message || 'Failed to remove prescription');
+      }
+    } catch (err) {
+      toast.error('Failed to remove prescription');
+    }
+  };
+
+  const handleAddLabReport = async (e) => {
+    e.preventDefault();
+    if (!reportForm.test_name.trim()) {
+      toast.error('Test name is required');
+      return;
+    }
+
+    try {
+      const res = await createPatientDocument({
+        document_type: 'lab_report',
+        title: reportForm.test_name.trim(),
+        lab_name: reportForm.lab_name.trim(),
+        test_date: reportForm.date,
+        file_path: reportForm.file_path || '/uploads/sample-lab-report.pdf',
+      });
+      if (res.success) {
+        toast.success('Lab report added successfully');
+        setShowReportModal(false);
+        setReportForm({ test_name: '', lab_name: '', date: '', file_path: '' });
+        fetchLabReports();
+      } else {
+        toast.error(res.message || 'Failed to add lab report');
+      }
+    } catch (err) {
+      toast.error('Failed to add lab report');
+    }
+  };
+
+  const handleDeleteReportItem = async (id) => {
+    if (!confirm('Are you sure you want to delete this lab report?')) return;
+    try {
+      const res = await deletePatientDocument(id);
+      if (res.success) {
+        toast.success('Lab report deleted');
+        fetchLabReports();
+      } else {
+        toast.error(res.message || 'Failed to delete report');
+      }
+    } catch (err) {
+      toast.error('Failed to delete lab report');
+    }
+  };
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
@@ -145,6 +394,9 @@ export default function PatientDashboard() {
       const res = await updatePatientProfile(profile);
       if (res.success) {
         toast.success('Profile updated successfully!');
+        const updatedName = `${profile.first_name} ${profile.last_name}`.trim();
+        setUserAuth({ name: updatedName, phone: profile.phone });
+        setAuthUser((prev) => ({ ...prev, name: updatedName, phone: profile.phone }));
       } else {
         toast.error(res.message || 'Failed to update profile');
       }
@@ -153,45 +405,6 @@ export default function PatientDashboard() {
     } finally {
       setSavingProfile(false);
     }
-  };
-
-  const handleAddFamilyMember = (e) => {
-    e.preventDefault();
-    if (!familyForm.name.trim()) return;
-    const newMember = {
-      id: Date.now(),
-      name: familyForm.name.trim(),
-      relation: familyForm.relation,
-      initials: familyForm.name.trim().split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase(),
-    };
-    setFamilyMembers([...familyMembers, newMember]);
-    setShowFamilyModal(false);
-    setFamilyForm({ name: '', relation: 'Spouse', dob: '', gender: 'female', blood_group: 'B+' });
-    toast.success('Family member added');
-  };
-
-  const handleAddPrescription = (e) => {
-    e.preventDefault();
-    if (!prescriptionForm.title.trim()) return;
-    setPrescriptions([
-      ...prescriptions,
-      { id: Date.now(), ...prescriptionForm, date: prescriptionForm.date || new Date().toISOString().split('T')[0] },
-    ]);
-    setShowPrescriptionModal(false);
-    setPrescriptionForm({ title: '', doctor_name: '', date: '' });
-    toast.success('Prescription uploaded');
-  };
-
-  const handleAddLabReport = (e) => {
-    e.preventDefault();
-    if (!reportForm.test_name.trim()) return;
-    setLabReports([
-      ...labReports,
-      { id: Date.now(), ...reportForm, date: reportForm.date || new Date().toISOString().split('T')[0] },
-    ]);
-    setShowReportModal(false);
-    setReportForm({ test_name: '', lab_name: '', date: '' });
-    toast.success('Lab report added');
   };
 
   // User details computations
@@ -215,6 +428,35 @@ export default function PatientDashboard() {
       monthStr: months[d.getMonth()] || 'SEPT',
       time: timeStr ? timeStr.substring(0, 5) : '7:00 PM',
     };
+  };
+
+  // Dynamic Status Badge Mapping
+  const getAppointmentStatusInfo = (status) => {
+    const s = String(status || '').toLowerCase().trim();
+    switch (s) {
+      case 'confirmed':
+        return { label: 'CONFIRMED', className: 'patient-status-confirmed' };
+      case 'booked':
+        return { label: 'BOOKED', className: 'patient-status-awaiting' };
+      case 'pending':
+      case 'requested':
+        return { label: 'PENDING', className: 'patient-status-awaiting' };
+      case 'completed':
+        return { label: 'COMPLETED', className: 'patient-status-completed' };
+      case 'cancelled':
+        return { label: 'CANCELLED', className: 'patient-status-cancelled' };
+      case 'no_show':
+        return { label: 'NO SHOW', className: 'patient-status-cancelled' };
+      case 'in_progress':
+        return { label: 'IN PROGRESS', className: 'patient-status-awaiting' };
+      case 'arrived':
+        return { label: 'ARRIVED', className: 'patient-status-confirmed' };
+      default:
+        return {
+          label: s ? s.replace(/_/g, ' ').toUpperCase() : 'PENDING',
+          className: 'patient-status-awaiting',
+        };
+    }
   };
 
   if (loading) {
@@ -264,7 +506,10 @@ export default function PatientDashboard() {
             {activeTab === 'bookings' && (
               <div className="patient-main-card">
                 <div className="patient-section-header">
-                  <h2 className="patient-section-title">PENDING REQUESTS</h2>
+                  <h2 className="patient-section-title">PENDING REQUESTS & APPOINTMENTS</h2>
+                  <Link href="/finddoctor" className="patient-primary-btn text-decoration-none">
+                    + Book New Slot
+                  </Link>
                 </div>
                 <p className="patient-section-subtitle">
                   We&apos;ve notified these clinics. They&apos;ll call you to confirm.
@@ -290,29 +535,12 @@ export default function PatientDashboard() {
                   <div className="patient-appt-list">
                     {appointments.map((apt) => {
                       const dt = formatApptDate(apt.appointment_date, apt.start_time);
-                      const clinicTitle = apt.clinic?.name || 'Dr.FeelGood\'s Clinic';
-                      const clinicLoc = [apt.clinic?.address, apt.clinic?.city].filter(Boolean).join(' · ') || 'Gota, Ahmedabad';
+                      const clinicTitle = apt.clinic?.name || 'eClinic Health Centre';
+                      const clinicLoc = [apt.clinic?.address, apt.clinic?.city].filter(Boolean).join(' · ') || 'Ahmedabad, Gujarat';
                       const docTitle = apt.doctor?.user ? `Dr. ${apt.doctor.user.first_name} ${apt.doctor.user.last_name || ''}` : '';
                       const phoneCall = apt.clinic?.phone || '+919876543210';
 
-                      const isConfirmed = apt.status === 'confirmed' || apt.status === 'booked';
-                      const statusClass =
-                        isConfirmed
-                          ? 'patient-status-confirmed'
-                          : apt.status === 'completed'
-                          ? 'patient-status-completed'
-                          : apt.status === 'cancelled'
-                          ? 'patient-status-cancelled'
-                          : 'patient-status-confirmed';
-
-                      const statusLabel =
-                        isConfirmed
-                          ? 'CONFIRMED'
-                          : apt.status === 'completed'
-                          ? 'COMPLETED'
-                          : apt.status === 'cancelled'
-                          ? 'CANCELLED'
-                          : 'CONFIRMED';
+                      const statusInfo = getAppointmentStatusInfo(apt.status);
 
                       return (
                         <div key={apt.id} className="patient-appt-card">
@@ -339,13 +567,13 @@ export default function PatientDashboard() {
                           </div>
 
                           <div className="patient-appt-actions">
-                            <a href={`tel:${phoneCall}`} className="patient-call-btn">
+                            <a href={`tel:${phoneCall}`} className="patient-call-btn text-decoration-none">
                               📞 Call
                             </a>
-                            <span className={`patient-status-pill ${statusClass}`}>
-                              {statusLabel}
+                            <span className={`patient-status-pill ${statusInfo.className}`}>
+                              {statusInfo.label}
                             </span>
-                            {(apt.status === 'booked' || apt.status === 'confirmed') && (
+                            {(apt.status === 'booked' || apt.status === 'confirmed' || apt.status === 'pending') && (
                               <button
                                 type="button"
                                 className="btn btn-link text-danger p-0 small text-decoration-none"
@@ -368,21 +596,105 @@ export default function PatientDashboard() {
               <div className="patient-main-card">
                 <div className="patient-section-header">
                   <h2 className="patient-section-title">SHORTLISTED DOCTORS</h2>
-                </div>
-                <p className="patient-section-subtitle">
-                  Doctors and clinics you have saved for quick access.
-                </p>
-
-                <div className="patient-empty-state">
-                  <div className="patient-empty-icon">❤️</div>
-                  <h3 className="patient-empty-title">Your shortlist is empty</h3>
-                  <p className="patient-empty-desc">
-                    Browse doctors and click the bookmark icon to save them here.
-                  </p>
-                  <Link href="/finddoctor" className="patient-primary-btn">
-                    Explore Doctors &rarr;
+                  <Link href="/finddoctor" className="patient-primary-btn text-decoration-none">
+                    + Explore More Doctors
                   </Link>
                 </div>
+                <p className="patient-section-subtitle">
+                  Doctors and clinics you have saved for quick access and consultations.
+                </p>
+
+                {loadingShortlist ? (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-success" role="status" />
+                    <p className="text-muted small mt-2">Loading your shortlist...</p>
+                  </div>
+                ) : shortlistedDoctors.length === 0 ? (
+                  <div className="patient-empty-state">
+                    {/* <div className="patient-empty-icon">❤️</div> */}
+                    <h3 className="patient-empty-title">Your shortlist is empty</h3>
+                    <p className="patient-empty-desc">
+                      Browse doctors on Find Doctor and click the heart icon to save them here.
+                    </p>
+                    <Link href="/finddoctor" className="patient-primary-btn">
+                      Explore Doctors &rarr;
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="patient-family-list">
+                    {shortlistedDoctors.map((item) => {
+                      const doc = item.doctor || {};
+                      const u = doc.user || {};
+                      const docName = `Dr. ${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Specialist Doctor';
+                      const departments = (doc.departments || []).map((d) => d.name).join(', ') || 'General Physician';
+                      const docAvatar = getDoctorImageUrl(u.profile_image);
+
+                      return (
+                        <div key={item.shortlist_id || item.doctor_id} className="patient-appt-card align-items-center">
+                          <div className="patient-appt-left align-items-center">
+                            <div
+                              style={{
+                                width: '56px',
+                                height: '56px',
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                background: '#e0f2fe',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: '700',
+                                color: '#0369a1',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {u.profile_image ? (
+                                <img
+                                  src={docAvatar}
+                                  alt={docName}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                              ) : (
+                                (u.first_name?.[0] || 'D') + (u.last_name?.[0] || 'R')
+                              )}
+                            </div>
+
+                            <div className="patient-appt-info">
+                              <span className="patient-appt-clinic-name">{docName}</span>
+                              <span className="patient-appt-clinic-loc">{departments}</span>
+                              <div className="d-flex align-items-center gap-2 mt-1">
+                                {doc.experience_years && (
+                                  <span className="badge bg-light text-dark border">
+                                    {doc.experience_years} yrs exp
+                                  </span>
+                                )}
+                                <span className="text-success fw-bold small">
+                                  ₹{doc.consultation_fee || 500} Consultation
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="patient-appt-actions d-flex align-items-center gap-2">
+                            <Link
+                              href={`/finddoctor?search=${encodeURIComponent(u.first_name || '')}`}
+                              className="patient-primary-btn text-decoration-none py-1 px-3 small"
+                            >
+                              Book
+                            </Link>
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger btn-sm rounded-pill"
+                              title="Remove from shortlist"
+                              onClick={() => handleRemoveShortlist(item.doctor_id)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -394,46 +706,76 @@ export default function PatientDashboard() {
                   <button
                     type="button"
                     className="patient-primary-btn"
-                    onClick={() => setShowFamilyModal(true)}
+                    onClick={handleOpenAddFamily}
                   >
                     + Add member
                   </button>
                 </div>
-                <p className="patient-section-subtitle">
-                  Add up to 6 family members (including yourself) with relation, name, date of birth, gender, blood group, and ABHA number. · {familyMembers.length}/6 added
-                </p>
+                
 
-                <div className="patient-family-list">
-                  {familyMembers.map((m) => (
-                    <div key={m.id} className="patient-family-card">
-                      <div className="patient-family-info">
-                        <div className="patient-family-avatar">
-                          {m.initials}
+                {loadingFamily ? (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-success" role="status" />
+                    <p className="text-muted small mt-2">Loading family members...</p>
+                  </div>
+                ) : (
+                  <div className="patient-family-list">
+                    {familyMembers.map((m) => {
+                      const mInitials = (m.name || 'FM')
+                        .split(' ')
+                        .filter(Boolean)
+                        .map((n) => n[0])
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase();
+
+                      return (
+                        <div key={m.id} className="patient-family-card">
+                          <div className="patient-family-info">
+                            <div className="patient-family-avatar">
+                              {mInitials}
+                            </div>
+                            <div>
+                              <div className="d-flex align-items-center gap-2">
+                                <h4 className="patient-family-name mb-0">{m.name}</h4>
+                                <span className="badge bg-light text-secondary border small">
+                                  {m.relation}
+                                </span>
+                              </div>
+                              <p className="patient-family-relation mb-0 mt-1">
+                                {[
+                                  m.gender && (m.gender.charAt(0).toUpperCase() + m.gender.slice(1)),
+                                  m.blood_group && `Blood Group: ${m.blood_group}`,
+                                  m.phone && `📞 ${m.phone}`,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' · ')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="d-flex align-items-center gap-2">
+                            <button
+                              type="button"
+                              className="patient-family-edit-btn"
+                              onClick={() => handleOpenEditFamily(m)}
+                            >
+                              ✎ Edit
+                            </button>
+                            {m.relation !== 'Self' && (
+                              <button
+                                type="button"
+                                className="btn btn-link text-danger p-0 text-decoration-none small"
+                                onClick={() => handleDeleteFamily(m.id)}
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="patient-family-name">{m.name}</h4>
-                          <p className="patient-family-relation">{m.relation}</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="patient-family-edit-btn"
-                        onClick={() => {
-                          setFamilyForm({
-                            name: m.name,
-                            relation: m.relation,
-                            dob: '',
-                            gender: 'female',
-                            blood_group: 'B+',
-                          });
-                          setShowFamilyModal(true);
-                        }}
-                      >
-                        ✎ Edit
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -454,9 +796,13 @@ export default function PatientDashboard() {
                   Keep every prescription in one place — upload a photo or PDF of one you already have, and doctors on eClinicPro can share new ones straight to your panel.
                 </p>
 
-                {prescriptions.length === 0 ? (
+                {loadingPrescriptions ? (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-success" role="status" />
+                    <p className="text-muted small mt-2">Loading prescriptions...</p>
+                  </div>
+                ) : prescriptions.length === 0 ? (
                   <div className="patient-empty-state">
-                    <div className="patient-empty-icon">💊</div>
                     <h3 className="patient-empty-title">No prescriptions yet</h3>
                     <p className="patient-empty-desc">
                       Upload a photo of a prescription you already have, or ask your eClinicPro doctor to share one during your next visit.
@@ -479,6 +825,14 @@ export default function PatientDashboard() {
                             {p.doctor_name ? `Dr. ${p.doctor_name}` : 'Prescription'} &middot; {p.date}
                           </p>
                         </div>
+                        <button
+                          type="button"
+                          className="patient-family-delete-btn"
+                          title="Delete Prescription"
+                          onClick={() => handleDeletePrescriptionItem(p.id)}
+                        >
+                          ✕
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -500,15 +854,20 @@ export default function PatientDashboard() {
                   </button>
                 </div>
                 <p className="patient-section-subtitle">
-                  Keep every test result in one place — blood work, scans, X-rays. Upload a photo or PDF of a report you already have and it stays with you, for any doctor you visit.
+                  Keep every test result in one place — blood work, scans, X-rays. Upload details of reports you have and access them anytime.
                 </p>
 
-                {labReports.length === 0 ? (
+                {loadingReports ? (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-success" role="status" />
+                    <p className="text-muted small mt-2">Loading lab reports...</p>
+                  </div>
+                ) : labReports.length === 0 ? (
                   <div className="patient-empty-state">
-                    <div className="patient-empty-icon">🧪</div>
+                    <div className="patient-empty-icon"></div>
                     <h3 className="patient-empty-title">No lab reports yet</h3>
                     <p className="patient-empty-desc">
-                      Add your past test results — blood work, scans, X-rays — so you always have them with you at your next appointment.
+                      Add your past test results — blood work, scans, pathology tests — so you always have them accessible on your profile.
                     </p>
                     <button
                       type="button"
@@ -520,22 +879,64 @@ export default function PatientDashboard() {
                   </div>
                 ) : (
                   <div className="patient-family-list">
-                    {labReports.map((r) => (
-                      <div key={r.id} className="patient-family-card">
-                        <div>
-                          <h4 className="patient-family-name">🧪 {r.test_name}</h4>
-                          <p className="patient-family-relation">
-                            {r.lab_name || 'Lab Report'} &middot; {r.date}
-                          </p>
+                    {labReports.map((r) => {
+                      const reportDate = r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+
+                      return (
+                        <div key={r.id} className="patient-family-card align-items-center">
+                          <div className="d-flex align-items-center gap-3">
+                            <div
+                              style={{
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '10px',
+                                background: '#f0fdf4',
+                                color: '#16a34a',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '20px',
+                                flexShrink: 0,
+                              }}
+                            >
+                              🧪
+                            </div>
+                            <div>
+                              <h4 className="patient-family-name mb-0">{r.title}</h4>
+                              <p className="patient-family-relation mt-1 mb-0">
+                                Uploaded on {reportDate}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="d-flex align-items-center gap-2">
+                            {r.file_path && (
+                              <a
+                                href={r.file_path}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="patient-family-edit-btn text-decoration-none"
+                              >
+                                View / Download
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-link text-danger p-0 text-decoration-none small ms-2"
+                              onClick={() => handleDeleteReportItem(r.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
             )}
 
-            {/* TAB 6: LAB BOOKINGS */}
+            {/* TAB 6: LAB BOOKINGS (KEPT STATIC AS REQUESTED) */}
             {activeTab === 'lab_bookings' && (
               <div className="patient-main-card">
                 <div className="patient-section-header">
@@ -720,6 +1121,9 @@ export default function PatientDashboard() {
                   <span>❤️</span>
                   <span>Shortlist</span>
                 </div>
+                {shortlistedDoctors.length > 0 && (
+                  <span className="patient-menu-badge">{shortlistedDoctors.length}</span>
+                )}
               </button>
 
               <button
@@ -731,7 +1135,9 @@ export default function PatientDashboard() {
                   <span>👥</span>
                   <span>Family</span>
                 </div>
-                <span className="patient-menu-badge">{familyMembers.length}</span>
+                {familyMembers.length > 0 && (
+                  <span className="patient-menu-badge">{familyMembers.length}</span>
+                )}
               </button>
 
               <button
@@ -743,6 +1149,9 @@ export default function PatientDashboard() {
                   <span>💊</span>
                   <span>E-prescriptions</span>
                 </div>
+                {prescriptions.length > 0 && (
+                  <span className="patient-menu-badge">{prescriptions.length}</span>
+                )}
               </button>
 
               <button
@@ -754,6 +1163,9 @@ export default function PatientDashboard() {
                   <span>🧪</span>
                   <span>Lab reports</span>
                 </div>
+                {labReports.length > 0 && (
+                  <span className="patient-menu-badge">{labReports.length}</span>
+                )}
               </button>
 
               <button
@@ -780,18 +1192,7 @@ export default function PatientDashboard() {
             </div>
 
             {/* COMING SOON CARD */}
-            <div className="patient-coming-soon-card">
-              <div className="patient-coming-soon-badge">COMING SOON</div>
-              <div className="patient-coming-soon-content">
-                <div className="patient-coming-soon-icon">
-                  🩺
-                </div>
-                <div>
-                  <h4 className="patient-coming-soon-title">Video consult</h4>
-                  <p className="patient-coming-soon-desc">Talk to a doctor from home</p>
-                </div>
-              </div>
-            </div>
+           
           </div>
 
         </div>
@@ -800,13 +1201,17 @@ export default function PatientDashboard() {
 
       {/* ── MODALS ── */}
 
-      {/* Add Family Member Modal */}
+      {/* Add/Edit Family Member Modal */}
       {showFamilyModal && (
         <div className="dp-modal-overlay" onClick={() => setShowFamilyModal(false)}>
           <div className="dp-modal-card" onClick={(e) => e.stopPropagation()}>
-            <h3 className="dp-success-title">Add Family Member</h3>
-            <p className="dp-success-desc">Add family members to book appointments for them easily.</p>
-            <form onSubmit={handleAddFamilyMember}>
+            <h3 className="dp-success-title">
+              {editingFamilyId ? 'Edit Family Member' : 'Add Family Member'}
+            </h3>
+            <p className="dp-success-desc">
+              Manage family member profile for booking doctor visits easily.
+            </p>
+            <form onSubmit={handleSaveFamilyMember}>
               <div className="text-start mb-3">
                 <label className="form-label small fw-bold">Full Name *</label>
                 <input
@@ -818,23 +1223,71 @@ export default function PatientDashboard() {
                   required
                 />
               </div>
-              <div className="text-start mb-3">
-                <label className="form-label small fw-bold">Relation *</label>
-                <select
-                  className="form-select"
-                  value={familyForm.relation}
-                  onChange={(e) => setFamilyForm({ ...familyForm, relation: e.target.value })}
-                >
-                  <option value="Spouse">Spouse</option>
-                  <option value="Child">Child</option>
-                  <option value="Parent">Parent</option>
-                  <option value="Sibling">Sibling</option>
-                  <option value="Other">Other</option>
-                </select>
+              <div className="row g-2 mb-3 text-start">
+                <div className="col-6">
+                  <label className="form-label small fw-bold">Relation *</label>
+                  <select
+                    className="form-select"
+                    value={familyForm.relation}
+                    onChange={(e) => setFamilyForm({ ...familyForm, relation: e.target.value })}
+                  >
+                    <option value="Self">Self</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Child">Child</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Sibling">Sibling</option>
+                    <option value="Grandparent">Grandparent</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="col-6">
+                  <label className="form-label small fw-bold">Gender</label>
+                  <select
+                    className="form-select"
+                    value={familyForm.gender}
+                    onChange={(e) => setFamilyForm({ ...familyForm, gender: e.target.value })}
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div className="row g-2 mb-3 text-start">
+                <div className="col-6">
+                  <label className="form-label small fw-bold">Blood Group</label>
+                  <select
+                    className="form-select"
+                    value={familyForm.blood_group}
+                    onChange={(e) => setFamilyForm({ ...familyForm, blood_group: e.target.value })}
+                  >
+                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => (
+                      <option key={bg} value={bg}>{bg}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-6">
+                  <label className="form-label small fw-bold">Phone Number</label>
+                  <input
+                    type="tel"
+                    className="form-control"
+                    placeholder="+91..."
+                    value={familyForm.phone}
+                    onChange={(e) => setFamilyForm({ ...familyForm, phone: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="dp-modal-actions">
-                <button type="submit" className="dp-modal-btn-done">Save Member</button>
-                <button type="button" className="btn btn-outline-secondary" onClick={() => setShowFamilyModal(false)}>Cancel</button>
+                <button type="submit" className="dp-modal-btn-done">
+                  {editingFamilyId ? 'Update Member' : 'Save Member'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowFamilyModal(false)}
+                >
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
@@ -853,14 +1306,14 @@ export default function PatientDashboard() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="e.g. Skin Allergy Medication"
+                  placeholder="e.g. Chronic Migraine Treatment"
                   value={prescriptionForm.title}
                   onChange={(e) => setPrescriptionForm({ ...prescriptionForm, title: e.target.value })}
                   required
                 />
               </div>
               <div className="text-start mb-3">
-                <label className="form-label small fw-bold">Doctor Name</label>
+                <label className="form-label small fw-bold">Prescribing Doctor (Optional)</label>
                 <input
                   type="text"
                   className="form-control"
@@ -904,6 +1357,15 @@ export default function PatientDashboard() {
                   placeholder="e.g. Metropolis Diagnostics"
                   value={reportForm.lab_name}
                   onChange={(e) => setReportForm({ ...reportForm, lab_name: e.target.value })}
+                />
+              </div>
+              <div className="text-start mb-3">
+                <label className="form-label small fw-bold">Test Date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={reportForm.date}
+                  onChange={(e) => setReportForm({ ...reportForm, date: e.target.value })}
                 />
               </div>
               <div className="dp-modal-actions">

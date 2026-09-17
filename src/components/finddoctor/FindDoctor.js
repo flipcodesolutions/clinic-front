@@ -7,6 +7,9 @@ import { FiSearch, FiMapPin, FiHeart, FiClock, FiArrowRight } from "react-icons/
 import { FaCheckCircle, FaPhoneAlt, FaCalendarAlt, FaVideo } from "react-icons/fa";
 import { getVisitorDoctors, getVisitorDepartments } from "@/services/visitorService";
 import { getDoctorImageUrl, handleDoctorImageError } from "@/utils/imageHelper";
+import { getUserAuth } from "@/utils/auth";
+import { getPatientShortlist, addDoctorToShortlist, removeDoctorFromShortlist } from "@/services/patientService";
+import toast from "react-hot-toast";
 import "@/css/find-doctor.css";
 
 function formatTimeString(timeStr) {
@@ -279,6 +282,7 @@ function FindDoctorContent() {
   const [sortBy, setSortBy] = useState("best");
   const [openDropdown, setOpenDropdown] = useState(null);
   const [userCoords, setUserCoords] = useState({ lat: 22.7284, lng: 71.6371 });
+  const [shortlistedIds, setShortlistedIds] = useState(new Set());
 
   useEffect(() => {
     if (typeof window !== "undefined" && navigator.geolocation) {
@@ -341,6 +345,19 @@ function FindDoctorContent() {
         if (deptRes.success && Array.isArray(deptRes.data)) {
           setDepartments(deptRes.data);
         }
+
+        // Check if user is logged in to load shortlist
+        const auth = getUserAuth();
+        if (auth && (auth.role === 'patient' || (auth.roles && auth.roles.includes('patient')))) {
+          try {
+            const slRes = await getPatientShortlist();
+            if (slRes.success && Array.isArray(slRes.data)) {
+              setShortlistedIds(new Set(slRes.data.map((item) => item.doctor_id)));
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch visitor data:", err);
       } finally {
@@ -349,6 +366,39 @@ function FindDoctorContent() {
     }
     loadData();
   }, []);
+
+  const handleToggleShortlist = async (e, doc) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const user = getUserAuth();
+    if (!user) {
+      toast.error('Please sign in to save doctors to your shortlist');
+      return;
+    }
+    const docId = doc.id;
+    const isCurrentlyShortlisted = shortlistedIds.has(docId);
+    try {
+      if (isCurrentlyShortlisted) {
+        await removeDoctorFromShortlist(docId);
+        setShortlistedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(docId);
+          return next;
+        });
+        toast.success('Removed from shortlist');
+      } else {
+        await addDoctorToShortlist(docId);
+        setShortlistedIds((prev) => {
+          const next = new Set(prev);
+          next.add(docId);
+          return next;
+        });
+        toast.success('Doctor saved to shortlist!');
+      }
+    } catch (err) {
+      toast.error('Could not update shortlist');
+    }
+  };
 
   // Availability helper
   const isDoctorAvailable = (doc, mode) => {
@@ -1168,8 +1218,10 @@ function FindDoctorContent() {
                         type="button"
                         className="fd-fav"
                         aria-label="Save doctor"
+                        onClick={(e) => handleToggleShortlist(e, doc)}
+                        style={shortlistedIds.has(doc.id) ? { color: '#e63946', borderColor: '#e63946' } : undefined}
                       >
-                        <FiHeart size={15} />
+                        <FiHeart size={15} style={{ fill: shortlistedIds.has(doc.id) ? '#e63946' : 'none' }} />
                       </button>
 
                       {/* 3. Identity Column */}

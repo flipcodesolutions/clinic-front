@@ -76,6 +76,15 @@ export function getUserAuth() {
 }
 
 /**
+ * Update user auth details in session.
+ */
+export function setUserAuth(userData) {
+  if (typeof window === 'undefined') return;
+  const current = getUserAuth() || {};
+  localStorage.setItem('user_auth', JSON.stringify({ ...current, ...userData }));
+}
+
+/**
  * Clear session on logout.
  */
 export function clearUserSession() {
