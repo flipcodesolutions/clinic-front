@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { getUserAuth, clearUserAuth } from "@/utils/auth";
+import { getUserAuth, clearUserSession } from "@/utils/auth";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -30,7 +30,7 @@ export default function Navbar() {
   }, [showMenu]);
 
   const handleLogout = () => {
-    clearUserAuth();
+    clearUserSession();
     setUser(null);
     setShowMenu(false);
     router.push("/");

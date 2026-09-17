@@ -3,10 +3,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { FiMapPin, FiGlobe, FiStar, FiClock, FiCheckCircle } from 'react-icons/fi';
-import { FaPhoneAlt, FaStethoscope, FaLanguage, FaHospital, FaStar } from 'react-icons/fa';
+import { FiMapPin, FiCheckCircle } from 'react-icons/fi';
+import { FaPhoneAlt, FaStethoscope, FaHospital, FaStar } from 'react-icons/fa';
 import { TbStethoscope, TbMapPin, TbLanguage, TbStar, TbWorld } from 'react-icons/tb';
-import { getVisitorDoctorProfile, bookVisitorAppointment } from '@/services/visitorService';
+import { getVisitorDoctorProfile, getVisitorDoctors, bookVisitorAppointment } from '@/services/visitorService';
 import { getUserAuth } from '@/utils/auth';
 import { showError, showSuccess } from '@/utils/toast';
 import { getDoctorImageUrl, handleDoctorImageError } from '@/utils/imageHelper';
@@ -140,8 +140,34 @@ export default function DoctorBookingDetails({ doctorId: propDoctorId }) {
     async function loadDoctorData() {
       try {
         setLoading(true);
-        const res = await getVisitorDoctorProfile(doctorId);
-        if (res.success && res.data) {
+        let idToFetch = doctorId;
+
+        // If doctorId is a clinic identifier and urlDoctorId exists, fetch that doctor
+        if (String(doctorId).startsWith('clinic-') && urlDoctorId) {
+          idToFetch = urlDoctorId;
+        }
+
+        let res = await getVisitorDoctorProfile(idToFetch);
+
+        // Fallback: If idToFetch is a clinic- id without doctor param or if initial fetch failed
+        if ((!res || !res.success || !res.data) && String(idToFetch).startsWith('clinic-')) {
+          const clinicIdNum = idToFetch.replace('clinic-', '').trim().toLowerCase();
+          const allDocsRes = await getVisitorDoctors();
+          if (allDocsRes?.success && Array.isArray(allDocsRes.data)) {
+            const matchedDoc = allDocsRes.data.find((d) => {
+              const cObj = d.schedules?.[0]?.clinic || d.user?.clinics?.[0];
+              return (
+                String(cObj?.id) === clinicIdNum ||
+                (cObj?.name || '').trim().toLowerCase() === clinicIdNum
+              );
+            });
+            if (matchedDoc) {
+              res = await getVisitorDoctorProfile(matchedDoc.id);
+            }
+          }
+        }
+
+        if (res && res.success && res.data) {
           setDoctor(res.data);
         }
       } catch (err) {
@@ -153,7 +179,7 @@ export default function DoctorBookingDetails({ doctorId: propDoctorId }) {
     if (doctorId) {
       loadDoctorData();
     }
-  }, [doctorId]);
+  }, [doctorId, urlDoctorId]);
 
   // List of all doctors practicing in this clinic
   const clinicDoctors = useMemo(() => {

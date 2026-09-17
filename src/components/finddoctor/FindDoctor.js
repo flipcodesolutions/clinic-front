@@ -4,7 +4,7 @@ import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiSearch, FiMapPin, FiHeart, FiClock, FiArrowRight } from "react-icons/fi";
-import { FaCheckCircle, FaStar, FaPhoneAlt, FaCalendarAlt, FaVideo } from "react-icons/fa";
+import { FaCheckCircle, FaPhoneAlt, FaCalendarAlt, FaVideo } from "react-icons/fa";
 import { getVisitorDoctors, getVisitorDepartments } from "@/services/visitorService";
 import { getDoctorImageUrl, handleDoctorImageError } from "@/utils/imageHelper";
 import "@/css/find-doctor.css";
@@ -208,7 +208,7 @@ function FilterDropdown({
   darkPill = false,
 }) {
   return (
-    <div className="position-relative" style={{ display: 'inline-block' }}>
+    <div className="position-relative custom-filter-dropdown-container" style={{ display: 'inline-block' }}>
       <button
         type="button"
         onClick={onToggle}
@@ -1148,7 +1148,12 @@ function FindDoctorContent() {
                     /* Exact  3-Column Doctor / Clinic Card */
                     <div key={doc.id} className="fd-card">
                       {/* 1. Avatar column  */}
-                      <div className="fd-avatar">
+                      <div
+                        className="fd-avatar"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleBookClick(clinicDoctorsList[0]?.id || doc.id)}
+                        title={`View ${primaryTitle}`}
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={image}
@@ -1170,7 +1175,14 @@ function FindDoctorContent() {
                       {/* 3. Identity Column */}
                       <div className="fd-identity">
                         <div className="fd-name-row">
-                          <span className="fd-name">{primaryTitle}</span>
+                          <span
+                            className="fd-name"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => handleBookClick(clinicDoctorsList[0]?.id || doc.id)}
+                            title={`View ${primaryTitle}`}
+                          >
+                            {primaryTitle}
+                          </span>
                           <span className="fd-verified">
                             <FaCheckCircle size={10} /> Verified
                           </span>
@@ -1191,7 +1203,7 @@ function FindDoctorContent() {
                                   style={{ cursor: 'pointer' }}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    router.push(`/finddoctor/${doc.id}?doctor=${cd.id}`);
+                                    router.push(`/finddoctor/${cd.id}`);
                                   }}
                                   title={`Book appointment with ${cdName}`}
                                 >

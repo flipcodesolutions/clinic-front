@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { login, register } from '@/services/authService';
 import { getRedirectPath, saveUserSession } from '@/utils/auth';

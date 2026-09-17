@@ -6,7 +6,6 @@ import { getStaffList, createStaff, updateStaff, deleteStaff } from '@/services/
 import { getClinics } from '@/services/superadmin/clinicService';
 import { uploadFile } from '@/services/clinic/galleryService';
 import apiClient from '@/services/apiClient';
-import Image from 'next/image';
 
 const showSuccess = (msg) => {
   Swal.fire({

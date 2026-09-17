@@ -15,13 +15,11 @@ export default function ClinicPanelShell({ children }) {
       const user = getUserAuth();
       const token = getAuthToken();
 
-      // ✅ No session → redirect to login
       if (!user || !token) {
         router.replace('/login');
         return;
       }
 
-      // ✅ Wrong role → redirect to login
       const hasClinicRole = user.roles?.some(r => CLINIC_ROLES.includes(r))
         || CLINIC_ROLES.includes(user.role);
 

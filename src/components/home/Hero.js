@@ -1,9 +1,8 @@
 import React from "react";
 import Link from "next/link";
-import { FaPlus, FaStar } from "react-icons/fa";
+import { FaStar } from "react-icons/fa";
 import { FiShield, FiCloud, FiActivity } from "react-icons/fi";
 import heroImg from "@/assets/images/Homepage/carely-hero-img1.webp";
-import bgImg from "@/assets/images/Homepage/bg.png";
 
 export default function Hero() {
   return (

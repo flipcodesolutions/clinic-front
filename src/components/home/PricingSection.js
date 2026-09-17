@@ -4,8 +4,7 @@ import Card from "@/components/common/Card";
 import { FiCheck } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa6";
 
-// Custom background and card icons imports
-import pricingBgImg from "@/assets/images/Homepage/background-img.png";
+// Custom card icons imports
 
 import clinicNetworkImg from "@/assets/images/fordoctor/clinic-network.png";
 import patientRecordsImg from "@/assets/images/Homepage/structured-visit-notes.png";

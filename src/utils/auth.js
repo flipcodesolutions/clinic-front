@@ -83,7 +83,4 @@ export function clearUserSession() {
   localStorage.removeItem('user_auth');
 }
 
-// Keep old names used in other files
-export const saveAuthToken = (token) => localStorage.setItem('auth_token', token);
-export const removeAuthToken = clearUserSession;
 export const clearUserAuth = clearUserSession;

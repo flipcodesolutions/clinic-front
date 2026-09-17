@@ -376,6 +376,7 @@
 .fd-pop .row {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 10px;
   padding: 8px 10px;
   border-radius: 8px;
@@ -390,6 +391,11 @@
   background: transparent;
 }
 
+.fd-pop .row > span:last-child {
+  min-width: 0;
+  white-space: nowrap;
+}
+
 .fd-pop .row:hover {
   background: var(--ecp-bg-2);
 }
@@ -402,6 +408,7 @@
 .fd-pop .row .ck {
   width: 16px;
   height: 16px;
+  flex: 0 0 16px;
   border-radius: 4px;
   border: 1.5px solid rgba(0, 0, 0, 0.2);
   display: grid;
@@ -713,7 +720,7 @@
 .fd-slot .dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 2px;
   background: var(--ecp-teal-400);
 }
 
