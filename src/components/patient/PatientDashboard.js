@@ -79,30 +79,6 @@ export default function PatientDashboard() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportForm, setReportForm] = useState({ test_name: '', lab_name: '', date: '', file_path: '' });
 
-  useEffect(() => {
-    const user = getUserAuth();
-    const token = getAuthToken();
-    if (!user || !token) {
-      clearUserSession();
-      router.push('/login?redirect=/patient');
-      return;
-    }
-    setAuthUser(user);
-
-    // Fetch all dynamic data on load
-    fetchAllData();
-    setLoading(false);
-  }, []);
-
-  const fetchAllData = async () => {
-    fetchAppointments();
-    fetchShortlist();
-    fetchFamily();
-    fetchPrescriptions();
-    fetchLabReports();
-    fetchProfileData();
-  };
-
   const fetchAppointments = async () => {
     try {
       setLoadingAppts(true);
@@ -195,6 +171,36 @@ export default function PatientDashboard() {
       console.error('Error fetching patient profile:', err);
     }
   };
+
+  const fetchAllData = async () => {
+    await Promise.allSettled([
+      fetchAppointments(),
+      fetchShortlist(),
+      fetchFamily(),
+      fetchPrescriptions(),
+      fetchLabReports(),
+      fetchProfileData(),
+    ]);
+  };
+
+  useEffect(() => {
+    const user = getUserAuth();
+    const token = getAuthToken();
+    if (!user || !token) {
+      clearUserSession();
+      router.push('/login?redirect=/patient');
+      return;
+    }
+    setAuthUser(user);
+
+    // Fetch all dynamic data on load
+    const loadData = async () => {
+      await fetchAllData();
+      setLoading(false);
+    };
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSignOut = () => {
     clearUserSession();

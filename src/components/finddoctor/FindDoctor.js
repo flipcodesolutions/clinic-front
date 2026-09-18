@@ -233,11 +233,18 @@ function FilterDropdown({
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => onSelect(opt.value)}
-                className={`row ${isSelected ? 'on' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isSelected && String(opt.value) !== 'any') {
+                    onSelect('any');
+                  } else {
+                    onSelect(opt.value);
+                  }
+                }}
+                className={`fd-pop-item ${isSelected ? 'on' : ''}`}
               >
                 <span className="ck">{isSelected ? '✓' : ''}</span>
-                <span>{opt.label}</span>
+                <span className="fd-pop-label">{opt.label}</span>
               </button>
             );
           })}
